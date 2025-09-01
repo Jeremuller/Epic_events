@@ -2,45 +2,39 @@ import pytest
 from sqlalchemy import text
 from ...database import engine, SessionLocal
 
+
 def test_database_connection():
     """
     Test the database connection to ensure it is properly configured and accessible.
-
-    This test attempts to execute a simple SQL query ("SELECT 1") to verify that:
-    - The database engine is correctly initialized.
-    - The connection credentials (user, password, host, etc.) are valid.
-    - The database server is reachable.
-
-    Raises:
-        pytest.fail: If the connection fails or the query does not return the expected result.
     """
     try:
-        # Attempt to connect to the database and execute a simple query
         with engine.connect() as connection:
+            # Assert that the connection is not None
+            assert connection is not None, "Database connection failed: connection is None"
+
+            # Execute a simple query and assert the result
             result = connection.execute(text("SELECT 1;"))
-            assert result.scalar() == 1  # Expected result: 1
+            assert result.scalar() == 1, "Database query failed: expected 1, got {result.scalar()}"
+
         print("✅ Database connection successful!")  # Success message
     except Exception as e:
-        # Fail the test if an error occurs
         pytest.fail(f"❌ Database connection error: {e}")
+
 
 def test_session_creation():
     """
     Test the creation of a SQLAlchemy session to ensure it can be instantiated and closed properly.
-
-    This test verifies that:
-    - The SQLAlchemy session factory is correctly configured.
-    - A session can be created and closed without errors.
-    - The database connection pool is functional.
-
-    Raises:
-        pytest.fail: If the session creation or closure fails.
     """
     try:
-        # Attempt to create and close a SQLAlchemy session
+        # Create a session and assert it is not None
         session = SessionLocal()
-        session.close()  # Explicitly close the session to free resources
+        assert session is not None, "Session creation failed: session is None"
+
+        # Test a simple query to ensure the session works
+        result = session.execute(text("SELECT 1;"))
+        assert result.scalar() == 1, "Session query failed: expected 1, got {result.scalar()}"
+
+        session.close()  # Explicitly close the session
         print("✅ SQLAlchemy session created and closed successfully!")  # Success message
     except Exception as e:
-        # Fail the test if an error occurs
         pytest.fail(f"❌ Session creation error: {e}")
