@@ -1,3 +1,5 @@
+from unittest.mock import DEFAULT
+
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Enum, DECIMAL, Boolean
 from sqlalchemy.orm import relationship
 from database import Base
@@ -43,3 +45,41 @@ class Client(Base):
     commercial_contact =relationship("User", back_populates="clients")
 
 
+class Contract(Base):
+    """
+        Represents a contract in the CRM system.
+
+        This class maps to the 'contracts' table in the database and defines the attributes
+        and relationships of a contract entity.
+
+        Attributes:
+            contract_id (int): Primary key and unique identifier for the contract.
+            total_price (DECIMAL): Total amount of the contract (e.g., 1000.00).
+            rest_to_pay (DECIMAL): Remaining amount to be paid by the client.
+            creation (DateTime): Date and time when the contract was created.
+            signed (Boolean): Status indicating whether the contract is signed (True/False).
+            client_id (int): Foreign key referencing the associated client.
+            commercial_contact_id (int): Foreign key referencing the commercial user responsible for the contract.
+
+        Relationships:
+            client (Client): Many-to-one relationship with Client.
+                             A contract belongs to exactly one client.
+            commercial_contact (User): Many-to-one relationship with User.
+                                       A contract is managed by exactly one commercial contact (user).
+    """
+
+    __tablename__ = 'contracts'
+
+    # Columns definition
+    contract_id = Column(Integer, primary_key=True, index=True, nullable=False)
+    total_price = Column(DECIMAL(10, 2))
+    rest_to_pay = Column(DECIMAL(10, 2))
+    creation = Column(DateTime)
+    signed = Column(Boolean, default= False)
+    client_id = Column(Integer, ForeignKey('clients.client_id'), nullable=False)
+    commercial_contact_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+
+    # Relationship definition
+
+    client = relationship("Client", back_populates="contract")
+    commercial_contact = relationship("User", back_populates="contracts")
