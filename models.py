@@ -40,7 +40,7 @@ class Client(Base):
 
     # Relationship definition
     contract = relationship("Contract", back_populates="client")
-    commercial_contact =relationship("User", back_populates="clients")
+    commercial_contact = relationship("User", back_populates="clients")
 
 
 class Contract(Base):
@@ -73,7 +73,7 @@ class Contract(Base):
     total_price = Column(DECIMAL(10, 2))
     rest_to_pay = Column(DECIMAL(10, 2))
     creation = Column(DateTime)
-    signed = Column(Boolean, default= False)
+    signed = Column(Boolean, default=False)
     client_id = Column(Integer, ForeignKey('clients.client_id'), nullable=False)
     commercial_contact_id = Column(Integer, ForeignKey('users.id'), nullable=False)
 
@@ -109,25 +109,15 @@ class Event(Base):
 
     # Columns definition
     event_id = Column(Integer, primary_key=True, index=True, nullable=False)
-
     name = Column(String(200), nullable=False)
-
     notes = Column(Text, nullable=True)
-
     start_datetime = Column(DateTime, nullable=False)
-
     end_datetime = Column(DateTime, nullable=False)
-
     location = Column(String(200))
-
     attendees = Column(Integer)
-
     client_id = Column(Integer, ForeignKey('clients.client_id'), nullable=False)
-
     contact_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-
 
     # Relationships definition
     client = relationship("Client", back_populates="events")
-
     contact = relationship("User", back_populates="events")
