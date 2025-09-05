@@ -1,6 +1,4 @@
-from unittest.mock import DEFAULT
-
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Enum, DECIMAL, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, DECIMAL, Boolean, Text
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -83,3 +81,53 @@ class Contract(Base):
 
     client = relationship("Client", back_populates="contract")
     commercial_contact = relationship("User", back_populates="contracts")
+
+
+class Event(Base):
+    """
+    Represents an event in the CRM system (e.g., meetings, workshops, follow-ups).
+
+    Attributes:
+        event_id (int): Primary key and unique identifier for the event.
+        name (str): Title/name of the event (max 200 characters).
+        notes (str): Detailed description of the event (optional).
+        start_datetime (DateTime): Start date and time of the event.
+        end_datetime (DateTime): End date and time of the event.
+        location (str): Physical or virtual location of the event (max 200 characters).
+        attendees (int): Number off attendees for the event.
+        client_id (int): Foreign key referencing the associated client.
+        contact_id (int): Foreign key referencing the user (commercial/support) responsible for the event.
+
+
+    Relationships:
+        client (Client): Many-to-one relationship with Client.
+                         An event is associated with exactly one client.
+        contact (User): Many-to-one relationship with User.
+                        An event is managed by exactly one user (commercial/support).
+    """
+    __tablename__ = 'events'
+
+    # Columns definition
+    event_id = Column(Integer, primary_key=True, index=True, nullable=False)
+
+    name = Column(String(200), nullable=False)
+
+    notes = Column(Text, nullable=True)
+
+    start_datetime = Column(DateTime, nullable=False)
+
+    end_datetime = Column(DateTime, nullable=False)
+
+    location = Column(String(200))
+
+    attendees = Column(Integer)
+
+    client_id = Column(Integer, ForeignKey('clients.client_id'), nullable=False)
+
+    contact_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+
+
+    # Relationships definition
+    client = relationship("Client", back_populates="events")
+
+    contact = relationship("User", back_populates="events")
