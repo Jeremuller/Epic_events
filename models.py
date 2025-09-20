@@ -1,6 +1,42 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, DECIMAL, Boolean, Text
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, DECIMAL, Boolean, Text, Enum
 from sqlalchemy.orm import relationship
 from database import Base
+
+
+class User(Base):
+    """
+        Represents a user in the CRM system (e.g., commercial, management, support).
+
+        Attributes:
+            user_id (int): Primary key and unique identifier for the user.
+            first_name (str): User's first name (max 100 characters).
+            last_name (str): User's last name (max 100 characters).
+            username (str): Unique username for authentication (max 100 characters).
+            password (str): Hashed password for authentication (max 100 characters).
+            email (str): Unique email address of the user.
+            role (str): Role of the user (commercial/management/support).
+
+        Relationships:
+            clients (list[Client]): List of clients managed by the user (one-to-many).
+            contracts (list[Contract]): List of contracts managed by the user (one-to-many).
+            events (list[Event]): List of events managed by the user (one-to-many).
+        """
+
+    __tablename__ = 'users'
+
+    # Columns definition
+    user_id = Column(Integer, primary_key=True, index=True, nullable=False)
+    first_name = Column(String(100))
+    last_name = Column(String(100))
+    username = Column(String(100), unique=True)
+    password = Column(String(100))
+    email = Column(String(100), unique=True)
+    role = Column(Enum('commercial', 'management', 'support'))
+
+    # Relationships definition
+    clients = relationship("Client", back_populates="commercial_contact")
+    contracts = relationship("Contract", back_populates="commercial_contact")
+    events = relationship("Event", back_populates="support_contact")
 
 
 class Client(Base):
@@ -19,11 +55,15 @@ class Client(Base):
             email (str): Client's email address (unique, optional).
             first_contact (DateTime): Date and time of the first contact with the client.
             last_update (DateTime): Date and time of the last update for the client.
+            commercial_contact_id (int): Foreign key referencing the commercial user responsible for the contract.
 
         Relationships:
-            contract (Contract): One-to-one or one-to-many relationship with Contract.
-            commercial_contact (User): Relationship with the commercial contact (User model).
-                                       Note: This requires the 'User' model to be defined.
+            contracts (list[Contract]): One-to-many relationship with Contract.
+                                   A client can have multiple contracts.
+            commercial_contact (User): Many-to-one relationship with User.
+                                   A client is managed by exactly one commercial user.
+            events (list[Event]): One-to-many relationship with Event.
+                             A client can have multiple events.
     """
 
     __tablename__ = 'clients'
@@ -37,10 +77,12 @@ class Client(Base):
     email = Column(String(100), unique=True)
     first_contact = Column(DateTime)
     last_update = Column(DateTime)
+    commercial_contact_id = Column(Integer, ForeignKey('users.user_id'), nullable=False)
 
     # Relationship definition
-    contract = relationship("Contract", back_populates="client")
+    contracts = relationship("Contract", back_populates="client")
     commercial_contact = relationship("User", back_populates="clients")
+    events = relationship("Event", back_populates="client")
 
 
 class Contract(Base):
@@ -56,12 +98,11 @@ class Contract(Base):
             rest_to_pay (DECIMAL): Remaining amount to be paid by the client.
             creation (DateTime): Date and time when the contract was created.
             signed (Boolean): Status indicating whether the contract is signed (True/False).
-            client_id (int): Foreign key referencing the associated client.
             commercial_contact_id (int): Foreign key referencing the commercial user responsible for the contract.
 
         Relationships:
             client (Client): Many-to-one relationship with Client.
-                             A contract belongs to exactly one client.
+                        A contract belongs to exactly one client.
             commercial_contact (User): Many-to-one relationship with User.
                                        A contract is managed by exactly one commercial contact (user).
     """
@@ -75,11 +116,11 @@ class Contract(Base):
     creation = Column(DateTime)
     signed = Column(Boolean, default=False)
     client_id = Column(Integer, ForeignKey('clients.client_id'), nullable=False)
-    commercial_contact_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    commercial_contact_id = Column(Integer, ForeignKey('users.user_id'), nullable=False)
 
     # Relationship definition
 
-    client = relationship("Client", back_populates="contract")
+    client = relationship("Client", back_populates="contracts")
     commercial_contact = relationship("User", back_populates="contracts")
 
 
@@ -96,7 +137,7 @@ class Event(Base):
         location (str): Physical or virtual location of the event (max 200 characters).
         attendees (int): Number off attendees for the event.
         client_id (int): Foreign key referencing the associated client.
-        contact_id (int): Foreign key referencing the user (commercial/support) responsible for the event.
+        support_contact_id (int): Foreign key referencing the user (commercial/support) responsible for the event.
 
 
     Relationships:
@@ -116,8 +157,8 @@ class Event(Base):
     location = Column(String(200))
     attendees = Column(Integer)
     client_id = Column(Integer, ForeignKey('clients.client_id'), nullable=False)
-    contact_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    support_contact_id = Column(Integer, ForeignKey('users.user_id'), nullable=False)
 
     # Relationships definition
     client = relationship("Client", back_populates="events")
-    contact = relationship("User", back_populates="events")
+    support_contact = relationship("User", back_populates="events")

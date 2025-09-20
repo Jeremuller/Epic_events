@@ -14,3 +14,9 @@ engine = create_engine(SQLALCHEMY_DATABASE_URL)
 Base = declarative_base()
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+def init_db():
+    print("Database initialization in progress...")
+    Base.metadata.create_all(bind=engine)
+    print("Tables successfully created. ✅ ")
