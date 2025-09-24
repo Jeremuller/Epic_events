@@ -2,6 +2,7 @@ import click
 from database import SessionLocal
 from models import User
 
+
 @click.group()
 def cli():
     """
@@ -12,11 +13,13 @@ def cli():
     """
     pass
 
+
 @cli.command()
 @click.option("--first-name", prompt="User's first name", help="First name of the user (max 100 characters).")
 @click.option("--last-name", prompt="User's last name", help="Last name of the user (max 100 characters).")
 @click.option("--email", prompt="User's email", help="Unique email address of the user.")
-@click.option("--role", prompt="User's role", type=click.Choice(["commercial", "management", "support"]), help="Role of the user in the system.")
+@click.option("--role", prompt="User's role", type=click.Choice(["commercial", "management", "support"]),
+              help="Role of the user in the system.")
 def create_user_cli(first_name, last_name, email, role):
     """
     Creates a new user in the CRM system.
@@ -36,12 +39,12 @@ def create_user_cli(first_name, last_name, email, role):
         # Create the user using the class method (note: password is set to default here)
         user = User.create_user(
             db=db,
-            username=f"{first_name.lower()}_{last_name.lower()}",  # Auto-generate username
+            username=f"{first_name.lower()}_{last_name.lower()}",
             first_name=first_name,
             last_name=last_name,
             email=email,
             role=role,
-            password="default_hashed_password"  # Placeholder - replace with hashed password in production
+            password="default_hashed_password"
         )
         click.echo(f"✅ User created: {user.first_name} {user.last_name} (ID: {user.user_id}, Role: {user.role})")
     except Exception as e:
@@ -49,6 +52,7 @@ def create_user_cli(first_name, last_name, email, role):
         db.rollback()  # Rollback in case of error
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     cli()
