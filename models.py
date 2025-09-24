@@ -272,16 +272,6 @@ class Client(Base):
 
         return db.query(cls).filter_by(client_id=client_id).first()
 
-    def delete(self, db: Session):
-        """
-        Deletes the client from the database.
-
-        Args:
-            db (Session): SQLAlchemy database session.
-        """
-        db.delete(self)
-        db.commit()
-
 
 class Contract(Base):
     """
@@ -349,16 +339,6 @@ class Contract(Base):
         """
 
         return db.query(cls).filter_by(contract_id=contract_id).first()
-
-    def delete(self, db: Session):
-        """
-        Deletes the contract from the database.
-
-        Args:
-            db (Session): SQLAlchemy database session.
-        """
-        db.delete(self)
-        db.commit()
 
 
 class Event(Base):
@@ -428,13 +408,3 @@ class Event(Base):
         """
 
         return db.query(cls).filter_by(event_id=event_id).first()
-
-    def delete(self, db: Session):
-        """
-        Deletes the event from the database.
-
-        Args:
-            db (Session): SQLAlchemy database session.
-        """
-        db.delete(self)
-        db.commit()
