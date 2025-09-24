@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, DECIMAL, Boolean, Text, Enum
 from sqlalchemy.orm import relationship, Session
 from database import Base
+from datetime import datetime
 
 
 class User(Base):
@@ -175,6 +176,112 @@ class Client(Base):
     commercial_contact = relationship("User", back_populates="clients")
     events = relationship("Event", back_populates="client")
 
+    @classmethod
+    def create(cls, db: Session, first_name: str, last_name: str, email: str, commercial_contact_id: int,
+               business_name: str = None, telephone: str = None):
+        """
+        Creates a new client linked to a commercial user.
+
+        Args:
+            db (Session): SQLAlchemy database session.
+            first_name (str): Client's first name.
+            last_name (str): Client's last name.
+            email (str): Client's email address.
+            commercial_contact_id (int): ID of the commercial user responsible.
+            business_name (str, optional): Client's business name.
+            telephone (str, optional): Client's phone number.
+
+        Returns:
+            Client: The created Client object.
+        """
+        client = cls(
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            commercial_contact_id=commercial_contact_id,
+            business_name=business_name,
+            telephone=telephone,
+            first_contact=datetime.now(),
+            last_update=datetime.now()
+        )
+        db.add(client)
+        db.commit()
+        db.refresh(client)
+        return client
+
+    def update(self, db: Session, first_name: str = None, last_name: str = None, email: str = None,
+               business_name: str = None, telephone: str = None, commercial_contact_id: int = None):
+        """
+        Updates the client's information in the database.
+
+        Args:
+            db (Session): SQLAlchemy database session.
+            first_name (str, optional): New first name.
+            last_name (str, optional): New last name.
+            email (str, optional): New email address.
+            business_name (str, optional): New business name.
+            telephone (str, optional): New phone number.
+            commercial_contact_id (int, optional): New commercial contact ID.
+
+        Returns:
+            Client: The updated Client object.
+        """
+        if first_name:
+            self.first_name = first_name
+        if last_name:
+            self.last_name = last_name
+        if email:
+            self.email = email
+        if business_name:
+            self.business_name = business_name
+        if telephone:
+            self.telephone = telephone
+        if commercial_contact_id:
+            self.commercial_contact_id = commercial_contact_id
+        self.last_update = datetime.now()
+        db.commit()
+        db.refresh(self)
+        return self
+
+    @classmethod
+    def get_all(cls, db: Session):
+        """
+        Retrieves all clients from the database.
+
+        Args:
+            db (Session): SQLAlchemy database session.
+
+        Returns:
+            list[Client]: List of all Client objects.
+        """
+        return db.query(cls).all()
+
+    @classmethod
+    def get_by_id(cls, db: Session, client_id: int):
+        """
+            Retrieves a client by their ID.
+
+            Args:
+            db (Session): SQLAlchemy database session.
+            client_id (int): The ID of the client to retrieve.
+
+            Returns:
+            Client: The Client object if found, None otherwise.
+
+        """
+
+        return db.query(cls).filter_by(client_id=client_id).first()
+
+    def delete(self, db: Session):
+        """
+        Deletes the client from the database.
+
+        Args:
+            db (Session): SQLAlchemy database session.
+        """
+        db.delete(self)
+        db.commit()
+
 
 class Contract(Base):
     """
@@ -213,6 +320,45 @@ class Contract(Base):
 
     client = relationship("Client", back_populates="contracts")
     commercial_contact = relationship("User", back_populates="contracts")
+
+    @classmethod
+    def get_all(cls, db: Session):
+        """
+        Retrieves all contracts from the database.
+
+        Args:
+            db (Session): SQLAlchemy database session.
+
+        Returns:
+            list[Contract]: List of all Contract objects.
+        """
+        return db.query(cls).all()
+
+    @classmethod
+    def get_by_id(cls, db: Session, contract_id: int):
+        """
+            Retrieves a contract by their ID.
+
+            Args:
+            db (Session): SQLAlchemy database session.
+            contract_id (int): The ID of the contract to retrieve.
+
+            Returns:
+            Contract: The Contract object if found, None otherwise.
+
+        """
+
+        return db.query(cls).filter_by(contract_id=contract_id).first()
+
+    def delete(self, db: Session):
+        """
+        Deletes the contract from the database.
+
+        Args:
+            db (Session): SQLAlchemy database session.
+        """
+        db.delete(self)
+        db.commit()
 
 
 class Event(Base):
@@ -253,3 +399,42 @@ class Event(Base):
     # Relationships definition
     client = relationship("Client", back_populates="events")
     support_contact = relationship("User", back_populates="events")
+
+    @classmethod
+    def get_all(cls, db: Session):
+        """
+        Retrieves all events from the database.
+
+        Args:
+            db (Session): SQLAlchemy database session.
+
+        Returns:
+            list[Event]: List of all Events objects.
+        """
+        return db.query(cls).all()
+
+    @classmethod
+    def get_by_id(cls, db: Session, event_id: int):
+        """
+            Retrieves an event by their ID.
+
+            Args:
+            db (Session): SQLAlchemy database session.
+            event_id (int): The ID of the event to retrieve.
+
+            Returns:
+            Event: The Event object if found, None otherwise.
+
+        """
+
+        return db.query(cls).filter_by(event_id=event_id).first()
+
+    def delete(self, db: Session):
+        """
+        Deletes the event from the database.
+
+        Args:
+            db (Session): SQLAlchemy database session.
+        """
+        db.delete(self)
+        db.commit()
