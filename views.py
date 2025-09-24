@@ -54,5 +54,88 @@ def create_user_cli(first_name, last_name, email, role):
         db.close()
 
 
+@cli.command()
+def list_users():
+    """
+    Lists all users in the CRM system.
+
+    This command retrieves and displays all users from the database,
+    including their ID, full name, email, and role.
+    """
+    db = SessionLocal()
+    try:
+        users = User.get_all(db)
+        if not users:
+            click.echo("No users found in the database.")
+            return
+
+        click.echo("\n=== List of Users ===")
+        for user in users:
+            click.echo(f"ID: {user.user_id} | | {user.username} | {user.first_name} {user.last_name} | Email: {user.email} | Role: {user.role}")
+    except Exception as e:
+        click.echo(f"❌ Error: {e}")
+    finally:
+        db.close()
+
+
+@cli.command()
+@click.argument("user_id", type=int)
+def update_user(user_id):
+    """
+    Updates an existing user in the CRM system.
+
+    This command prompts for new values for the user's first name, last name, email, and role.
+    The user is identified by their ID.
+
+    Args:
+        user_id (int): The ID of the user to update.
+    """
+    db = SessionLocal()
+    try:
+        user = User.get_by_id(db, user_id)
+        if not user:
+            click.echo(f"❌ User with ID {user_id} not found.")
+            return
+
+        click.echo(f"Updating user: {user.first_name} {user.last_name} (ID: {user.user_id})")
+        first_name = click.prompt("New first name", default=user.first_name)
+        last_name = click.prompt("New last name", default=user.last_name)
+        email = click.prompt("New email", default=user.email)
+        role = click.prompt("New role", type=click.Choice(["commercial", "management", "support"]), default=user.role)
+
+        user.update(db, first_name=first_name, last_name=last_name, email=email, role=role)
+        click.echo(f"✅ User updated: {user.first_name} {user.last_name} (ID: {user.user_id})")
+    except Exception as e:
+        click.echo(f"❌ Error: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+
+@cli.command()
+@click.argument("user_id", type=int)
+def delete_user(user_id):
+    """Deletes a user using User.get_by_id() and User.delete()."""
+    db = SessionLocal()
+    try:
+        user = User.get_by_id(db, user_id)  # Utilisation de la nouvelle méthode
+        if not user:
+            click.echo(f"❌ User with ID {user_id} not found.")
+            return
+
+        click.echo(f"⚠️ You are about to delete user: {user.first_name} {user.last_name} (ID: {user.user_id})")
+        if not click.confirm("Do you want to continue?"):
+            click.echo("🔄 Operation cancelled.")
+            return
+
+        user.delete(db)
+        click.echo(f"✅ User deleted: {user.first_name} {user.last_name} (ID: {user.user_id})")
+    except Exception as e:
+        click.echo(f"❌ Error: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+
 if __name__ == "__main__":
     cli()

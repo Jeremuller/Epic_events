@@ -168,7 +168,7 @@ class Client(Base):
     email = Column(String(100), unique=True)
     first_contact = Column(DateTime)
     last_update = Column(DateTime)
-    commercial_contact_id = Column(Integer, ForeignKey('users.user_id'), nullable=False)
+    commercial_contact_id = Column(Integer, ForeignKey('users.user_id'), nullable=True)
 
     # Relationship definition
     contracts = relationship("Contract", back_populates="client")
@@ -206,8 +206,8 @@ class Contract(Base):
     rest_to_pay = Column(DECIMAL(10, 2))
     creation = Column(DateTime)
     signed = Column(Boolean, default=False)
-    client_id = Column(Integer, ForeignKey('clients.client_id'), nullable=False)
-    commercial_contact_id = Column(Integer, ForeignKey('users.user_id'), nullable=False)
+    client_id = Column(Integer, ForeignKey('clients.client_id'), nullable=True)
+    commercial_contact_id = Column(Integer, ForeignKey('users.user_id'), nullable=True)
 
     # Relationship definition
 
@@ -247,8 +247,8 @@ class Event(Base):
     end_datetime = Column(DateTime, nullable=False)
     location = Column(String(200))
     attendees = Column(Integer)
-    client_id = Column(Integer, ForeignKey('clients.client_id'), nullable=False)
-    support_contact_id = Column(Integer, ForeignKey('users.user_id'), nullable=False)
+    client_id = Column(Integer, ForeignKey('clients.client_id'), nullable=True)
+    support_contact_id = Column(Integer, ForeignKey('users.user_id'), nullable=True)
 
     # Relationships definition
     client = relationship("Client", back_populates="events")
