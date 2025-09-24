@@ -69,6 +69,66 @@ class User(Base):
         db.refresh(user)
         return user
 
+    @classmethod
+    def get_all(cls, db: Session):
+        """
+        Retrieves all users from the database.
+
+        Args:
+            db (Session): SQLAlchemy database session.
+
+        Returns:
+            list[User]: List of all User objects.
+        """
+        return db.query(cls).all()
+
+    @classmethod
+    def get_by_id(cls, db: Session, user_id: int):
+        """
+        Retrieves a user by their ID.
+
+        Args:
+            db (Session): SQLAlchemy database session.
+            user_id (int): The ID of the user to retrieve.
+
+        Returns:
+            User: The User object if found, None otherwise.
+        """
+        return db.query(cls).filter_by(user_id=user_id).first()
+
+    def update(self, db: Session, first_name: str = None, last_name: str = None, email: str = None, role: str = None):
+        """
+        Updates the user's information in the database.
+
+        Args:
+            db (Session): SQLAlchemy database session.
+            first_name (str, optional): New first name.
+            last_name (str, optional): New last name.
+            email (str, optional): New email address.
+            role (str, optional): New role.
+        """
+        if first_name:
+            self.first_name = first_name
+        if last_name:
+            self.last_name = last_name
+        if email:
+            self.email = email
+        if role:
+            self.role = role
+        db.commit()
+        db.refresh(self)
+        return self
+
+    def delete(self, db: Session):
+        """
+        Deletes the user from the database.
+
+        Args:
+            db (Session): SQLAlchemy database session.
+        """
+        db.delete(self)
+        db.commit()
+
 
 class Client(Base):
     """
