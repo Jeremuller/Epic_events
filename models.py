@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, DECIMAL, Boolean, Text, Enum
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Session
 from database import Base
 
 
@@ -37,6 +37,37 @@ class User(Base):
     clients = relationship("Client", back_populates="commercial_contact")
     contracts = relationship("Contract", back_populates="commercial_contact")
     events = relationship("Event", back_populates="support_contact")
+
+    @classmethod
+    def create_user(cls, db: Session, username: str, first_name: str, last_name: str, email: str, role: str,
+                    password: str = "default_hashed_password"):
+        """
+        Creates a new user in the database.
+
+        Args:
+            db (Session): SQLAlchemy database session.
+            username (str): Unique username for authentication (max 100 characters).
+            first_name (str): User's first name (max 100 characters).
+            last_name (str): User's last name (max 100 characters).
+            email (str): Unique email address of the user.
+            role (str): Role of the user (commercial/management/support).
+            password (str, optional): Hashed password for authentication.
+
+        Returns:
+            User: The newly created User object.
+        """
+        user = cls(
+            username=username,
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            role=role,
+            password=password
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return user
 
 
 class Client(Base):

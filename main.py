@@ -1,4 +1,3 @@
-from models import Client, Contract, Event
 from database import SessionLocal, init_db
 
 
