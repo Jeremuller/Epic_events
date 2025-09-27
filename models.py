@@ -1,7 +1,8 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, DECIMAL, Boolean, Text, Enum
 from sqlalchemy.orm import relationship, Session
-from .database import Base
+from Epic_events.database import Base
 from datetime import datetime
+import pytest
 
 
 class User(Base):
@@ -57,6 +58,24 @@ class User(Base):
         Returns:
             User: The newly created User object.
         """
+
+        # Check for duplicate username
+        if db.query(cls).filter_by(username=username).first():
+            raise ValueError(f"Username '{username}' is already taken.")
+
+        # Check for duplicate email
+        if db.query(cls).filter_by(email=email).first():
+            raise ValueError(f"Email '{email}' is already taken.")
+
+        # Check for empty required fields
+        if not username or not first_name or not last_name or not email or not role:
+            raise ValueError("Required fields cannot be empty.")
+
+        # Validate role
+        valid_roles = ["commercial", "management", "support"]
+        if role not in valid_roles:
+            raise ValueError(f"Invalid role. Must be one of: {', '.join(valid_roles)}")
+
         user = cls(
             username=username,
             first_name=first_name,
@@ -99,7 +118,7 @@ class User(Base):
 
     def update(self, db: Session, first_name: str = None, last_name: str = None, email: str = None, role: str = None):
         """
-        Updates the user's information in the database.
+        Updates the user's information with uniqueness checks for email.
 
         Args:
             db (Session): SQLAlchemy database session.
@@ -107,7 +126,16 @@ class User(Base):
             last_name (str, optional): New last name.
             email (str, optional): New email address.
             role (str, optional): New role.
+
+        Raises:
+            ValueError: If the new email is already taken by another user.
         """
+        if email:
+            # Check if the new email is already taken by another user
+            existing_user = db.query(User).filter(User.email == email, User.user_id != self.user_id).first()
+            if existing_user:
+                raise ValueError(f"Email '{email}' is already taken by another user.")
+
         if first_name:
             self.first_name = first_name
         if last_name:
@@ -115,18 +143,42 @@ class User(Base):
         if email:
             self.email = email
         if role:
+            # Validate role if updated
+            valid_roles = ["commercial", "management", "support"]
+            if role not in valid_roles:
+                raise ValueError(f"Invalid role. Must be one of: {', '.join(valid_roles)}")
             self.role = role
+
         db.commit()
         db.refresh(self)
         return self
 
     def delete(self, db: Session):
         """
-        Deletes the user from the database.
+        Deletes the user from the database after handling dependencies.
 
         Args:
             db (Session): SQLAlchemy database session.
+
+        Notes:
+            - Clients: Sets their commercial_contact_id to None.
+            - Contracts: Sets their commercial_contact_id to None.
+            - Events: Sets their support_contact_id to None.
         """
+        # Handle clients: set commercial_contact_id to None
+        for client in self.clients:
+            client.commercial_contact_id = None
+
+        # Handle contracts: set commercial_contact_id to None
+        for contract in self.contracts:
+            contract.commercial_contact_id = None
+
+        # Handle events: set support_contact_id to None
+        for event in self.events:
+            event.support_contact_id = None
+
+        db.commit()  # Save changes before deletion
+
         db.delete(self)
         db.commit()
 
