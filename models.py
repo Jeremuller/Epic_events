@@ -1,8 +1,11 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, DECIMAL, Boolean, Text, Enum
 from sqlalchemy.orm import relationship, Session
-from Epic_events.database import Base
+from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 import pytest
+
+
+Base = declarative_base()
 
 
 class User(Base):

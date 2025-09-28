@@ -1,6 +1,6 @@
 import click
 from database import SessionLocal
-from Epic_events.models import User, Client
+from models import User, Client
 
 
 @click.group()

@@ -9,7 +9,7 @@ It includes a pytest fixture to create and manage database sessions.
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from ...database import Base
+from ...models import Base
 
 # Create an in-memory SQLite engine for testing.
 # This avoids affecting the production database and ensures tests run in isolation.
