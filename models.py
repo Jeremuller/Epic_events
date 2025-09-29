@@ -53,12 +53,15 @@ class User(Base):
             username (str): Unique username for authentication (max 100 characters).
             first_name (str): User's first name (max 100 characters).
             last_name (str): User's last name (max 100 characters).
+            If already taken, a suffix will be added (e.g., "john_doe_1").
             email (str): Unique email address of the user.
             role (str): Role of the user (commercial/management/support).
             password (str, optional): Hashed password for authentication.
 
         Returns:
             User: The newly created User object.
+        Raises:
+            ValueError: If username/email is taken, fields are empty, or role is invalid.
         """
         try:
             # Check for duplicate username
@@ -75,7 +78,7 @@ class User(Base):
                     raise ValueError("invalid_role")
 
             # Check for empty required fields
-            if not username or not first_name or not last_name or not email or not role:
+            if not first_name or not last_name or not email or not role:
                 raise ValueError("required_fields_empty")
 
             user = cls(

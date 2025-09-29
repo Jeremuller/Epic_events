@@ -1,6 +1,7 @@
 import click
 from database import SessionLocal
 from models import User, Client
+from sqlalchemy.exc import OperationalError, ProgrammingError, InternalError
 
 ERROR_MESSAGES = {
     "username_taken": "This username is already taken.",
@@ -24,12 +25,13 @@ def cli():
 
 
 @cli.command()
+@click.option("--username", prompt="Username", help="Unique username for authentication (max 100 characters).")
 @click.option("--first-name", prompt="User's first name", help="First name of the user (max 100 characters).")
 @click.option("--last-name", prompt="User's last name", help="Last name of the user (max 100 characters).")
 @click.option("--email", prompt="User's email", help="Unique email address of the user.")
 @click.option("--role", prompt="User's role", type=click.Choice(["commercial", "management", "support"]),
               help="Role of the user in the system.")
-def create_user_cli(first_name, last_name, email, role):
+def create_user(username, first_name, last_name, email, role):
     """
     Creates a new user in the CRM system.
 
@@ -38,6 +40,7 @@ def create_user_cli(first_name, last_name, email, role):
     and should be updated later via a secure method.
 
     Args:
+        username (str): Unique username for authentication.
         first_name (str): User's first name.
         last_name (str): User's last name.
         email (str): Unique email address.
@@ -48,17 +51,24 @@ def create_user_cli(first_name, last_name, email, role):
         # Create the user using the class method (note: password is set to default here)
         user = User.create_user(
             db=db,
-            username=f"{first_name.lower()}_{last_name.lower()}",
+            username=username,
             first_name=first_name,
             last_name=last_name,
             email=email,
             role=role,
             password="default_hashed_password"
         )
-        click.echo(f"✅ User created: {user.first_name} {user.last_name} (ID: {user.user_id}, Role: {user.role})")
-    except Exception as e:
-        click.echo(f"❌ Error: {e}")
-        db.rollback()  # Rollback in case of error
+        click.echo(
+            f"✅ User created: {user.first_name} {user.last_name} (ID: {user.user_id},"
+            f"Username: {user.username}, Role: {user.role})")
+
+    except ValueError as e:
+        error_key = str(e)
+        click.echo(f"❌ Error: {ERROR_MESSAGES.get(error_key, ERROR_MESSAGES['database_error'])}")
+    except Exception:
+        click.echo(f"❌ Error: {ERROR_MESSAGES['database_error']}")
+        raise
+
     finally:
         db.close()
 
@@ -69,7 +79,7 @@ def list_users():
     Lists all users in the CRM system.
 
     This command retrieves and displays all users from the database,
-    including their ID, full name, email, and role.
+    including their ID, username, full name, email, and role.
     """
     db = SessionLocal()
     try:
@@ -83,8 +93,11 @@ def list_users():
             click.echo(
                 f"ID: {user.user_id} | {user.username} | {user.first_name} {user.last_name} | "
                 f"Email: {user.email} | Role: {user.role}")
-    except Exception as e:
-        click.echo(f"❌ Error: {e}")
+    except (OperationalError, ProgrammingError, InternalError) as e:
+        click.echo(f"❌ Database error: {ERROR_MESSAGES['database_error']}")
+    except Exception:
+        click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
+        raise
     finally:
         db.close()
 
@@ -116,9 +129,12 @@ def update_user(user_id):
 
         user.update(db, first_name=first_name, last_name=last_name, email=email, role=role)
         click.echo(f"✅ User updated: {user.first_name} {user.last_name} (ID: {user.user_id})")
-    except Exception as e:
-        click.echo(f"❌ Error: {e}")
-        db.rollback()
+    except ValueError as e:
+        error_key = str(e)
+        click.echo(f"❌ Error: {ERROR_MESSAGES.get(error_key, ERROR_MESSAGES['database_error'])}")
+    except Exception:
+        click.echo(f"❌ Error: {ERROR_MESSAGES['database_error']}")
+        raise
     finally:
         db.close()
 
@@ -126,7 +142,13 @@ def update_user(user_id):
 @cli.command()
 @click.argument("user_id", type=int)
 def delete_user(user_id):
-    """Deletes a user using User.get_by_id() and User.delete()."""
+    """
+    Deletes an existing user from the CRM system.
+    This command prompts for confirmation before permanently deleting a user identified by their ID.
+    The user's associated clients, contracts, and events will have their references set to None.
+    Args:
+        user_id (int): The ID of the user to delete.
+    """
     db = SessionLocal()
     try:
         user = User.get_by_id(db, user_id)
@@ -141,9 +163,14 @@ def delete_user(user_id):
 
         user.delete(db)
         click.echo(f"✅ User deleted: {user.first_name} {user.last_name} (ID: {user.user_id})")
+
+    except ValueError as e:
+        error_key = str(e)
+        click.echo(f"❌ Error: {ERROR_MESSAGES.get(error_key, ERROR_MESSAGES['database_error'])}")
     except Exception as e:
-        click.echo(f"❌ Error: {e}")
-        db.rollback()
+        click.echo(f"❌ Error: {ERROR_MESSAGES['database_error']}")
+        raise
+
     finally:
         db.close()
 
