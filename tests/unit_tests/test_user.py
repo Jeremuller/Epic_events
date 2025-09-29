@@ -1,6 +1,5 @@
 import pytest
 from ...models import User, Client
-from datetime import datetime
 
 
 def test_create_user(db_session):
