@@ -2,6 +2,15 @@ import click
 from database import SessionLocal
 from models import User, Client
 
+ERROR_MESSAGES = {
+    "username_taken": "This username is already taken.",
+    "email_taken": "This email is already registered.",
+    "required_fields_empty": "Required fields cannot be empty or whitespace.",
+    "invalid_role": "Invalid role. Must be one of: commercial, management, support.",
+    "delete_failed": "Failed to delete user. Dependencies may be locked.",
+    "database_error": "A technical error occurred. Please try again later.",
+}
+
 
 @click.group()
 def cli():

@@ -4,7 +4,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 import pytest
 
-
 Base = declarative_base()
 
 
@@ -13,7 +12,7 @@ class User(Base):
         Represents a user in the CRM system (e.g., commercial, management, support).
 
         Attributes:
-            user_id (int): Primary key and unique identifier for the user.
+            user_id (int): Primary key and unique identifier for the user, auto-incremented.
             first_name (str): User's first name (max 100 characters).
             last_name (str): User's last name (max 100 characters).
             username (str): Unique username for authentication (max 100 characters).
@@ -61,36 +60,40 @@ class User(Base):
         Returns:
             User: The newly created User object.
         """
+        try:
+            # Check for duplicate username
+            if db.query(cls).filter_by(username=username).first():
+                raise ValueError("username_taken")
 
-        # Check for duplicate username
-        if db.query(cls).filter_by(username=username).first():
-            raise ValueError(f"Username '{username}' is already taken.")
+            # Check for duplicate email
+            if db.query(cls).filter_by(email=email).first():
+                raise ValueError("email_taken")
 
-        # Check for duplicate email
-        if db.query(cls).filter_by(email=email).first():
-            raise ValueError(f"Email '{email}' is already taken.")
+            if role:
+                valid_roles = ["commercial", "management", "support"]
+                if role not in valid_roles:
+                    raise ValueError("invalid_role")
 
-        # Check for empty required fields
-        if not username or not first_name or not last_name or not email or not role:
-            raise ValueError("Required fields cannot be empty.")
+            # Check for empty required fields
+            if not username or not first_name or not last_name or not email or not role:
+                raise ValueError("required_fields_empty")
 
-        # Validate role
-        valid_roles = ["commercial", "management", "support"]
-        if role not in valid_roles:
-            raise ValueError(f"Invalid role. Must be one of: {', '.join(valid_roles)}")
+            user = cls(
+                username=username,
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                role=role,
+                password=password
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+            return user
 
-        user = cls(
-            username=username,
-            first_name=first_name,
-            last_name=last_name,
-            email=email,
-            role=role,
-            password=password
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-        return user
+        except Exception:
+            db.rollback()
+            raise
 
     @classmethod
     def get_all(cls, db: Session):
@@ -122,6 +125,7 @@ class User(Base):
     def update(self, db: Session, first_name: str = None, last_name: str = None, email: str = None, role: str = None):
         """
         Updates the user's information with uniqueness checks for email.
+        Only provided fields are updated.
 
         Args:
             db (Session): SQLAlchemy database session.
@@ -133,32 +137,36 @@ class User(Base):
         Raises:
             ValueError: If the new email is already taken by another user.
         """
-        if email:
-            # Check if the new email is already taken by another user
-            existing_user = db.query(User).filter(User.email == email, User.user_id != self.user_id).first()
-            if existing_user:
-                raise ValueError(f"Email '{email}' is already taken by another user.")
+        try:
+            if email and email != self.email:
+                existing_user = db.query(User).filter(User.email == email, User.user_id != self.user_id).first()
+                if existing_user:
+                    raise ValueError("email_taken")
+            if role:
+                valid_roles = ["commercial", "management", "support"]
+                if role not in valid_roles:
+                    raise ValueError("invalid_role")
+            if first_name:
+                self.first_name = first_name
+            if last_name:
+                self.last_name = last_name
+            if email:
+                self.email = email
+            if role:
+                self.role = role
 
-        if first_name:
-            self.first_name = first_name
-        if last_name:
-            self.last_name = last_name
-        if email:
-            self.email = email
-        if role:
-            # Validate role if updated
-            valid_roles = ["commercial", "management", "support"]
-            if role not in valid_roles:
-                raise ValueError(f"Invalid role. Must be one of: {', '.join(valid_roles)}")
-            self.role = role
+            db.commit()
+            db.refresh(self)
+            return self
 
-        db.commit()
-        db.refresh(self)
-        return self
+        except Exception:
+            db.rollback()
+            raise
 
     def delete(self, db: Session):
         """
         Deletes the user from the database after handling dependencies.
+        Dependencies automatically set no None.
 
         Args:
             db (Session): SQLAlchemy database session.
@@ -168,22 +176,24 @@ class User(Base):
             - Contracts: Sets their commercial_contact_id to None.
             - Events: Sets their support_contact_id to None.
         """
-        # Handle clients: set commercial_contact_id to None
-        for client in self.clients:
-            client.commercial_contact_id = None
+        try:
+            # Handle clients: set commercial_contact_id to None
+            for client in self.clients:
+                client.commercial_contact_id = None
 
-        # Handle contracts: set commercial_contact_id to None
-        for contract in self.contracts:
-            contract.commercial_contact_id = None
+            # Handle contracts: set commercial_contact_id to None
+            for contract in self.contracts:
+                contract.commercial_contact_id = None
 
-        # Handle events: set support_contact_id to None
-        for event in self.events:
-            event.support_contact_id = None
+            # Handle events: set support_contact_id to None
+            for event in self.events:
+                event.support_contact_id = None
 
-        db.commit()  # Save changes before deletion
-
-        db.delete(self)
-        db.commit()
+            db.delete(self)
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise ValueError("delete_failed")
 
 
 class Client(Base):
