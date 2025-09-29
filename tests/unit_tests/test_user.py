@@ -58,7 +58,7 @@ def test_create_user_invalid_role(db_session):
 
 def test_get_all_users(db_session):
     """Test retrieving all users."""
-    # Créez quelques utilisateurs de test
+    # Create a few test users
     user1 = User.create_user(db_session, "user1", "User", "One", "user1@example.com", "commercial")
     user2 = User.create_user(db_session, "user2", "User", "Two", "user2@example.com", "management")
 
@@ -101,7 +101,7 @@ def test_update_user_with_none_values(db_session):
     """Test that updating a user with None values does not change existing values."""
     user = User.create_user(db_session, "jdoe", "John", "Doe", "john@example.com", "commercial")
     original_first_name = user.first_name
-    user.update(db_session, first_name=None, email=None)  # None ne doit pas écraser les valeurs existantes
+    user.update(db_session, first_name=None, email=None)
     assert user.first_name == original_first_name
     assert user.email == "john@example.com"
 
