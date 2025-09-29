@@ -21,7 +21,7 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 
 
 @pytest.fixture()
-def db():
+def db_session():
     """
     Pytest fixture that provides a database session for testing.
 

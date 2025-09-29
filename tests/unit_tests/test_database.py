@@ -16,7 +16,7 @@ def test_database_connection():
             result = connection.execute(text("SELECT 1;"))
             assert result.scalar() == 1, "Database query failed: expected 1, got {result.scalar()}"
 
-        print("✅ Database connection successful!")  # Success message
+        print("✅ Database connection successful!")
     except Exception as e:
         pytest.fail(f"❌ Database connection error: {e}")
 
@@ -35,6 +35,6 @@ def test_session_creation():
         assert result.scalar() == 1, "Session query failed: expected 1, got {result.scalar()}"
 
         session.close()  # Explicitly close the session
-        print("✅ SQLAlchemy session created and closed successfully!")  # Success message
+        print("✅ SQLAlchemy session created and closed successfully!")
     except Exception as e:
         pytest.fail(f"❌ Session creation error: {e}")
