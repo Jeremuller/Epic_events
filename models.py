@@ -78,7 +78,7 @@ class User(Base):
                     raise ValueError("invalid_role")
 
             # Check for empty required fields
-            if not first_name or not last_name or not email or not role:
+            if not username or not first_name or not last_name or not email or not role:
                 raise ValueError("required_fields_empty")
 
             user = cls(

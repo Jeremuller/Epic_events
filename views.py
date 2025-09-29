@@ -122,6 +122,7 @@ def update_user(user_id):
             return
 
         click.echo(f"Updating user: {user.first_name} {user.last_name} (ID: {user.user_id})")
+        username = click.prompt("New username", default=user.username)
         first_name = click.prompt("New first name", default=user.first_name)
         last_name = click.prompt("New last name", default=user.last_name)
         email = click.prompt("New email", default=user.email)
