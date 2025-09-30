@@ -68,7 +68,7 @@ def test_create_client_empty_fields(db_session, test_user):
 
 def test_create_client_invalid_commercial_contact(db_session):
     """Test that creating a client with an invalid commercial_contact_id raises a ValueError."""
-    with pytest.raises(ValueError, match="commercial_contact_not_found"):
+    with pytest.raises(ValueError, match="contact_not_found"):
         Client.create(
             db=db_session,
             first_name="John",
