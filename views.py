@@ -10,6 +10,7 @@ ERROR_MESSAGES = {
     "invalid_role": "Invalid role. Must be one of: commercial, management, support.",
     "delete_failed": "Failed to delete user. Dependencies may be locked.",
     "database_error": "A technical error occurred. Please try again later.",
+    "contact_not_found": "The contact mentioned doesn't exist",
 }
 
 

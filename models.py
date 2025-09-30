@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, DECIMAL, Boolean, Text, Enum
 from sqlalchemy.orm import relationship, Session
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 import pytest
@@ -262,20 +263,41 @@ class Client(Base):
         Returns:
             Client: The created Client object.
         """
-        client = cls(
-            first_name=first_name,
-            last_name=last_name,
-            email=email,
-            commercial_contact_id=commercial_contact_id,
-            business_name=business_name,
-            telephone=telephone,
-            first_contact=datetime.now(),
-            last_update=datetime.now()
-        )
-        db.add(client)
-        db.commit()
-        db.refresh(client)
-        return client
+        try:
+            # Check for duplicate email
+            if db.query(cls).filter_by(email=email).first():
+                raise ValueError("email_taken")
+
+            # Check for empty required fields
+            if not first_name or not last_name or not email or not commercial_contact_id:
+                raise ValueError("required_fields_empty")
+
+            # Check if commercial_contact_id exists
+            if not db.query(User).filter_by(user_id=commercial_contact_id).first():
+                raise ValueError("contact_not_found")
+
+            # Create client
+            client = cls(
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                commercial_contact_id=commercial_contact_id,
+                business_name=business_name,
+                telephone=telephone,
+                first_contact=datetime.now(),
+                last_update=datetime.now()
+            )
+            db.add(client)
+            db.commit()
+            db.refresh(client)
+            return client
+
+        except IntegrityError:
+            db.rollback()
+            raise ValueError("email_taken")
+        except Exception:
+            db.rollback()
+            raise
 
     def update(self, db: Session, first_name: str = None, last_name: str = None, email: str = None,
                business_name: str = None, telephone: str = None, commercial_contact_id: int = None):
@@ -294,22 +316,40 @@ class Client(Base):
         Returns:
             Client: The updated Client object.
         """
-        if first_name:
-            self.first_name = first_name
-        if last_name:
-            self.last_name = last_name
-        if email:
-            self.email = email
-        if business_name:
-            self.business_name = business_name
-        if telephone:
-            self.telephone = telephone
-        if commercial_contact_id:
-            self.commercial_contact_id = commercial_contact_id
-        self.last_update = datetime.now()
-        db.commit()
-        db.refresh(self)
-        return self
+        try:
+            # Check for duplicate email (if email is provided and different from current)
+            if email and email != self.email:
+                if db.query(Client).filter(Client.email == email, Client.client_id != self.client_id).first():
+                    raise ValueError("email_taken")
+
+            # Check if commercial_contact_id exists (if provided)
+            if commercial_contact_id and commercial_contact_id != self.commercial_contact_id:
+                if not db.query(User).filter_by(user_id=commercial_contact_id).first():
+                    raise ValueError("contact_not_found")
+
+            # Update fields
+            if first_name:
+                self.first_name = first_name
+            if last_name:
+                self.last_name = last_name
+            if email:
+                self.email = email
+            if business_name:
+                self.business_name = business_name
+            if telephone:
+                self.telephone = telephone
+            if commercial_contact_id:
+                self.commercial_contact_id = commercial_contact_id
+            self.last_update = datetime.now()
+            db.commit()
+            db.refresh(self)
+            return self
+        except IntegrityError:
+            db.rollback()
+            raise ValueError("email_taken")
+        except Exception:
+            db.rollback()
+            raise
 
     @classmethod
     def get_all(cls, db: Session):
