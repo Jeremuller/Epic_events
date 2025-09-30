@@ -10,7 +10,7 @@ ERROR_MESSAGES = {
     "invalid_role": "Invalid role. Must be one of: commercial, management, support.",
     "delete_failed": "Failed to delete user. Dependencies may be locked.",
     "database_error": "A technical error occurred. Please try again later.",
-    "contact_not_found": "The contact mentioned doesn't exist",
+    "contact_not_found": "The contact mentioned does not exists.",
 }
 
 
@@ -185,7 +185,18 @@ def delete_user(user_id):
 @click.option("--business-name", prompt="Business name (optional)", default=None, help="Client's business name.")
 @click.option("--telephone", prompt="Telephone (optional)", default=None, help="Client's phone number.")
 def create_client(first_name, last_name, email, commercial_id, business_name, telephone):
-    """Creates a new client."""
+    """
+    Creates a new client in the CRM system.
+    This command prompts for client details (first name, last name, email, commercial contact ID,
+    and optional business name/telephone) and creates a new client record in the database.
+    Args:
+        first_name (str): Client's first name.
+        last_name (str): Client's last name.
+        email (str): Unique email address of the client.
+        commercial_id (int): ID of the commercial user responsible for the client.
+        business_name (str, optional): Client's business name.
+        telephone (str, optional): Client's phone number.
+    """
     db = SessionLocal()
     try:
         client = Client.create(
@@ -198,16 +209,27 @@ def create_client(first_name, last_name, email, commercial_id, business_name, te
             telephone=telephone
         )
         click.echo(f"✅ Client created: {client.first_name} {client.last_name} (ID: {client.client_id})")
-    except Exception as e:
-        click.echo(f"❌ Error: {e}")
-        db.rollback()
+    except ValueError as e:
+        error_key = str(e)
+        click.echo(f"❌ Error: {ERROR_MESSAGES.get(error_key, ERROR_MESSAGES['database_error'])}")
+    except (OperationalError, ProgrammingError, InternalError) as e:
+        click.echo(f"❌ Database error: {ERROR_MESSAGES['database_error']}")
+    except Exception:
+        click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
+        raise
     finally:
         db.close()
 
 
 @cli.command()
 def list_clients():
-    """Lists all clients in the CRM system."""
+    """
+    Lists all clients in the CRM system.
+
+    This command retrieves and displays all users from the database,
+    including their ID, full name, email, contact and business name.
+    If no clients exist, a message is displayed to inform the user.
+    """
     db = SessionLocal()
     try:
         clients = Client.get_all(db)
@@ -217,17 +239,20 @@ def list_clients():
 
         click.echo("\n=== List of Clients ===")
         for client in clients:
-            commercial_contact = f"{client.commercial_contact.first_name} {client.commercial_contact.last_name}" \
+            contact = f"{client.commercial_contact.first_name} {client.commercial_contact.last_name}" \
                 if client.commercial_contact else "None"
             click.echo(
                 f"ID: {client.client_id} | "
                 f"{client.first_name} {client.last_name} | "
                 f"Email: {client.email} | "
-                f"Commercial: {commercial_contact} | "
+                f"Commercial: {contact} | "
                 f"Business: {client.business_name or 'N/A'}"
             )
-    except Exception as e:
-        click.echo(f"❌ Error: {e}")
+    except (OperationalError, ProgrammingError, InternalError) as e:
+        click.echo(f"❌ Database error: {ERROR_MESSAGES['database_error']}")
+    except Exception:
+        click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
+        raise
     finally:
         db.close()
 
@@ -236,9 +261,13 @@ def list_clients():
 @click.argument("client_id", type=int)
 def update_client(client_id):
     """
-    Updates a client's information via interactive prompts.
-    Uses Client.update() method to apply changes.
-    """
+        Updates a client's information in the CRM system via interactive prompts.
+        This command retrieves a client by their ID, prompts for new values (first name, last name, email,
+        business name, telephone, and commercial contact ID), and applies the changes using Client.update().
+        If the client does not exist, an error message is displayed.
+        Args:
+            client_id (int): The ID of the client to update.
+        """
     db = SessionLocal()
     try:
         client = Client.get_by_id(db, client_id)
@@ -248,6 +277,7 @@ def update_client(client_id):
 
         click.echo(f"Updating client: {client.first_name} {client.last_name} (ID: {client.client_id})")
 
+        # Prompt for new values
         first_name = click.prompt("First name", default=client.first_name)
         last_name = click.prompt("Last name", default=client.last_name)
         email = click.prompt("Email", default=client.email)
@@ -259,6 +289,7 @@ def update_client(client_id):
                                              if client.commercial_contact_id else "None",
                                              type=int)
 
+        # Update the client
         client.update(
             db=db,
             first_name=first_name,
@@ -270,9 +301,14 @@ def update_client(client_id):
         )
 
         click.echo(f"✅ Client updated: {client.first_name} {client.last_name} (ID: {client.client_id})")
-    except Exception as e:
-        click.echo(f"❌ Error: {e}")
-        db.rollback()
+    except ValueError as e:
+        error_key = str(e)
+        click.echo(f"❌ Error: {ERROR_MESSAGES.get(error_key, ERROR_MESSAGES['database_error'])}")
+    except (OperationalError, ProgrammingError, InternalError) as e:
+        click.echo(f"❌ Database error: {ERROR_MESSAGES['database_error']}")
+    except Exception:
+        click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
+        raise
     finally:
         db.close()
 
