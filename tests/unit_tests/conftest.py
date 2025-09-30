@@ -9,7 +9,7 @@ It includes a pytest fixture to create and manage database sessions.
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from ...models import Base
+from ...models import Base, User
 
 # Create an in-memory SQLite engine for testing.
 # This avoids affecting the production database and ensures tests run in isolation.
@@ -44,3 +44,17 @@ def db_session():
         # Close the session and drop all tables to ensure a clean state for the next test
         db.close()
         Base.metadata.drop_all(engine)
+
+
+@pytest.fixture()
+def test_user(db_session):
+    """Fixture to create a test user."""
+    user = User.create_user(
+        db=db_session,
+        username="test_user",
+        first_name="Test",
+        last_name="User",
+        email="test@example.com",
+        role="commercial"
+    )
+    return user
