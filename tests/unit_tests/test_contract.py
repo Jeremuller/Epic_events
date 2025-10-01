@@ -18,7 +18,7 @@ def test_create_contract_valid(db_session, test_user, test_client):
 
 def test_create_contract_invalid_rest_to_pay(db_session, test_user, test_client):
     """Test that creating a contract with rest_to_pay > total_price raises a ValueError."""
-    with pytest.raises(ValueError, match="invalid_total_price"):
+    with pytest.raises(ValueError, match="inferior_total_price"):
         Contract.create(
             db=db_session,
             total_price=1000.00,
@@ -55,7 +55,7 @@ def test_update_contract_rest_to_pay(db_session, test_user, test_client):
     contract.update(db=db_session, rest_to_pay=300.00)
     assert contract.rest_to_pay == 300.00
     # Wrong update (rest_to_pay > total_price)
-    with pytest.raises(ValueError, match="invalid_total_price"):
+    with pytest.raises(ValueError, match="inferior_total_price"):
         contract.update(db=db_session, rest_to_pay=1500.00)
 
 

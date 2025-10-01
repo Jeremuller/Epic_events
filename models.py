@@ -126,7 +126,8 @@ class User(Base):
         """
         return db.query(cls).filter_by(user_id=user_id).first()
 
-    def update(self, db: Session, username: str = None, first_name: str = None, last_name: str = None, email: str = None, role: str = None):
+    def update(self, db: Session, username: str = None, first_name: str = None, last_name: str = None,
+               email: str = None, role: str = None):
         """
         Updates the user's information with uniqueness checks for email.
         Only provided fields are updated.
@@ -450,8 +451,10 @@ class Contract(Base):
             # Validate total_price and rest_to_pay
             if total_price <= 0:
                 raise ValueError("invalid_total_price")
-            if rest_to_pay < 0 or rest_to_pay > total_price:
-                raise ValueError("invalid_rest_to_pay")
+            if rest_to_pay > total_price:
+                raise ValueError("inferior_total_price")
+            if rest_to_pay < 0:
+                raise ValueError("negative_rest_to_pay")
 
             # Check if client_id exists
             if not db.query(Client).filter_by(client_id=client_id).first():
@@ -507,8 +510,10 @@ class Contract(Base):
             # Update rest_to_pay if provided
             if rest_to_pay is not None:
                 current_total = self.total_price if total_price is None else total_price
-                if rest_to_pay < 0 or rest_to_pay > current_total:
-                    raise ValueError("invalid_rest_to_pay")
+                if rest_to_pay < 0:
+                    raise ValueError("negative_rest_to_pay")
+                if rest_to_pay > current_total:
+                    raise ValueError("inferior_total_price")
                 self.rest_to_pay = rest_to_pay
 
             # Update client_id if provided

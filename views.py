@@ -11,6 +11,9 @@ ERROR_MESSAGES = {
     "delete_failed": "Failed to delete user. Dependencies may be locked.",
     "database_error": "A technical error occurred. Please try again later.",
     "contact_not_found": "The contact mentioned does not exists.",
+    "inferior_total_price": "Total price can't be inferior to rest to pay.",
+    "invalid_total_price": "Total_price can't be <= 0.",
+    "negative_rest_to_pay": "Rest to pay can't be < 0."
 }
 
 
