@@ -420,6 +420,115 @@ class Contract(Base):
     commercial_contact = relationship("User", back_populates="contracts")
 
     @classmethod
+    def create(cls, db: Session, total_price: float, rest_to_pay: float, client_id: int, commercial_contact_id: int):
+        """
+        Creates a new contract linked to a client and a commercial user.
+        Args:
+            db (Session): SQLAlchemy database session.
+            total_price (float): Total amount of the contract (must be > 0).
+            rest_to_pay (float): Remaining amount to be paid (must be ≥ 0 and ≤ total_price).
+            client_id (int): ID of the associated client (must exist).
+            commercial_contact_id (int): ID of the commercial user responsible (must exist).
+        Returns:
+            Contract: The created Contract object.
+        Raises:
+            ValueError: If total_price/rest_to_pay are invalid, or if client_id/commercial_contact_id are not found.
+        """
+        try:
+            # Validate total_price and rest_to_pay
+            if total_price <= 0:
+                raise ValueError("invalid_total_price")
+            if rest_to_pay < 0 or rest_to_pay > total_price:
+                raise ValueError("invalid_rest_to_pay")
+
+            # Check if client_id exists
+            if not db.query(Client).filter_by(client_id=client_id).first():
+                raise ValueError("client_not_found")
+
+            # Check if commercial_contact_id exists
+            if not db.query(User).filter_by(user_id=commercial_contact_id).first():
+                raise ValueError("contact_not_found")
+
+            # Create the contract
+            contract = cls(
+                total_price=total_price,
+                rest_to_pay=rest_to_pay,
+                creation=datetime.now(),
+                client_id=client_id,
+                commercial_contact_id=commercial_contact_id
+            )
+            db.add(contract)
+            db.commit()
+            db.refresh(contract)
+            return contract
+
+        except IntegrityError:
+            db.rollback()
+            raise ValueError("database_error")
+        except Exception:
+            db.rollback()
+            raise
+
+
+    def update(self, db: Session, total_price: float = None, rest_to_pay: float = None,
+               client_id: int = None, commercial_contact_id: int = None, signed: bool = None):
+        """
+        Updates the contract's information in the database with validation checks.
+        Args:
+            db (Session): SQLAlchemy database session.
+            total_price (float, optional): New total price (must be > 0).
+            rest_to_pay (float, optional): New remaining amount (must be ≥ 0 and ≤ total_price).
+            client_id (int, optional): New client ID (must exist).
+            commercial_contact_id (int, optional): New commercial contact ID (must exist).
+            signed (bool, optional): New signed status.
+        Returns:
+            Contract: The updated Contract object.
+        Raises:
+            ValueError: If validations fail (invalid prices, IDs not found).
+        """
+        try:
+            # Update total_price if provided
+            if total_price is not None:
+                if total_price <= 0:
+                    raise ValueError("invalid_total_price")
+                self.total_price = total_price
+
+            # Update rest_to_pay if provided
+            if rest_to_pay is not None:
+                current_total = self.total_price if total_price is None else total_price
+                if rest_to_pay < 0 or rest_to_pay > current_total:
+                    raise ValueError("invalid_rest_to_pay")
+                self.rest_to_pay = rest_to_pay
+
+            # Update client_id if provided
+            if client_id is not None and client_id != self.client_id:
+                if not db.query(Client).filter_by(client_id=client_id).first():
+                    raise ValueError("client_not_found")
+                self.client_id = client_id
+
+            # Update commercial_contact_id if provided
+            if commercial_contact_id is not None and commercial_contact_id != self.commercial_contact_id:
+                if not db.query(User).filter_by(user_id=commercial_contact_id).first():
+                    raise ValueError("contact_not_found")
+                self.commercial_contact_id = commercial_contact_id
+
+            # Update signed status if provided
+            if signed is not None:
+                self.signed = signed
+
+            db.commit()
+            db.refresh(self)
+            return self
+
+        except IntegrityError:
+            db.rollback()
+            raise ValueError("database_error")
+        except Exception:
+            db.rollback()
+            raise
+
+
+    @classmethod
     def get_all(cls, db: Session):
         """
         Retrieves all contracts from the database.
@@ -431,6 +540,7 @@ class Contract(Base):
             list[Contract]: List of all Contract objects.
         """
         return db.query(cls).all()
+
 
     @classmethod
     def get_by_id(cls, db: Session, contract_id: int):
