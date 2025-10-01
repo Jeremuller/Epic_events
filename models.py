@@ -126,13 +126,14 @@ class User(Base):
         """
         return db.query(cls).filter_by(user_id=user_id).first()
 
-    def update(self, db: Session, first_name: str = None, last_name: str = None, email: str = None, role: str = None):
+    def update(self, db: Session, username: str = None, first_name: str = None, last_name: str = None, email: str = None, role: str = None):
         """
         Updates the user's information with uniqueness checks for email.
         Only provided fields are updated.
 
         Args:
             db (Session): SQLAlchemy database session.
+            username (str, optional): New username.
             first_name (str, optional): New first name.
             last_name (str, optional): New last name.
             email (str, optional): New email address.
@@ -142,14 +143,25 @@ class User(Base):
             ValueError: If the new email is already taken by another user.
         """
         try:
-            if email and email != self.email:
-                existing_user = db.query(User).filter(User.email == email, User.user_id != self.user_id).first()
-                if existing_user:
+            # Check for duplicate username (if provided and different from current)
+            if username is not None and username != self.username:
+                if db.query(User).filter(User.username == username, User.user_id != self.user_id).first():
+                    raise ValueError("username_taken")
+
+            # Check for duplicate email (if provided and different from current)
+            if email is not None and email != self.email:
+                if db.query(User).filter(User.email == email, User.user_id != self.user_id).first():
                     raise ValueError("email_taken")
-            if role:
+
+            # Validate role if provided
+            if role is not None:
                 valid_roles = ["commercial", "management", "support"]
                 if role not in valid_roles:
                     raise ValueError("invalid_role")
+
+            # Update fields
+            if username:
+                self.username = username
             if first_name:
                 self.first_name = first_name
             if last_name:
@@ -469,7 +481,6 @@ class Contract(Base):
             db.rollback()
             raise
 
-
     def update(self, db: Session, total_price: float = None, rest_to_pay: float = None,
                client_id: int = None, commercial_contact_id: int = None, signed: bool = None):
         """
@@ -527,7 +538,6 @@ class Contract(Base):
             db.rollback()
             raise
 
-
     @classmethod
     def get_all(cls, db: Session):
         """
@@ -540,7 +550,6 @@ class Contract(Base):
             list[Contract]: List of all Contract objects.
         """
         return db.query(cls).all()
-
 
     @classmethod
     def get_by_id(cls, db: Session, contract_id: int):

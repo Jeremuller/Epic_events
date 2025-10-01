@@ -94,7 +94,7 @@ def list_users():
             click.echo(
                 f"ID: {user.user_id} | {user.username} | {user.first_name} {user.last_name} | "
                 f"Email: {user.email} | Role: {user.role}")
-    except (OperationalError, ProgrammingError, InternalError) as e:
+    except (OperationalError, ProgrammingError, InternalError):
         click.echo(f"❌ Database error: {ERROR_MESSAGES['database_error']}")
     except Exception:
         click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
@@ -129,8 +129,8 @@ def update_user(user_id):
         email = click.prompt("New email", default=user.email)
         role = click.prompt("New role", type=click.Choice(["commercial", "management", "support"]), default=user.role)
 
-        user.update(db, first_name=first_name, last_name=last_name, email=email, role=role)
-        click.echo(f"✅ User updated: {user.first_name} {user.last_name} (ID: {user.user_id})")
+        user.update(db, username=username, first_name=first_name, last_name=last_name, email=email, role=role)
+        click.echo(f"✅ User updated: {user.username} | {user.first_name} {user.last_name} (ID: {user.user_id})")
     except ValueError as e:
         error_key = str(e)
         click.echo(f"❌ Error: {ERROR_MESSAGES.get(error_key, ERROR_MESSAGES['database_error'])}")
@@ -169,7 +169,7 @@ def delete_user(user_id):
     except ValueError as e:
         error_key = str(e)
         click.echo(f"❌ Error: {ERROR_MESSAGES.get(error_key, ERROR_MESSAGES['database_error'])}")
-    except Exception as e:
+    except Exception:
         click.echo(f"❌ Error: {ERROR_MESSAGES['database_error']}")
         raise
 
@@ -212,7 +212,7 @@ def create_client(first_name, last_name, email, commercial_id, business_name, te
     except ValueError as e:
         error_key = str(e)
         click.echo(f"❌ Error: {ERROR_MESSAGES.get(error_key, ERROR_MESSAGES['database_error'])}")
-    except (OperationalError, ProgrammingError, InternalError) as e:
+    except (OperationalError, ProgrammingError, InternalError):
         click.echo(f"❌ Database error: {ERROR_MESSAGES['database_error']}")
     except Exception:
         click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
@@ -248,7 +248,7 @@ def list_clients():
                 f"Commercial: {contact} | "
                 f"Business: {client.business_name or 'N/A'}"
             )
-    except (OperationalError, ProgrammingError, InternalError) as e:
+    except (OperationalError, ProgrammingError, InternalError):
         click.echo(f"❌ Database error: {ERROR_MESSAGES['database_error']}")
     except Exception:
         click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
@@ -304,7 +304,7 @@ def update_client(client_id):
     except ValueError as e:
         error_key = str(e)
         click.echo(f"❌ Error: {ERROR_MESSAGES.get(error_key, ERROR_MESSAGES['database_error'])}")
-    except (OperationalError, ProgrammingError, InternalError) as e:
+    except (OperationalError, ProgrammingError, InternalError):
         click.echo(f"❌ Database error: {ERROR_MESSAGES['database_error']}")
     except Exception:
         click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
