@@ -3,7 +3,6 @@ from sqlalchemy.orm import relationship, Session
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
-import pytest
 
 Base = declarative_base()
 
