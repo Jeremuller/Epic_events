@@ -1,6 +1,6 @@
 import click
 from database import SessionLocal
-from models import User, Client
+from models import User, Client, Contract
 from sqlalchemy.exc import OperationalError, ProgrammingError, InternalError
 
 ERROR_MESSAGES = {
@@ -13,7 +13,8 @@ ERROR_MESSAGES = {
     "contact_not_found": "The contact mentioned does not exists.",
     "inferior_total_price": "Total price can't be inferior to rest to pay.",
     "invalid_total_price": "Total_price can't be <= 0.",
-    "negative_rest_to_pay": "Rest to pay can't be < 0."
+    "negative_rest_to_pay": "Rest to pay can't be < 0.",
+    "contract_not_found": "The specified contract does not exist.",
 }
 
 
@@ -304,6 +305,129 @@ def update_client(client_id):
         )
 
         click.echo(f"✅ Client updated: {client.first_name} {client.last_name} (ID: {client.client_id})")
+    except ValueError as e:
+        error_key = str(e)
+        click.echo(f"❌ Error: {ERROR_MESSAGES.get(error_key, ERROR_MESSAGES['database_error'])}")
+    except (OperationalError, ProgrammingError, InternalError):
+        click.echo(f"❌ Database error: {ERROR_MESSAGES['database_error']}")
+    except Exception:
+        click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
+        raise
+    finally:
+        db.close()
+
+
+@cli.command()
+@click.option("--total-price", prompt="Total price", type=float, help="Total amount of the contract (e.g., 1000.00).")
+@click.option("--rest-to-pay", prompt="Rest to pay", type=float, help="Remaining amount to be paid.")
+@click.option("--client-id", prompt="Client ID", type=int, help="ID of the associated client.")
+@click.option("--commercial-id", prompt="Commercial user ID", type=int, help="ID of the commercial user.")
+def create_contract(total_price, rest_to_pay, client_id, commercial_id):
+    """
+    Creates a new contract in the CRM system.
+    This command prompts for contract details (total price, rest to pay, client ID, and commercial user ID)
+    and creates a new contract record in the database.
+    Args:
+        total_price (float): Total amount of the contract (must be > 0).
+        rest_to_pay (float): Remaining amount to be paid (must be ≥ 0 and ≤ total_price).
+        client_id (int): ID of the associated client.
+        commercial_id (int): ID of the commercial user responsible for the contract.
+    """
+    db = SessionLocal()
+    try:
+        contract = Contract.create(
+            db=db,
+            total_price=total_price,
+            rest_to_pay=rest_to_pay,
+            client_id=client_id,
+            commercial_contact_id=commercial_id
+        )
+        click.echo(
+            f"✅ Contract created: ID {contract.contract_id} "
+            f"(Total: {contract.total_price}, Rest to Pay: {contract.rest_to_pay})"
+        )
+    except ValueError as e:
+        error_key = str(e)
+        click.echo(f"❌ Error: {ERROR_MESSAGES.get(error_key, ERROR_MESSAGES['database_error'])}")
+    except (OperationalError, ProgrammingError, InternalError):
+        click.echo(f"❌ Database error: {ERROR_MESSAGES['database_error']}")
+    except Exception:
+        click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
+        raise
+    finally:
+        db.close()
+
+@cli.command()
+def list_contracts():
+    """
+    Lists all contracts in the CRM system.
+    This command retrieves and displays all contracts from the database,
+    including their ID, total price, rest to pay, client, and commercial contact.
+    If no contracts exist, a message is displayed to inform the user.
+    """
+    db = SessionLocal()
+    try:
+        contracts = Contract.get_all(db)
+        if not contracts:
+            click.echo("No contracts found in the database.")
+            return
+        click.echo("\n=== List of Contracts ===")
+        for contract in contracts:
+            client_name = f"{contract.client.first_name} {contract.client.last_name}" if contract.client else "N/A"
+            commercial_name = (
+                f"{contract.commercial_contact.first_name} {contract.commercial_contact.last_name}"
+                if contract.commercial_contact else "N/A"
+            )
+            click.echo(
+                f"ID: {contract.contract_id} | "
+                f"Total: {contract.total_price} | "
+                f"Rest to Pay: {contract.rest_to_pay} | "
+                f"Client: {client_name} (ID: {contract.client_id}) | "
+                f"Commercial: {commercial_name} (ID: {contract.commercial_contact_id}) | "
+                f"Signed: {contract.signed}"
+            )
+    except (OperationalError, ProgrammingError, InternalError):
+        click.echo(f"❌ Database error: {ERROR_MESSAGES['database_error']}")
+    except Exception:
+        click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
+        raise
+    finally:
+        db.close()
+
+@cli.command()
+@click.argument("contract_id", type=int)
+def update_contract(contract_id):
+    """
+    Updates an existing contract in the CRM system.
+    This command retrieves a contract by its ID, prompts for new values (total price, rest to pay, signed status),
+    and applies the changes using Contract.update().
+    If the contract does not exist, an error message is displayed.
+    Args:
+        contract_id (int): The ID of the contract to update.
+    """
+    db = SessionLocal()
+    try:
+        contract = Contract.get_by_id(db, contract_id)
+        if not contract:
+            click.echo(f"❌ Contract with ID {contract_id} not found.")
+            return
+        click.echo(
+            f"Updating contract: ID {contract.contract_id} "
+            f"(Total: {contract.total_price}, Rest to Pay: {contract.rest_to_pay})"
+        )
+
+        # Prompt for new values
+        total_price = click.prompt("Total price", type=float, default=contract.total_price)
+        rest_to_pay = click.prompt("Rest to pay", type=float, default=contract.rest_to_pay)
+        signed = click.prompt("Is the contract signed?", type=bool, default=contract.signed)
+
+        contract.update(
+            db=db,
+            total_price=total_price,
+            rest_to_pay=rest_to_pay,
+            signed=signed
+        )
+        click.echo(f"✅ Contract updated: ID {contract.contract_id}")
     except ValueError as e:
         error_key = str(e)
         click.echo(f"❌ Error: {ERROR_MESSAGES.get(error_key, ERROR_MESSAGES['database_error'])}")
