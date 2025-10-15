@@ -1,6 +1,6 @@
 import click
-from database import SessionLocal
-from models import User, Client, Contract
+from Epic_events.database import SessionLocal
+from Epic_events.models import User, Client, Contract
 from sqlalchemy.exc import OperationalError, ProgrammingError, InternalError
 
 ERROR_MESSAGES = {
