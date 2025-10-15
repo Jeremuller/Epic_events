@@ -357,6 +357,7 @@ def create_contract(total_price, rest_to_pay, client_id, commercial_id):
     finally:
         db.close()
 
+
 @cli.command()
 def list_contracts():
     """
@@ -393,6 +394,7 @@ def list_contracts():
         raise
     finally:
         db.close()
+
 
 @cli.command()
 @click.argument("contract_id", type=int)
