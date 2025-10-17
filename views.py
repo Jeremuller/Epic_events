@@ -1,5 +1,4 @@
 import click
-from Epic_events.database import SessionLocal
 from Epic_events.models import User, Client, Contract
 from sqlalchemy.exc import OperationalError, ProgrammingError, InternalError
 
@@ -51,7 +50,7 @@ def create_user(username, first_name, last_name, email, role):
         email (str): Unique email address.
         role (str): User's role (commercial/management/support).
     """
-    db = SessionLocal()
+    db = click.get_current_context().obj['db']
     try:
         # Create the user using the class method (note: password is set to default here)
         user = User.create_user(
@@ -86,7 +85,7 @@ def list_users():
     This command retrieves and displays all users from the database,
     including their ID, username, full name, email, and role.
     """
-    db = SessionLocal()
+    db = click.get_current_context().obj['db']
     try:
         users = User.get_all(db)
         if not users:
@@ -119,7 +118,7 @@ def update_user(user_id):
     Args:
         user_id (int): The ID of the user to update.
     """
-    db = SessionLocal()
+    db = click.get_current_context().obj['db']
     try:
         user = User.get_by_id(db, user_id)
         if not user:
@@ -155,7 +154,7 @@ def delete_user(user_id):
     Args:
         user_id (int): The ID of the user to delete.
     """
-    db = SessionLocal()
+    db = click.get_current_context().obj['db']
     try:
         user = User.get_by_id(db, user_id)
         if not user:
@@ -201,7 +200,7 @@ def create_client(first_name, last_name, email, commercial_id, business_name, te
         business_name (str, optional): Client's business name.
         telephone (str, optional): Client's phone number.
     """
-    db = SessionLocal()
+    db = click.get_current_context().obj['db']
     try:
         client = Client.create(
             db=db,
@@ -234,7 +233,7 @@ def list_clients():
     including their ID, full name, email, contact and business name.
     If no clients exist, a message is displayed to inform the user.
     """
-    db = SessionLocal()
+    db = click.get_current_context().obj['db']
     try:
         clients = Client.get_all(db)
         if not clients:
@@ -272,7 +271,7 @@ def update_client(client_id):
         Args:
             client_id (int): The ID of the client to update.
         """
-    db = SessionLocal()
+    db = click.get_current_context().obj['db']
     try:
         client = Client.get_by_id(db, client_id)
         if not client:
@@ -333,7 +332,7 @@ def create_contract(total_price, rest_to_pay, client_id, commercial_id):
         client_id (int): ID of the associated client.
         commercial_id (int): ID of the commercial user responsible for the contract.
     """
-    db = SessionLocal()
+    db = click.get_current_context().obj['db']
     try:
         contract = Contract.create(
             db=db,
@@ -366,7 +365,7 @@ def list_contracts():
     including their ID, total price, rest to pay, client, and commercial contact.
     If no contracts exist, a message is displayed to inform the user.
     """
-    db = SessionLocal()
+    db = click.get_current_context().obj['db']
     try:
         contracts = Contract.get_all(db)
         if not contracts:
@@ -407,7 +406,7 @@ def update_contract(contract_id):
     Args:
         contract_id (int): The ID of the contract to update.
     """
-    db = SessionLocal()
+    db = click.get_current_context().obj['db']
     try:
         contract = Contract.get_by_id(db, contract_id)
         if not contract:
