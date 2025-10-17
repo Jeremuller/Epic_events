@@ -1,5 +1,5 @@
 import pytest
-from ...models import User, Client
+from ...models import Client
 
 
 def test_create_client_valid(db_session, test_user):
