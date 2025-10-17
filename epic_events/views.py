@@ -1,5 +1,6 @@
 import click
-from Epic_events.models import User, Client, Contract
+from epic_events.models import User, Client, Contract
+from epic_events.database import SessionLocal
 from sqlalchemy.exc import OperationalError, ProgrammingError, InternalError
 
 ERROR_MESSAGES = {
@@ -442,4 +443,8 @@ def update_contract(contract_id):
 
 
 if __name__ == "__main__":
-    cli()
+    db = SessionLocal()
+    try:
+        cli(obj={"db": db})
+    finally:
+        db.close()

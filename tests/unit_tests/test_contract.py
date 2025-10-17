@@ -1,5 +1,5 @@
 import pytest
-from ...models import Contract
+from epic_events.models import Contract
 
 
 def test_create_contract_valid(db_session, test_user, test_client):

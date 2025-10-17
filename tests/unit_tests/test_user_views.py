@@ -1,7 +1,7 @@
 import pytest
 from click.testing import CliRunner
-from ...views import create_user, list_users, update_user, delete_user
-from ...models import User
+from epic_events.views import create_user, list_users, update_user, delete_user
+from epic_events.models import User
 
 
 @pytest.fixture

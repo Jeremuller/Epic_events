@@ -1,5 +1,5 @@
 import pytest
-from ...models import User, Client
+from epic_events.models import User, Client
 
 
 def test_create_user(db_session):

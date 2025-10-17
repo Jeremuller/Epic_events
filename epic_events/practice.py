@@ -1,5 +1,5 @@
-from database import SessionLocal, Base, engine
-from models import User, Client, Contract, Event
+from .database import SessionLocal, Base, engine
+from .models import User, Client, Contract, Event
 from datetime import datetime, timedelta
 
 # Initialisation

@@ -1,4 +1,4 @@
-from database import SessionLocal, init_db
+from .database import SessionLocal, init_db
 
 
 # Create session

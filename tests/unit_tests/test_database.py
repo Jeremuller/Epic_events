@@ -1,6 +1,6 @@
 import pytest
 from sqlalchemy import text
-from ...database import engine, SessionLocal
+from epic_events.database import engine, SessionLocal
 
 
 def test_database_connection():
