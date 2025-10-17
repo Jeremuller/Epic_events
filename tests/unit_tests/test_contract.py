@@ -1,6 +1,5 @@
 import pytest
-from datetime import datetime
-from ...models import User, Client, Contract
+from ...models import Contract
 
 
 def test_create_contract_valid(db_session, test_user, test_client):
