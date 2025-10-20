@@ -29,6 +29,28 @@ def test_create_user_command(runner, db_session):
     assert users[0].first_name == "John"
 
 
+def test_create_user_duplicate_username(runner, db_session):
+    """Test create_user with a duplicate username."""
+    User.create_user(
+        db=db_session,
+        username="mickey",
+        first_name="John",
+        last_name="Doe",
+        email="john@example.com",
+        role="commercial"
+    )
+    inputs = "mickey\nJane\nDoe\njane@example.com\ncommercial\n"
+    result = runner.invoke(
+        create_user,
+        input=inputs,
+        obj={"db": db_session}
+    )
+    assert result.exit_code == 0
+    assert "❌ Error: This username is already taken." in result.output
+    users = db_session.query(User).all()
+    assert len(users) == 1
+
+
 def test_list_users_command(runner, db_session):
     """Test the list_users CLI command."""
     User.create_user(
@@ -46,6 +68,13 @@ def test_list_users_command(runner, db_session):
     assert "=== List of Users ===" in result.output
     assert "jdoe" in result.output
     assert "John Doe" in result.output
+
+
+def test_list_users_empty_db(runner, db_session):
+    """Test list_users with an empty database."""
+    result = runner.invoke(list_users, obj={"db": db_session})
+    assert result.exit_code == 0
+    assert "No users found in the database." in result.output
 
 
 def test_update_user_command(runner, db_session):
@@ -73,6 +102,37 @@ def test_update_user_command(runner, db_session):
 
     updated_user = db_session.query(User).filter_by(user_id=user.user_id).first()
     assert updated_user.first_name == "Jane"
+    assert updated_user.email == "jane@example.com"
+
+
+def test_update_user_duplicate_email(runner, db_session):
+    """Test update_user with a duplicate email."""
+    user1 = User.create_user(
+        db=db_session,
+        username="user1",
+        first_name="John",
+        last_name="Doe",
+        email="john@example.com",
+        role="commercial"
+    )
+    user2 = User.create_user(
+        db=db_session,
+        username="user2",
+        first_name="Jane",
+        last_name="Doe",
+        email="jane@example.com",
+        role="commercial"
+    )
+    inputs = "user2\nJane\nDoe\njohn@example.com\ncommercial\n"
+    result = runner.invoke(
+        update_user,
+        args=[str(user2.user_id)],
+        input=inputs,
+        obj={"db": db_session}
+    )
+    assert result.exit_code == 0
+    assert "❌ Error: This email is already registered." in result.output
+    updated_user = db_session.query(User).filter_by(user_id=user2.user_id).first()
     assert updated_user.email == "jane@example.com"
 
 
@@ -128,3 +188,15 @@ def test_delete_user_cancelled(runner, db_session):
     assert "🔄 Operation cancelled" in result.output
 
     assert db_session.query(User).filter_by(user_id=user.user_id).first() is not None
+
+
+def test_delete_user_not_found(runner, db_session):
+    """Test delete_user with a non-existent user ID."""
+    result = runner.invoke(
+        delete_user,
+        args=["999"],
+        input="y\n",
+        obj={"db": db_session}
+    )
+    assert result.exit_code == 0
+    assert "❌ User with ID 999 not found." in result.output
