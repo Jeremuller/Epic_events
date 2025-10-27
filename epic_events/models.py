@@ -432,7 +432,8 @@ class Contract(Base):
     commercial_contact = relationship("User", back_populates="contracts")
 
     @classmethod
-    def create(cls, db: Session, total_price: float, rest_to_pay: float, client_id: int, commercial_contact_id: int):
+    def create(cls, db: Session, total_price: float, rest_to_pay: float, client_id: int, commercial_contact_id: int,
+               signed: bool = None):
         """
         Creates a new contract linked to a client and a commercial user.
         Args:
@@ -441,6 +442,7 @@ class Contract(Base):
             rest_to_pay (float): Remaining amount to be paid (must be ≥ 0 and ≤ total_price).
             client_id (int): ID of the associated client (must exist).
             commercial_contact_id (int): ID of the commercial user responsible (must exist).
+            signed (bool, optional): New signed status.
         Returns:
             Contract: The created Contract object.
         Raises:
@@ -469,7 +471,8 @@ class Contract(Base):
                 rest_to_pay=rest_to_pay,
                 creation=datetime.now(),
                 client_id=client_id,
-                commercial_contact_id=commercial_contact_id
+                commercial_contact_id=commercial_contact_id,
+                signed=signed
             )
             db.add(contract)
             db.commit()
