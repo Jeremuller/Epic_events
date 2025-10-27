@@ -14,6 +14,7 @@ ERROR_MESSAGES = {
     "inferior_total_price": "Total price can't be inferior to rest to pay.",
     "invalid_total_price": "Total_price can't be <= 0.",
     "negative_rest_to_pay": "Rest to pay can't be < 0.",
+    "client_not_found": "The specified client does not exist.",
     "contract_not_found": "The specified contract does not exist.",
 }
 
