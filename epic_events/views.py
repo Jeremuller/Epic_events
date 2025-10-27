@@ -74,9 +74,6 @@ def create_user(username, first_name, last_name, email, role):
         click.echo(f"❌ Error: {ERROR_MESSAGES['database_error']}")
         raise
 
-    finally:
-        db.close()
-
 
 @cli.command()
 def list_users():
@@ -141,8 +138,6 @@ def update_user(user_id):
     except Exception:
         click.echo(f"❌ Error: {ERROR_MESSAGES['database_error']}")
         raise
-    finally:
-        db.close()
 
 
 @cli.command()
