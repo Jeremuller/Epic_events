@@ -345,8 +345,6 @@ def create_contract(total_price, rest_to_pay, client_id, commercial_id):
     except Exception:
         click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
         raise
-    finally:
-        db.close()
 
 
 @cli.command()
@@ -383,8 +381,6 @@ def list_contracts():
     except Exception:
         click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
         raise
-    finally:
-        db.close()
 
 
 @cli.command()
@@ -429,8 +425,6 @@ def update_contract(contract_id):
     except Exception:
         click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
         raise
-    finally:
-        db.close()
 
 
 if __name__ == "__main__":
