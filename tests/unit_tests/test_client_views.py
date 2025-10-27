@@ -75,7 +75,7 @@ def test_create_client_invalid_commercial_id(runner, db_session):
         obj={"db": db_session}
     )
     assert result.exit_code == 0
-    assert "The contact mentioned does not exists." in result.output
+    assert "The contact mentioned does not exist." in result.output
     clients = db_session.query(Client).all()
     assert len(clients) == 0
 
@@ -174,6 +174,6 @@ def test_update_client_invalid_commercial_id(runner, db_session, test_user, test
         obj={"db": db_session}
     )
     assert result.exit_code == 0
-    assert "❌ Error: The contact mentioned does not exists." in result.output
+    assert "❌ Error: The contact mentioned does not exist." in result.output
     updated_client = db_session.query(Client).filter_by(client_id=test_client.client_id).first()
     assert updated_client.commercial_contact_id == test_user.user_id
