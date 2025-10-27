@@ -221,8 +221,6 @@ def create_client(first_name, last_name, email, commercial_id, business_name, te
     except Exception:
         click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
         raise
-    finally:
-        db.close()
 
 
 @cli.command()
@@ -313,8 +311,6 @@ def update_client(client_id):
     except Exception:
         click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
         raise
-    finally:
-        db.close()
 
 
 @cli.command()
