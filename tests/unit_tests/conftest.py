@@ -9,7 +9,7 @@ It includes a pytest fixture to create and manage database sessions.
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from epic_events.models import Base, User, Client
+from epic_events.models import Base, User, Client, Contract
 
 # Create an in-memory SQLite engine for testing.
 # This avoids affecting the production database and ensures tests run in isolation.
@@ -71,3 +71,17 @@ def test_client(db_session, test_user):
         commercial_contact_id=test_user.user_id
     )
     return client
+
+
+@pytest.fixture()
+def test_contract(db_session, test_user, test_client):
+    """Fixture to create a test contract linked to the test user and test client."""
+    contract = Contract.create(
+        db=db_session,
+        total_price=1000.0,
+        rest_to_pay=500.0,
+        client_id=test_client.client_id,
+        commercial_contact_id=test_user.user_id,
+        signed=False
+    )
+    return contract
