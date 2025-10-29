@@ -16,6 +16,8 @@ ERROR_MESSAGES = {
     "negative_rest_to_pay": "Rest to pay can't be < 0.",
     "client_not_found": "The specified client does not exist.",
     "contract_not_found": "The specified contract does not exist.",
+    "event_date_in_past": "Event date must be in the future.",
+    "end_before_start": "End date must be after start date.",
 }
 
 
