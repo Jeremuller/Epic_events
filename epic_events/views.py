@@ -1,7 +1,8 @@
 import click
-from epic_events.models import User, Client, Contract
+from epic_events.models import User, Client, Contract, Event
 from epic_events.database import SessionLocal
 from sqlalchemy.exc import OperationalError, ProgrammingError, InternalError
+from datetime import datetime
 
 ERROR_MESSAGES = {
     "username_taken": "This username is already taken.",
@@ -420,6 +421,153 @@ def update_contract(contract_id):
             signed=signed
         )
         click.echo(f"✅ Contract updated: ID {contract.contract_id}")
+    except ValueError as e:
+        error_key = str(e)
+        click.echo(f"❌ Error: {ERROR_MESSAGES.get(error_key, ERROR_MESSAGES['database_error'])}")
+    except (OperationalError, ProgrammingError, InternalError):
+        click.echo(f"❌ Database error: {ERROR_MESSAGES['database_error']}")
+    except Exception:
+        click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
+        raise
+
+
+@cli.command()
+@click.option("--name", prompt="Event name", help="Name of the event (max 200 characters).")
+@click.option("--start-datetime", prompt="Start date and time (YYYY-MM-DD HH:MM)",
+              help="Start date and time of the event.")
+@click.option("--end-datetime", prompt="End date and time (YYYY-MM-DD HH:MM)", help="End date and time of the event.")
+@click.option("--location", prompt="Location", help="Location of the event (max 200 characters).")
+@click.option("--attendees", prompt="Number of attendees", type=int, help="Number of attendees for the event.")
+@click.option("--notes", prompt="Notes (optional)", default="", help="Detailed description of the event.")
+@click.option("--client-id", prompt="Client ID", type=int, help="ID of the associated client.")
+@click.option("--support-contact-id", prompt="Support contact ID", type=int, help="ID of the support contact user.")
+def create_event(name, start_datetime, end_datetime, location, attendees, notes, client_id, support_contact_id):
+    """
+    Creates a new event in the CRM system.
+    This command prompts for event details (name, start/end datetime, location, attendees, notes)
+    and creates a new event record in the database linked to a contract.
+    Args:
+        name (str): Name of the event.
+        start_datetime (str): Start date and time of the event (format: YYYY-MM-DD HH:MM).
+        end_datetime (str): End date and time of the event (format: YYYY-MM-DD HH:MM).
+        location (str): Location of the event.
+        attendees (int): Number of attendees for the event.
+        notes (str): Detailed description of the event (optional).
+        client_id (int): ID of the associated client.
+        support_contact_id (int): ID of the support contact user.
+    """
+    db = click.get_current_context().obj['db']
+    try:
+        start_datetime = datetime.strptime(start_datetime, "%Y-%m-%d %H:%M")
+        end_datetime = datetime.strptime(end_datetime, "%Y-%m-%d %H:%M")
+
+        event = Event.create(
+            db=db,
+            name=name,
+            notes=notes,
+            start_datetime=start_datetime,
+            end_datetime=end_datetime,
+            location=location,
+            attendees=attendees,
+            client_id=client_id,
+            support_contact_id=support_contact_id,
+        )
+        click.echo(
+            f"✅ Event created: ID {event.event_id} "
+            f"(Name: {event.name}, Location: {event.location}, "
+            f"Start: {event.start_datetime}, End: {event.end_datetime})"
+        )
+    except ValueError as e:
+        error_key = str(e)
+        click.echo(f"❌ Error: {ERROR_MESSAGES.get(error_key, ERROR_MESSAGES['database_error'])}")
+    except (OperationalError, ProgrammingError, InternalError):
+        click.echo(f"❌ Database error: {ERROR_MESSAGES['database_error']}")
+    except Exception:
+        click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
+        raise
+
+
+@cli.command()
+def list_events():
+    """
+    Lists all events in the CRM system.
+    This command retrieves and displays all events from the database,
+    including their ID, name, location, start/end datetime, and associated client/contact.
+    If no events exist, a message is displayed to inform the user.
+    """
+    db = click.get_current_context().obj['db']
+    try:
+        events = Event.get_all(db)
+        if not events:
+            click.echo("No events found in the database.")
+            return
+        click.echo("\n=== List of Events ===")
+        for event in events:
+            client_name = f"{event.client.first_name} {event.client.last_name}" if event.client else "N/A"
+            contact_name = f"{event.support_contact.first_name} {event.support_contact.last_name}" if event.support_contact else "N/A"
+            click.echo(
+                f"ID: {event.event_id} | "
+                f"Name: {event.name} | "
+                f"Location: {event.location} | "
+                f"Start: {event.start_datetime} | "
+                f"End: {event.end_datetime} | "
+                f"Attendees: {event.attendees} | "
+                f"Client: {client_name} | "
+                f"Contact: {contact_name}"
+            )
+    except (OperationalError, ProgrammingError, InternalError):
+        click.echo(f"❌ Database error: {ERROR_MESSAGES['database_error']}")
+    except Exception:
+        click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
+        raise
+
+
+@cli.command()
+@click.argument("event_id", type=int)
+def update_event(event_id):
+    """
+    Updates an existing event in the CRM system.
+    This command retrieves an event by its ID, prompts for new values (name, start/end datetime, location, attendees, notes),
+    and applies the changes using Event.update().
+    If the event does not exist, an error message is displayed.
+    Args:
+        event_id (int): The ID of the event to update.
+    """
+    db = click.get_current_context().obj['db']
+    try:
+        event = Event.get_by_id(db, event_id)
+        if not event:
+            click.echo(f"❌ Event with ID {event_id} not found.")
+            return
+        click.echo(f"Updating event: {event.name} (ID: {event.event_id})")
+
+        name = click.prompt("New event name", default=event.name)
+        start_datetime_str = click.prompt("New start date and time (YYYY-MM-DD HH:MM)",
+                                          default=event.start_datetime.strftime("%Y-%m-%d %H:%M"))
+        end_datetime_str = click.prompt("New end date and time (YYYY-MM-DD HH:MM)",
+                                        default=event.end_datetime.strftime("%Y-%m-%d %H:%M"))
+        location = click.prompt("New location", default=event.location)
+        attendees = click.prompt("New number of attendees", default=event.attendees, type=int)
+        notes = click.prompt("New notes (optional)", default=event.notes or "")
+        client_id = click.prompt("New client ID (optional)", default=event.client_id, type=int)
+        support_contact_id = click.prompt("New support contact ID (optional)", default=event.support_contact_id,
+                                          type=int)
+
+        start_datetime = datetime.strptime(start_datetime_str, "%Y-%m-%d %H:%M")
+        end_datetime = datetime.strptime(end_datetime_str, "%Y-%m-%d %H:%M")
+
+        event.update(
+            db=db,
+            name=name,
+            notes=notes,
+            start_datetime=start_datetime,
+            end_datetime=end_datetime,
+            location=location,
+            attendees=attendees,
+            client_id=client_id,
+            support_contact_id=support_contact_id
+        )
+        click.echo(f"✅ Event updated: ID {event.event_id}")
     except ValueError as e:
         error_key = str(e)
         click.echo(f"❌ Error: {ERROR_MESSAGES.get(error_key, ERROR_MESSAGES['database_error'])}")
