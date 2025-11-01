@@ -615,6 +615,38 @@ class Event(Base):
     support_contact = relationship("User", back_populates="events")
 
     @classmethod
+    def create(cls, db, name, notes, start_datetime, end_datetime, location, attendees, client_id, support_contact_id):
+        """Creates a new event in the database."""
+        client = db.query(Client).filter_by(client_id=client_id).first()
+        if not client:
+            raise ValueError("client_not_found")
+
+        contact = db.query(User).filter_by(user_id=support_contact_id).first()
+        if not contact:
+            raise ValueError("contact_not_found")
+
+        if start_datetime < datetime.now():
+            raise ValueError("event_date_in_past")
+
+        if end_datetime < start_datetime:
+            raise ValueError("end_before_start")
+
+        event = cls(
+            name=name,
+            notes=notes,
+            start_datetime=start_datetime,
+            end_datetime=end_datetime,
+            location=location,
+            attendees=attendees,
+            client_id=client_id,
+            support_contact_id=support_contact_id
+        )
+        db.add(event)
+        db.commit()
+        db.refresh(event)
+        return event
+
+    @classmethod
     def get_all(cls, db: Session):
         """
         Retrieves all events from the database.
@@ -642,3 +674,34 @@ class Event(Base):
         """
 
         return db.query(cls).filter_by(event_id=event_id).first()
+
+    def update(self, db, name=None, notes=None, start_datetime=None, end_datetime=None, location=None, attendees=None,
+               client_id=None, support_contact_id=None):
+        """Updates an existing event in the database."""
+        if name is not None:
+            self.name = name
+        if notes is not None:
+            self.notes = notes
+        if start_datetime is not None:
+            if start_datetime < datetime.now():
+                raise ValueError("event_date_in_past")
+            self.start_datetime = start_datetime
+        if end_datetime is not None:
+            if end_datetime < self.start_datetime:
+                raise ValueError("end_before_start")
+            self.end_datetime = end_datetime
+        if location is not None:
+            self.location = location
+        if attendees is not None:
+            self.attendees = attendees
+        if client_id is not None:
+            client = db.query(Client).filter_by(client_id=client_id).first()
+            if not client:
+                raise ValueError("client_not_found")
+            self.client_id = client_id
+        if support_contact_id is not None:
+            contact = db.query(User).filter_by(user_id=support_contact_id).first()
+            if not contact:
+                raise ValueError("contact_not_found")
+            self.support_contact_id = support_contact_id
+        db.commit()
