@@ -616,7 +616,23 @@ class Event(Base):
 
     @classmethod
     def create(cls, db, name, notes, start_datetime, end_datetime, location, attendees, client_id, support_contact_id):
-        """Creates a new event in the database."""
+        """
+        Creates a new event linked to a client and a support user.
+        Args:
+            db (Session): SQLAlchemy database session.
+            name (str): Name of the event.
+            notes (str): Notes for the event.
+            start_datetime (DateTime): Start date and time of the event.
+            end_datetime (DateTime): End date and time of the event.
+            location (str): Location of the event.
+            attendees (int): Number of attendees for the event.
+            client_id (int): ID of the associated client (must exist).
+            support_contact_id (int): ID of the support user responsible (must exist).
+        Returns:
+            Event: The created Contract object.
+        Raises:
+            ValueError: If total_price/rest_to_pay are invalid, or if client_id/commercial_contact_id are not found.
+        """
         client = db.query(Client).filter_by(client_id=client_id).first()
         if not client:
             raise ValueError("client_not_found")
@@ -677,7 +693,23 @@ class Event(Base):
 
     def update(self, db, name=None, notes=None, start_datetime=None, end_datetime=None, location=None, attendees=None,
                client_id=None, support_contact_id=None):
-        """Updates an existing event in the database."""
+        """
+        Updates the event's information in the database with validation checks.
+        Args:
+            db (Session): SQLAlchemy database session.
+            name (str): Name of the event.
+            notes (str): Notes for the event.
+            start_datetime (DateTime): Start date and time of the event.
+            end_datetime (DateTime): End date and time of the event.
+            location (str): Location of the event.
+            attendees (int): Number of attendees for the event.
+            client_id (int): ID of the associated client (must exist).
+            support_contact_id (int): ID of the support user responsible (must exist).
+        Returns:
+            Event: The updated Contract object.
+        Raises:
+            ValueError: If validations fail (invalid prices, IDs not found).
+        """
         if start_datetime is not None and start_datetime < datetime.now():
             raise ValueError("event_date_in_past")
         if end_datetime is not None and start_datetime is not None and end_datetime < start_datetime:
