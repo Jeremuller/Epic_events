@@ -678,30 +678,35 @@ class Event(Base):
     def update(self, db, name=None, notes=None, start_datetime=None, end_datetime=None, location=None, attendees=None,
                client_id=None, support_contact_id=None):
         """Updates an existing event in the database."""
+        if start_datetime is not None and start_datetime < datetime.now():
+            raise ValueError("event_date_in_past")
+        if end_datetime is not None and start_datetime is not None and end_datetime < start_datetime:
+            raise ValueError("end_before_start")
+        if client_id is not None:
+            client = db.query(Client).filter_by(client_id=client_id).first()
+            if not client:
+                raise ValueError("client_not_found")
+        if support_contact_id is not None:
+            contact = db.query(User).filter_by(user_id=support_contact_id).first()
+            if not contact:
+                raise ValueError("contact_not_found")
+
+        # Update only if every verification bellow is passing
         if name is not None:
             self.name = name
         if notes is not None:
             self.notes = notes
         if start_datetime is not None:
-            if start_datetime < datetime.now():
-                raise ValueError("event_date_in_past")
             self.start_datetime = start_datetime
         if end_datetime is not None:
-            if end_datetime < self.start_datetime:
-                raise ValueError("end_before_start")
             self.end_datetime = end_datetime
         if location is not None:
             self.location = location
         if attendees is not None:
             self.attendees = attendees
         if client_id is not None:
-            client = db.query(Client).filter_by(client_id=client_id).first()
-            if not client:
-                raise ValueError("client_not_found")
             self.client_id = client_id
         if support_contact_id is not None:
-            contact = db.query(User).filter_by(user_id=support_contact_id).first()
-            if not contact:
-                raise ValueError("contact_not_found")
             self.support_contact_id = support_contact_id
         db.commit()
+
