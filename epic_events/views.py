@@ -7,6 +7,10 @@ from enum import Enum
 
 
 class ErrorMessages(Enum):
+    """
+        Enum class to centralize and manage all error messages in the CRM system.
+        Each enum member represents a specific error case with its associated user-friendly message.
+        """
     USERNAME_TAKEN = "This username is already taken."
     EMAIL_TAKEN = "This email is already registered."
     REQUIRED_FIELDS_EMPTY = "Required fields cannot be empty or whitespace."
@@ -24,7 +28,17 @@ class ErrorMessages(Enum):
 
     @classmethod
     def get_message(cls, error_key):
-        """Return error message associated to error key."""
+        """
+                Retrieve the error message associated with the given error key.
+
+                Args:
+                    error_key (str): The key of the error message to retrieve.
+                                      Must match an enum member name (case-sensitive).
+
+                Returns:
+                    str: The error message associated with the provided key.
+                         If the key is not found, returns the generic database error message.
+        """
         try:
             return cls[error_key].value
         except KeyError:
