@@ -1,25 +1,9 @@
 import click
 from epic_events.models import User, Client, Contract, Event
+from epic_events.error_management import ErrorMessages
 from epic_events.database import SessionLocal
 from sqlalchemy.exc import OperationalError, ProgrammingError, InternalError
 from datetime import datetime
-
-ERROR_MESSAGES = {
-    "username_taken": "This username is already taken.",
-    "email_taken": "This email is already registered.",
-    "required_fields_empty": "Required fields cannot be empty or whitespace.",
-    "invalid_role": "Invalid role. Must be one of: commercial, management, support.",
-    "delete_failed": "Failed to delete user. Dependencies may be locked.",
-    "database_error": "A technical error occurred. Please try again later.",
-    "contact_not_found": "The contact mentioned does not exist.",
-    "inferior_total_price": "Total price can't be inferior to rest to pay.",
-    "invalid_total_price": "Total_price can't be <= 0.",
-    "negative_rest_to_pay": "Rest to pay can't be < 0.",
-    "client_not_found": "The specified client does not exist.",
-    "contract_not_found": "The specified contract does not exist.",
-    "event_date_in_past": "Event date must be in the future.",
-    "end_before_start": "End date must be after start date.",
-}
 
 
 @click.group()
@@ -72,10 +56,13 @@ def create_user(username, first_name, last_name, email, role):
             f"Username: {user.username}, Role: {user.role})")
 
     except ValueError as e:
+
         error_key = str(e)
-        click.echo(f"❌ Error: {ERROR_MESSAGES.get(error_key, ERROR_MESSAGES['database_error'])}")
+        click.echo(f"❌ Error: {ErrorMessages.get_message(error_key)}")
+
     except Exception:
-        click.echo(f"❌ Error: {ERROR_MESSAGES['database_error']}")
+
+        click.echo(f"❌ Error: {ErrorMessages.DATABASE_ERROR.value}")
         raise
 
 
@@ -100,9 +87,9 @@ def list_users():
                 f"ID: {user.user_id} | {user.username} | {user.first_name} {user.last_name} | "
                 f"Email: {user.email} | Role: {user.role}")
     except (OperationalError, ProgrammingError, InternalError):
-        click.echo(f"❌ Database error: {ERROR_MESSAGES['database_error']}")
+        click.echo(f"❌ Database error: {ErrorMessages.DATABASE_ERROR.value}")
     except Exception:
-        click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
+        click.echo(f"❌ Unexpected error: {ErrorMessages.DATABASE_ERROR.value}")
         raise
     finally:
         db.close()
@@ -138,9 +125,9 @@ def update_user(user_id):
         click.echo(f"✅ User updated: {user.username} | {user.first_name} {user.last_name} (ID: {user.user_id})")
     except ValueError as e:
         error_key = str(e)
-        click.echo(f"❌ Error: {ERROR_MESSAGES.get(error_key, ERROR_MESSAGES['database_error'])}")
+        click.echo(f"❌ Error: {ErrorMessages.get_message(error_key)}")
     except Exception:
-        click.echo(f"❌ Error: {ERROR_MESSAGES['database_error']}")
+        click.echo(f"❌ Error: {ErrorMessages.DATABASE_ERROR.value}")
         raise
 
 
@@ -170,10 +157,13 @@ def delete_user(user_id):
         click.echo(f"✅ User deleted: {user.first_name} {user.last_name} (ID: {user.user_id})")
 
     except ValueError as e:
+
         error_key = str(e)
-        click.echo(f"❌ Error: {ERROR_MESSAGES.get(error_key, ERROR_MESSAGES['database_error'])}")
+        click.echo(f"❌ Error: {ErrorMessages.get_message(error_key)}")
+
     except Exception:
-        click.echo(f"❌ Error: {ERROR_MESSAGES['database_error']}")
+
+        click.echo(f"❌ Error: {ErrorMessages.DATABASE_ERROR.value}")
         raise
 
     finally:
@@ -214,11 +204,11 @@ def create_client(first_name, last_name, email, commercial_id, business_name, te
         click.echo(f"✅ Client created: {client.first_name} {client.last_name} (ID: {client.client_id})")
     except ValueError as e:
         error_key = str(e)
-        click.echo(f"❌ Error: {ERROR_MESSAGES.get(error_key, ERROR_MESSAGES['database_error'])}")
+        click.echo(f"❌ Error: {ErrorMessages.get_message(error_key)}")
     except (OperationalError, ProgrammingError, InternalError):
-        click.echo(f"❌ Database error: {ERROR_MESSAGES['database_error']}")
+        click.echo(f"❌ Database error: {ErrorMessages.DATABASE_ERROR.value}")
     except Exception:
-        click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
+        click.echo(f"❌ Unexpected error: {ErrorMessages.DATABASE_ERROR.value}")
         raise
 
 
@@ -250,9 +240,9 @@ def list_clients():
                 f"Business: {client.business_name or 'N/A'}"
             )
     except (OperationalError, ProgrammingError, InternalError):
-        click.echo(f"❌ Database error: {ERROR_MESSAGES['database_error']}")
+        click.echo(f"❌ Database error: {ErrorMessages.DATABASE_ERROR.value}")
     except Exception:
-        click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
+        click.echo(f"❌ Unexpected error: {ErrorMessages.DATABASE_ERROR.value}")
         raise
     finally:
         db.close()
@@ -304,11 +294,11 @@ def update_client(client_id):
         click.echo(f"✅ Client updated: {client.first_name} {client.last_name} (ID: {client.client_id})")
     except ValueError as e:
         error_key = str(e)
-        click.echo(f"❌ Error: {ERROR_MESSAGES.get(error_key, ERROR_MESSAGES['database_error'])}")
+        click.echo(f"❌ Error: {ErrorMessages.get_message(error_key)}")
     except (OperationalError, ProgrammingError, InternalError):
-        click.echo(f"❌ Database error: {ERROR_MESSAGES['database_error']}")
+        click.echo(f"❌ Database error: {ErrorMessages.DATABASE_ERROR.value}")
     except Exception:
-        click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
+        click.echo(f"❌ Unexpected error: {ErrorMessages.DATABASE_ERROR.value}")
         raise
 
 
@@ -343,11 +333,11 @@ def create_contract(total_price, rest_to_pay, client_id, commercial_id):
         )
     except ValueError as e:
         error_key = str(e)
-        click.echo(f"❌ Error: {ERROR_MESSAGES.get(error_key, ERROR_MESSAGES['database_error'])}")
+        click.echo(f"❌ Error: {ErrorMessages.get_message(error_key)}")
     except (OperationalError, ProgrammingError, InternalError):
-        click.echo(f"❌ Database error: {ERROR_MESSAGES['database_error']}")
+        click.echo(f"❌ Database error: {ErrorMessages.DATABASE_ERROR.value}")
     except Exception:
-        click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
+        click.echo(f"❌ Unexpected error: {ErrorMessages.DATABASE_ERROR.value}")
         raise
 
 
@@ -381,10 +371,12 @@ def list_contracts():
                 f"Signed: {contract.signed}"
             )
     except (OperationalError, ProgrammingError, InternalError):
-        click.echo(f"❌ Database error: {ERROR_MESSAGES['database_error']}")
+        click.echo(f"❌ Database error: {ErrorMessages.DATABASE_ERROR.value}")
     except Exception:
-        click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
+        click.echo(f"❌ Unexpected error: {ErrorMessages.DATABASE_ERROR.value}")
         raise
+    finally:
+        db.close()
 
 
 @cli.command()
@@ -423,11 +415,11 @@ def update_contract(contract_id):
         click.echo(f"✅ Contract updated: ID {contract.contract_id}")
     except ValueError as e:
         error_key = str(e)
-        click.echo(f"❌ Error: {ERROR_MESSAGES.get(error_key, ERROR_MESSAGES['database_error'])}")
+        click.echo(f"❌ Error: {ErrorMessages.get_message(error_key)}")
     except (OperationalError, ProgrammingError, InternalError):
-        click.echo(f"❌ Database error: {ERROR_MESSAGES['database_error']}")
+        click.echo(f"❌ Database error: {ErrorMessages.DATABASE_ERROR.value}")
     except Exception:
-        click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
+        click.echo(f"❌ Unexpected error: {ErrorMessages.DATABASE_ERROR.value}")
         raise
 
 
@@ -479,11 +471,11 @@ def create_event(name, start_datetime, end_datetime, location, attendees, notes,
         )
     except ValueError as e:
         error_key = str(e)
-        click.echo(f"❌ Error: {ERROR_MESSAGES.get(error_key, ERROR_MESSAGES['database_error'])}")
+        click.echo(f"❌ Error: {ErrorMessages.get_message(error_key)}")
     except (OperationalError, ProgrammingError, InternalError):
-        click.echo(f"❌ Database error: {ERROR_MESSAGES['database_error']}")
+        click.echo(f"❌ Database error: {ErrorMessages.DATABASE_ERROR.value}")
     except Exception:
-        click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
+        click.echo(f"❌ Unexpected error: {ErrorMessages.DATABASE_ERROR.value}")
         raise
 
 
@@ -516,10 +508,12 @@ def list_events():
                 f"Contact: {contact_name}"
             )
     except (OperationalError, ProgrammingError, InternalError):
-        click.echo(f"❌ Database error: {ERROR_MESSAGES['database_error']}")
+        click.echo(f"❌ Database error: {ErrorMessages.DATABASE_ERROR.value}")
     except Exception:
-        click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
+        click.echo(f"❌ Unexpected error: {ErrorMessages.DATABASE_ERROR.value}")
         raise
+    finally:
+        db.close()
 
 
 @cli.command()
@@ -570,11 +564,11 @@ def update_event(event_id):
         click.echo(f"✅ Event updated: ID {event.event_id}")
     except ValueError as e:
         error_key = str(e)
-        click.echo(f"❌ Error: {ERROR_MESSAGES.get(error_key, ERROR_MESSAGES['database_error'])}")
+        click.echo(f"❌ Error: {ErrorMessages.get_message(error_key)}")
     except (OperationalError, ProgrammingError, InternalError):
-        click.echo(f"❌ Database error: {ERROR_MESSAGES['database_error']}")
+        click.echo(f"❌ Database error: {ErrorMessages.DATABASE_ERROR.value}")
     except Exception:
-        click.echo(f"❌ Unexpected error: {ERROR_MESSAGES['database_error']}")
+        click.echo(f"❌ Unexpected error: {ErrorMessages.DATABASE_ERROR.value}")
         raise
 
 
