@@ -32,7 +32,7 @@ def test_create_event_past_date(db_session, test_user, test_client):
     """Test that creating an event with a past date raises a ValueError."""
     start_datetime = datetime.now() - timedelta(days=1)
     end_datetime = datetime.now() + timedelta(days=1)
-    with pytest.raises(ValueError, match="event_date_in_past"):
+    with pytest.raises(ValueError, match="EVENT_DATE_IN_PAST"):
         Event.create(
             db=db_session,
             name="Past Event",
@@ -50,7 +50,7 @@ def test_create_event_end_before_start(db_session, test_user, test_client):
     """Test that creating an event with end_datetime before start_datetime raises a ValueError."""
     start_datetime = datetime.now() + timedelta(days=30)
     end_datetime = datetime.now() + timedelta(days=29)
-    with pytest.raises(ValueError, match="end_before_start"):
+    with pytest.raises(ValueError, match="END_BEFORE_START"):
         Event.create(
             db=db_session,
             name="Invalid Event",
@@ -68,7 +68,7 @@ def test_create_event_invalid_client(db_session, test_user):
     """Test that creating an event with an invalid client_id raises a ValueError."""
     start_datetime = datetime.now() + timedelta(days=30)
     end_datetime = datetime.now() + timedelta(days=31)
-    with pytest.raises(ValueError, match="client_not_found"):
+    with pytest.raises(ValueError, match="CLIENT_NOT_FOUND"):
         Event.create(
             db=db_session,
             name="Invalid Client Event",
@@ -86,7 +86,7 @@ def test_create_event_invalid_support_contact(db_session, test_client):
     """Test that creating an event with an invalid support_contact_id raises a ValueError."""
     start_datetime = datetime.now() + timedelta(days=30)
     end_datetime = datetime.now() + timedelta(days=31)
-    with pytest.raises(ValueError, match="contact_not_found"):
+    with pytest.raises(ValueError, match="CONTACT_NOT_FOUND"):
         Event.create(
             db=db_session,
             name="Invalid Contact Event",

@@ -22,14 +22,14 @@ def test_create_user(db_session):
 def test_create_user_duplicate_username(db_session):
     """Test that creating a user with a duplicate username raises a ValueError."""
     User.create_user(db_session, "jdoe", "John", "Doe", "john@example.com", "commercial")
-    with pytest.raises(ValueError, match="username_taken"):
+    with pytest.raises(ValueError, match="USERNAME_TAKEN"):
         User.create_user(db_session, "jdoe", "Jane", "Doe", "jane@example.com", "management")
 
 
 def test_create_user_duplicate_email(db_session):
     """Test that creating a user with a duplicate email raises a ValueError."""
     User.create_user(db_session, "jdoe", "John", "Doe", "john@example.com", "commercial")
-    with pytest.raises(ValueError, match="email_taken"):
+    with pytest.raises(ValueError, match="EMAIL_TAKEN"):
         User.create_user(db_session, "jdoe2", "Jane", "Doe", "john@example.com", "management")
 
 
@@ -38,21 +38,21 @@ def test_create_user_with_empty_fields(db_session):
     Test that creating a user with empty required fields raises a ValueError.
     Required fields: username, first_name, last_name, email, role.
     """
-    with pytest.raises(ValueError, match="required_fields_empty"):
+    with pytest.raises(ValueError, match="REQUIRED_FIELDS_EMPTY"):
         User.create_user(db_session, "", "John", "Doe", "john@example.com", "commercial")
-    with pytest.raises(ValueError, match="required_fields_empty"):
+    with pytest.raises(ValueError, match="REQUIRED_FIELDS_EMPTY"):
         User.create_user(db_session, "jdoe", "", "Doe", "john@example.com", "commercial")
-    with pytest.raises(ValueError, match="required_fields_empty"):
+    with pytest.raises(ValueError, match="REQUIRED_FIELDS_EMPTY"):
         User.create_user(db_session, "jdoe", "John", "", "john@example.com", "commercial")
-    with pytest.raises(ValueError, match="required_fields_empty"):
+    with pytest.raises(ValueError, match="REQUIRED_FIELDS_EMPTY"):
         User.create_user(db_session, "jdoe", "John", "Doe", "", "commercial")
-    with pytest.raises(ValueError, match="required_fields_empty"):
+    with pytest.raises(ValueError, match="REQUIRED_FIELDS_EMPTY"):
         User.create_user(db_session, "jdoe", "John", "Doe", "john@example.com", "")
 
 
 def test_create_user_invalid_role(db_session):
     """Test that creating a user with an invalid role raises a ValueError."""
-    with pytest.raises(ValueError, match="invalid_role"):
+    with pytest.raises(ValueError, match="INVALID_ROLE"):
         User.create_user(db_session, "jdoe", "John", "Doe", "john@example.com", "invalid_role")
 
 
@@ -93,7 +93,7 @@ def test_update_user_duplicate_email(db_session):
     """Test that updating a user with a duplicate email raises a ValueError."""
     user1 = User.create_user(db_session, "jdoe1", "John", "Doe", "john@example.com", "commercial")
     user2 = User.create_user(db_session, "jdoe2", "Jane", "Doe", "jane@example.com", "management")
-    with pytest.raises(ValueError, match="email_taken"):
+    with pytest.raises(ValueError, match="EMAIL_TAKEN"):
         user2.update(db_session, email="john@example.com")
 
 

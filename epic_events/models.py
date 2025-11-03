@@ -712,7 +712,7 @@ class Event(Base):
             ValueError: If validations fail (invalid prices, IDs not found).
         """
         if start_datetime is not None and start_datetime < datetime.now():
-            raise ValueError(ErrorMessages.END_BEFORE_START.name)
+            raise ValueError(ErrorMessages.EVENT_DATE_IN_PAST.name)
         if end_datetime is not None and start_datetime is not None and end_datetime < start_datetime:
             raise ValueError(ErrorMessages.END_BEFORE_START.name)
         if client_id is not None:

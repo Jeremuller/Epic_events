@@ -17,7 +17,7 @@ def test_create_contract_valid(db_session, test_user, test_client):
 
 def test_create_contract_invalid_rest_to_pay(db_session, test_user, test_client):
     """Test that creating a contract with rest_to_pay > total_price raises a ValueError."""
-    with pytest.raises(ValueError, match="inferior_total_price"):
+    with pytest.raises(ValueError, match="INFERIOR_TOTAL_PRICE"):
         Contract.create(
             db=db_session,
             total_price=1000.00,
@@ -54,7 +54,7 @@ def test_update_contract_rest_to_pay(db_session, test_user, test_client):
     contract.update(db=db_session, rest_to_pay=300.00)
     assert contract.rest_to_pay == 300.00
     # Wrong update (rest_to_pay > total_price)
-    with pytest.raises(ValueError, match="inferior_total_price"):
+    with pytest.raises(ValueError, match="INFERIOR_TOTAL_PRICE"):
         contract.update(db=db_session, rest_to_pay=1500.00)
 
 
@@ -72,7 +72,7 @@ def test_contract_creation_date(db_session, test_user, test_client):
 
 def test_create_contract_with_none_client_id(db_session, test_user):
     """Test that creating a contract with None client_id raises a ValueError."""
-    with pytest.raises(ValueError, match="client_not_found"):
+    with pytest.raises(ValueError, match="CLIENT_NOT_FOUND"):
         Contract.create(
             db=db_session,
             total_price=1000.00,
@@ -84,7 +84,7 @@ def test_create_contract_with_none_client_id(db_session, test_user):
 
 def test_create_contract_with_none_commercial_id(db_session, test_client):
     """Test that creating a contract with None commercial_contact_id raises a ValueError."""
-    with pytest.raises(ValueError, match="contact_not_found"):
+    with pytest.raises(ValueError, match="CONTACT_NOT_FOUND"):
         Contract.create(
             db=db_session,
             total_price=1000.00,
@@ -103,7 +103,7 @@ def test_update_contract_with_invalid_client_id(db_session, test_user, test_clie
         client_id=test_client.client_id,
         commercial_contact_id=test_user.user_id
     )
-    with pytest.raises(ValueError, match="client_not_found"):
+    with pytest.raises(ValueError, match="CLIENT_NOT_FOUND"):
         contract.update(
             db=db_session,
             client_id=9999
@@ -119,7 +119,7 @@ def test_update_contract_with_invalid_commercial_id(db_session, test_user, test_
         client_id=test_client.client_id,
         commercial_contact_id=test_user.user_id
     )
-    with pytest.raises(ValueError, match="contact_not_found"):
+    with pytest.raises(ValueError, match="CONTACT_NOT_FOUND"):
         contract.update(
             db=db_session,
             commercial_contact_id=9999

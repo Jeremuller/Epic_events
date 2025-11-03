@@ -28,7 +28,7 @@ def test_create_client_duplicate_email(db_session, test_user):
         email="john@example.com",
         commercial_contact_id=test_user.user_id
     )
-    with pytest.raises(ValueError, match="email_taken"):
+    with pytest.raises(ValueError, match="EMAIL_TAKEN"):
         Client.create(
             db=db_session,
             first_name="Jane",
@@ -40,7 +40,7 @@ def test_create_client_duplicate_email(db_session, test_user):
 
 def test_create_client_empty_fields(db_session, test_user):
     """Test that creating a client with empty required fields raises a ValueError."""
-    with pytest.raises(ValueError, match="required_fields_empty"):
+    with pytest.raises(ValueError, match="REQUIRED_FIELDS_EMPTY"):
         Client.create(
             db=db_session,
             first_name="",
@@ -48,7 +48,7 @@ def test_create_client_empty_fields(db_session, test_user):
             email="john@example.com",
             commercial_contact_id=test_user.user_id
         )
-    with pytest.raises(ValueError, match="required_fields_empty"):
+    with pytest.raises(ValueError, match="REQUIRED_FIELDS_EMPTY"):
         Client.create(
             db=db_session,
             first_name="John",
@@ -56,7 +56,7 @@ def test_create_client_empty_fields(db_session, test_user):
             email="john@example.com",
             commercial_contact_id=test_user.user_id
         )
-    with pytest.raises(ValueError, match="required_fields_empty"):
+    with pytest.raises(ValueError, match="REQUIRED_FIELDS_EMPTY"):
         Client.create(
             db=db_session,
             first_name="John",
@@ -68,7 +68,7 @@ def test_create_client_empty_fields(db_session, test_user):
 
 def test_create_client_invalid_commercial_contact(db_session):
     """Test that creating a client with an invalid commercial_contact_id raises a ValueError."""
-    with pytest.raises(ValueError, match="contact_not_found"):
+    with pytest.raises(ValueError, match="CONTACT_NOT_FOUND"):
         Client.create(
             db=db_session,
             first_name="John",
