@@ -1,7 +1,7 @@
 import pytest
 from click.testing import CliRunner
-from epic_events.views import (create_user, cli, create_client,
-                               list_users, update_user, delete_user, create_contract, create_event)
+from epic_events.views import (cli, create_user, create_client,
+                               list_users, update_user, delete_user, create_contract, list_contracts, update_contract, create_event)
 from epic_events.models import User, Client, Contract, Event
 from datetime import datetime, timedelta
 
@@ -209,3 +209,165 @@ def test_delete_user_cli_integration(db_session, test_user):
 
     users = db_session.query(User).all()
     assert len(users) == 0
+
+
+def test_create_client_cli_integration_duplicate_email(db_session, test_client):
+    """
+    Test the error handling in the create_client CLI command.
+    This test verifies that the CLI command correctly handles duplicate emails.
+    """
+    runner = CliRunner()
+    inputs = f"Test\nClient\n{test_client.email}\n1\nBusiness Corp\n1234567890\n"
+    result = runner.invoke(
+        create_client,
+        input=inputs,
+        obj={"db": db_session}
+    )
+    assert result.exit_code == 0
+    assert "❌ Error: This email is already registered." in result.output
+    clients = db_session.query(Client).all()
+    assert len(clients) == 1
+
+
+def test_create_contract_cli_integration_invalid_client(db_session, test_user):
+    """
+    Test the error handling in the create_contract CLI command.
+    This test verifies that the CLI command correctly handles invalid client IDs.
+    """
+    runner = CliRunner()
+    inputs = "1000.0\n500.0\n999\n1\n"
+    result = runner.invoke(
+        create_contract,
+        input=inputs,
+        obj={"db": db_session}
+    )
+    assert result.exit_code == 0
+    assert "❌ Error: The specified client does not exist." in result.output
+    contracts = db_session.query(Contract).all()
+    assert len(contracts) == 0
+
+
+def test_create_event_cli_integration_invalid_dates(db_session, test_user, test_client):
+    """
+    Test the error handling in the create_event CLI command.
+    This test verifies that the CLI command correctly handles invalid dates.
+    """
+    runner = CliRunner()
+    from datetime import datetime, timedelta
+    start_datetime = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d %H:%M")
+    end_datetime = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d %H:%M")
+    inputs = (f"Past Event\n{start_datetime}\n{end_datetime}\nParis\n50\nNotes\n{test_client.client_id}"
+              f"\n{test_user.user_id}\n")
+    result = runner.invoke(
+        create_event,
+        input=inputs,
+        obj={"db": db_session}
+    )
+    assert result.exit_code == 0
+    assert "❌ Error: Event date must be in the future." in result.output
+    events = db_session.query(Event).all()
+    assert len(events) == 0
+
+
+def test_update_user_cli_integration_duplicate_email(db_session, test_user):
+    """
+    Test the error handling in the update_user CLI command.
+    This test verifies that the CLI command correctly handles duplicate emails during update.
+    """
+
+    user2 = User.create_user(
+        db=db_session,
+        username="test_user2",
+        first_name="Test2",
+        last_name="User2",
+        email="test2@example.com",
+        role="commercial"
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        update_user,
+        args=[str(test_user.user_id)],
+        input=f"{test_user.username}\n{test_user.first_name}\n{test_user.last_name}\n{user2.email}\n{test_user.role}\n",
+        obj={"db": db_session}
+    )
+    assert result.exit_code == 0
+    assert "❌ Error: This email is already registered." in result.output
+    updated_user = db_session.query(User).filter_by(user_id=test_user.user_id).first()
+    assert updated_user.email == test_user.email
+
+
+def test_update_contract_cli_integration_invalid_amount(db_session, test_contract):
+    """
+    Test the error handling in the update_contract CLI command.
+    This test verifies that the CLI command correctly handles invalid amounts.
+    """
+    runner = CliRunner()
+    inputs = "-10\n500.0\n"
+    result = runner.invoke(
+        update_contract,
+        args=[str(test_contract.contract_id)],
+        input=inputs,
+        obj={"db": db_session}
+    )
+    assert result.exit_code == 1
+    assert " ❌ Unexpected error: A technical error occurred." in result.output
+    updated_contract = db_session.query(Contract).filter_by(contract_id=test_contract.contract_id).first()
+    assert updated_contract.total_price == test_contract.total_price
+
+
+def test_list_contracts_cli_integration_filter(db_session, test_user, test_client, test_contract):
+    """
+    Test the list_contracts CLI command with a filter.
+    This test verifies that the CLI command correctly lists contracts filtered by client.
+    """
+    client2 = Client.create(
+        db=db_session,
+        first_name="Test2",
+        last_name="Client2",
+        email="test2.client@example.com",
+        commercial_contact_id=test_user.user_id
+    )
+    contract2 = Contract.create(
+        db=db_session,
+        total_price=2000.0,
+        rest_to_pay=1000.0,
+        client_id=client2.client_id,
+        commercial_contact_id=test_user.user_id
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        list_contracts,
+        obj={"db": db_session}
+    )
+    assert result.exit_code == 0
+    assert "=== List of Contracts ===" in result.output
+    assert f"ID: {test_contract.contract_id}" in result.output
+    assert f"ID: {contract2.contract_id}" in result.output
+
+
+def test_full_flow_integration_with_error(db_session):
+    """
+    Test the complete integration flow with a validation error.
+    This test verifies that the CLI commands correctly handle validation errors in a full flow.
+    """
+    runner = CliRunner()
+
+    user_inputs = "john_doe\nJohn\nDoe\njohn.doe@example.com\ncommercial\n"
+    result = runner.invoke(create_user, input=user_inputs, obj={"db": db_session})
+    assert result.exit_code == 0
+    assert "✅ User created" in result.output
+
+    users = db_session.query(User).all()
+    assert len(users) == 1
+    user = users[0]
+
+    second_user_inputs = "jane_doe\nJane\nDoe\njohn.doe@example.com\ncommercial\n"
+    result = runner.invoke(create_user, input=second_user_inputs, obj={"db": db_session})
+
+    assert result.exit_code == 0
+    assert "❌ Error: This email is already registered." in result.output
+
+    users = db_session.query(User).all()
+    assert len(users) == 1
