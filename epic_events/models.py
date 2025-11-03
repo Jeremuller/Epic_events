@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship, Session
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
+from epic_events.error_management import ErrorMessages
 
 Base = declarative_base()
 
@@ -66,20 +67,20 @@ class User(Base):
         try:
             # Check for duplicate username
             if db.query(cls).filter_by(username=username).first():
-                raise ValueError("username_taken")
+                raise ValueError(ErrorMessages.USERNAME_TAKEN.name)
 
             # Check for duplicate email
             if db.query(cls).filter_by(email=email).first():
-                raise ValueError("email_taken")
+                raise ValueError(ErrorMessages.EMAIL_TAKEN.name)
 
             if role:
                 valid_roles = ["commercial", "management", "support"]
                 if role not in valid_roles:
-                    raise ValueError("invalid_role")
+                    raise ValueError(ErrorMessages.INVALID_ROLE.name)
 
             # Check for empty required fields
             if not username or not first_name or not last_name or not email or not role:
-                raise ValueError("required_fields_empty")
+                raise ValueError(ErrorMessages.REQUIRED_FIELDS_EMPTY.name)
 
             user = cls(
                 username=username,
@@ -146,18 +147,18 @@ class User(Base):
             # Check for duplicate username (if provided and different from current)
             if username is not None and username != self.username:
                 if db.query(User).filter(User.username == username, User.user_id != self.user_id).first():
-                    raise ValueError("username_taken")
+                    raise ValueError(ErrorMessages.USERNAME_TAKEN.name)
 
             # Check for duplicate email (if provided and different from current)
             if email is not None and email != self.email:
                 if db.query(User).filter(User.email == email, User.user_id != self.user_id).first():
-                    raise ValueError("email_taken")
+                    raise ValueError(ErrorMessages.EMAIL_TAKEN.name)
 
             # Validate role if provided
             if role is not None:
                 valid_roles = ["commercial", "management", "support"]
                 if role not in valid_roles:
-                    raise ValueError("invalid_role")
+                    raise ValueError(ErrorMessages.INVALID_ROLE.name)
 
             # Update fields
             if username:
@@ -209,7 +210,7 @@ class User(Base):
             db.commit()
         except Exception:
             db.rollback()
-            raise ValueError("delete_failed")
+            raise ValueError(ErrorMessages.DELETE_FAILED.name)
 
 
 class Client(Base):
@@ -278,15 +279,15 @@ class Client(Base):
         try:
             # Check for duplicate email
             if db.query(cls).filter_by(email=email).first():
-                raise ValueError("email_taken")
+                raise ValueError(ErrorMessages.EMAIL_TAKEN.name)
 
             # Check for empty required fields
             if not first_name or not last_name or not email or not commercial_contact_id:
-                raise ValueError("required_fields_empty")
+                raise ValueError(ErrorMessages.REQUIRED_FIELDS_EMPTY.name)
 
             # Check if commercial_contact_id exists
             if not db.query(User).filter_by(user_id=commercial_contact_id).first():
-                raise ValueError("contact_not_found")
+                raise ValueError(ErrorMessages.CONTACT_NOT_FOUND.name)
 
             # Create client
             client = cls(
@@ -306,7 +307,7 @@ class Client(Base):
 
         except IntegrityError:
             db.rollback()
-            raise ValueError("email_taken")
+            raise ValueError(ErrorMessages.EMAIL_TAKEN.name)
         except Exception:
             db.rollback()
             raise
@@ -332,12 +333,12 @@ class Client(Base):
             # Check for duplicate email (if email is provided and different from current)
             if email and email != self.email:
                 if db.query(Client).filter(Client.email == email, Client.client_id != self.client_id).first():
-                    raise ValueError("email_taken")
+                    raise ValueError(ErrorMessages.EMAIL_TAKEN.name)
 
             # Check if commercial_contact_id exists (if provided)
             if commercial_contact_id and commercial_contact_id != self.commercial_contact_id:
                 if not db.query(User).filter_by(user_id=commercial_contact_id).first():
-                    raise ValueError("contact_not_found")
+                    raise ValueError(ErrorMessages.CONTACT_NOT_FOUND.name)
 
             # Update fields
             if first_name:
@@ -358,7 +359,7 @@ class Client(Base):
             return self
         except IntegrityError:
             db.rollback()
-            raise ValueError("email_taken")
+            raise ValueError(ErrorMessages.EMAIL_TAKEN.name)
         except Exception:
             db.rollback()
             raise
@@ -451,19 +452,19 @@ class Contract(Base):
         try:
             # Validate total_price and rest_to_pay
             if total_price <= 0:
-                raise ValueError("invalid_total_price")
+                raise ValueError(ErrorMessages.INVALID_TOTAL_PRICE.name)
             if rest_to_pay > total_price:
-                raise ValueError("inferior_total_price")
+                raise ValueError(ErrorMessages.INFERIOR_TOTAL_PRICE.name)
             if rest_to_pay < 0:
-                raise ValueError("negative_rest_to_pay")
+                raise ValueError(ErrorMessages.NEGATIVE_REST_TO_PAY.name)
 
             # Check if client_id exists
             if not db.query(Client).filter_by(client_id=client_id).first():
-                raise ValueError("client_not_found")
+                raise ValueError(ErrorMessages.CLIENT_NOT_FOUND.name)
 
             # Check if commercial_contact_id exists
             if not db.query(User).filter_by(user_id=commercial_contact_id).first():
-                raise ValueError("contact_not_found")
+                raise ValueError(ErrorMessages.CONTACT_NOT_FOUND.name)
 
             # Create the contract
             contract = cls(
@@ -481,7 +482,7 @@ class Contract(Base):
 
         except IntegrityError:
             db.rollback()
-            raise ValueError("database_error")
+            raise ValueError(ErrorMessages.DATABASE_ERROR.name)
         except Exception:
             db.rollback()
             raise
@@ -506,28 +507,28 @@ class Contract(Base):
             # Update total_price if provided
             if total_price is not None:
                 if total_price <= 0:
-                    raise ValueError("invalid_total_price")
+                    raise ValueError(ErrorMessages.INVALID_TOTAL_PRICE.name)
                 self.total_price = total_price
 
             # Update rest_to_pay if provided
             if rest_to_pay is not None:
                 current_total = self.total_price if total_price is None else total_price
                 if rest_to_pay < 0:
-                    raise ValueError("negative_rest_to_pay")
+                    raise ValueError(ErrorMessages.NEGATIVE_REST_TO_PAY.name)
                 if rest_to_pay > current_total:
-                    raise ValueError("inferior_total_price")
+                    raise ValueError(ErrorMessages.INFERIOR_TOTAL_PRICE.name)
                 self.rest_to_pay = rest_to_pay
 
             # Update client_id if provided
             if client_id is not None and client_id != self.client_id:
                 if not db.query(Client).filter_by(client_id=client_id).first():
-                    raise ValueError("client_not_found")
+                    raise ValueError(ErrorMessages.CLIENT_NOT_FOUND.name)
                 self.client_id = client_id
 
             # Update commercial_contact_id if provided
             if commercial_contact_id is not None and commercial_contact_id != self.commercial_contact_id:
                 if not db.query(User).filter_by(user_id=commercial_contact_id).first():
-                    raise ValueError("contact_not_found")
+                    raise ValueError(ErrorMessages.CONTACT_NOT_FOUND.name)
                 self.commercial_contact_id = commercial_contact_id
 
             # Update signed status if provided
@@ -540,7 +541,7 @@ class Contract(Base):
 
         except IntegrityError:
             db.rollback()
-            raise ValueError("database_error")
+            raise ValueError(ErrorMessages.DATABASE_ERROR.name)
         except Exception:
             db.rollback()
             raise
@@ -635,17 +636,17 @@ class Event(Base):
         """
         client = db.query(Client).filter_by(client_id=client_id).first()
         if not client:
-            raise ValueError("client_not_found")
+            raise ValueError(ErrorMessages.CLIENT_NOT_FOUND.name)
 
         contact = db.query(User).filter_by(user_id=support_contact_id).first()
         if not contact:
-            raise ValueError("contact_not_found")
+            raise ValueError(ErrorMessages.CONTACT_NOT_FOUND.name)
 
         if start_datetime < datetime.now():
-            raise ValueError("event_date_in_past")
+            raise ValueError(ErrorMessages.EVENT_DATE_IN_PAST.name)
 
         if end_datetime < start_datetime:
-            raise ValueError("end_before_start")
+            raise ValueError(ErrorMessages.END_BEFORE_START.name)
 
         event = cls(
             name=name,
@@ -711,17 +712,17 @@ class Event(Base):
             ValueError: If validations fail (invalid prices, IDs not found).
         """
         if start_datetime is not None and start_datetime < datetime.now():
-            raise ValueError("event_date_in_past")
+            raise ValueError(ErrorMessages.END_BEFORE_START.name)
         if end_datetime is not None and start_datetime is not None and end_datetime < start_datetime:
-            raise ValueError("end_before_start")
+            raise ValueError(ErrorMessages.END_BEFORE_START.name)
         if client_id is not None:
             client = db.query(Client).filter_by(client_id=client_id).first()
             if not client:
-                raise ValueError("client_not_found")
+                raise ValueError(ErrorMessages.CLIENT_NOT_FOUND.name)
         if support_contact_id is not None:
             contact = db.query(User).filter_by(user_id=support_contact_id).first()
             if not contact:
-                raise ValueError("contact_not_found")
+                raise ValueError(ErrorMessages.CONTACT_NOT_FOUND.name)
 
         # Update only if every verification bellow is passing
         if name is not None:
