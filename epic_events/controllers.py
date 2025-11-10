@@ -5,6 +5,9 @@ from views import (
     list_contracts, create_contract, update_contract,
     list_events, create_event, update_event
 )
+from epic_events.database import SessionLocal
+
+db = SessionLocal
 
 
 def display_main_menu():
@@ -47,7 +50,7 @@ def manage_users():
         choice = input("Enter your choice (1-5): ")
 
         if choice == "1":
-            users = User.get_all()
+            users = User.get_all(db)
             list_users(users)
         elif choice == "2":
             create_user()
@@ -73,7 +76,7 @@ def manage_clients():
         choice = input("Enter your choice (1-4): ")
 
         if choice == "1":
-            clients = Client.get_all()
+            clients = Client.get_all(db)
             list_clients(clients)
         elif choice == "2":
             create_client()
@@ -97,7 +100,7 @@ def manage_contracts():
         choice = input("Enter your choice (1-4): ")
 
         if choice == "1":
-            contracts = Contract.get_all()
+            contracts = Contract.get_all(db)
             list_contracts(contracts)
         elif choice == "2":
             create_contract()
@@ -121,7 +124,7 @@ def manage_events():
         choice = input("Enter your choice (1-4): ")
 
         if choice == "1":
-            events = Event.get_all()
+            events = Event.get_all(db)
             list_events(events)
         elif choice == "2":
             create_event()
