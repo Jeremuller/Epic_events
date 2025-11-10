@@ -10,14 +10,15 @@ from datetime import datetime
 def cli():
     """
     Main CLI entry point for the Epic Events CRM system.
-
-    This command group organizes all subcommands related to user, client, contract,
-    and event management. Use `--help` with any subcommand for more details.
+    This command group organizes all subcommands related to user, client, contract,    and event management.
+    Use `--help` with any subcommand for more details.
     """
-    pass
 
 
-@cli.command()
+pass
+
+
+@click.command()
 @click.option("--username", prompt="Username", help="Unique username for authentication (max 100 characters).")
 @click.option("--first-name", prompt="User's first name", help="First name of the user (max 100 characters).")
 @click.option("--last-name", prompt="User's last name", help="Last name of the user (max 100 characters).")
@@ -66,7 +67,7 @@ def create_user(username, first_name, last_name, email, role):
         raise
 
 
-@cli.command()
+@click.command()
 def list_users():
     """
     Lists all users in the CRM system.
@@ -95,7 +96,7 @@ def list_users():
         db.close()
 
 
-@cli.command()
+@click.command()
 @click.argument("user_id", type=int)
 def update_user(user_id):
     """
@@ -131,7 +132,7 @@ def update_user(user_id):
         raise
 
 
-@cli.command()
+@click.command()
 @click.argument("user_id", type=int)
 def delete_user(user_id):
     """
@@ -170,7 +171,15 @@ def delete_user(user_id):
         db.close()
 
 
-@cli.command()
+@click.command()
+def clients():
+    """
+    Commands related to client management.
+    """
+    pass
+
+
+@click.command()
 @click.option("--first-name", prompt="First name", help="Client's first name.")
 @click.option("--last-name", prompt="Last name", help="Client's last name.")
 @click.option("--email", prompt="Email", help="Client's email address.")
@@ -212,7 +221,7 @@ def create_client(first_name, last_name, email, commercial_id, business_name, te
         raise
 
 
-@cli.command()
+@click.command()
 def list_clients():
     """
     Lists all clients in the CRM system.
@@ -248,7 +257,7 @@ def list_clients():
         db.close()
 
 
-@cli.command()
+@click.command()
 @click.argument("client_id", type=int)
 def update_client(client_id):
     """
@@ -302,7 +311,7 @@ def update_client(client_id):
         raise
 
 
-@cli.command()
+@click.command()
 @click.option("--total-price", prompt="Total price", type=float, help="Total amount of the contract (e.g., 1000.00).")
 @click.option("--rest-to-pay", prompt="Rest to pay", type=float, help="Remaining amount to be paid.")
 @click.option("--client-id", prompt="Client ID", type=int, help="ID of the associated client.")
@@ -341,7 +350,7 @@ def create_contract(total_price, rest_to_pay, client_id, commercial_id):
         raise
 
 
-@cli.command()
+@click.command()
 def list_contracts():
     """
     Lists all contracts in the CRM system.
@@ -379,7 +388,7 @@ def list_contracts():
         db.close()
 
 
-@cli.command()
+@click.command()
 @click.argument("contract_id", type=int)
 def update_contract(contract_id):
     """
@@ -423,7 +432,7 @@ def update_contract(contract_id):
         raise
 
 
-@cli.command()
+@click.command()
 @click.option("--name", prompt="Event name", help="Name of the event (max 200 characters).")
 @click.option("--start-datetime", prompt="Start date and time (YYYY-MM-DD HH:MM)",
               help="Start date and time of the event.")
@@ -479,7 +488,7 @@ def create_event(name, start_datetime, end_datetime, location, attendees, notes,
         raise
 
 
-@cli.command()
+@click.command()
 def list_events():
     """
     Lists all events in the CRM system.
@@ -516,7 +525,7 @@ def list_events():
         db.close()
 
 
-@cli.command()
+@click.command()
 @click.argument("event_id", type=int)
 def update_event(event_id):
     """
