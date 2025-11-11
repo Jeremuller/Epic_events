@@ -67,33 +67,37 @@ def create_user(username, first_name, last_name, email, role):
         raise
 
 
-@click.command()
-def list_users():
+def list_users(users):
     """
     Lists all users in the CRM system.
 
-    This command retrieves and displays all users from the database,
-    including their ID, username, full name, email, and role.
+    Args:
+        users (list[User]): List of User objects to display.
+                           If empty, a message is shown.
+
+    Notes:
+        This function is designed to be called from the controller.
+        It handles display and basic error feedback, but assumes the list of users
+        is already retrieved by the controller (via User.get_all(db)).
     """
-    db = click.get_current_context().obj['db']
     try:
-        users = User.get_all(db)
         if not users:
-            click.echo("No users found in the database.")
+            print("No users found in the database.")
             return
 
-        click.echo("\n=== List of Users ===")
+        print("\n=== List of Users ===")
         for user in users:
-            click.echo(
-                f"ID: {user.user_id} | {user.username} | {user.first_name} {user.last_name} | "
-                f"Email: {user.email} | Role: {user.role}")
+            print(
+                f"ID: {user.user_id} | {user.username} | "
+                f"{user.first_name} {user.last_name} | "
+                f"Email: {user.email} | Role: {user.role}"
+            )
+
     except (OperationalError, ProgrammingError, InternalError):
-        click.echo(f"❌ Database error: {ErrorMessages.DATABASE_ERROR.value}")
+        print(f"❌ Database error: {ErrorMessages.DATABASE_ERROR.value}")
     except Exception:
-        click.echo(f"❌ Unexpected error: {ErrorMessages.DATABASE_ERROR.value}")
+        print(f"❌ Unexpected error: {ErrorMessages.DATABASE_ERROR.value}")
         raise
-    finally:
-        db.close()
 
 
 @click.command()
