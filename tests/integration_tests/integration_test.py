@@ -1,7 +1,8 @@
 import pytest
 from click.testing import CliRunner
 from epic_events.views import (cli, create_user, create_client,
-                               list_users, update_user, delete_user, create_contract, list_contracts, update_contract, create_event)
+                               list_users, update_user, delete_user,
+                               create_contract, list_contracts, update_contract, create_event)
 from epic_events.models import User, Client, Contract, Event
 from datetime import datetime, timedelta
 
