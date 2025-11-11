@@ -1,11 +1,9 @@
 import click
+from utils import ErrorMessages
 from models import User, Client, Contract, Event
-from views import (
-    list_users, create_user, update_user, delete_user,
-    list_clients, create_client, update_client,
-    list_contracts, create_contract, update_contract,
-    list_events, create_event, update_event
-)
+from views import (list_users, list_clients, list_contracts, list_events, prompt_user_creation,
+                   display_error, display_success)
+
 from epic_events.database import SessionLocal
 
 db = SessionLocal()
@@ -57,7 +55,7 @@ def manage_users():
             except Exception as e:
                 print(f"Error fetching users: {e}")
         elif choice == "2":
-            create_user()
+            create_user(db)
         elif choice == "3":
             update_user()
         elif choice == "4":
@@ -138,6 +136,49 @@ def manage_events():
             break
         else:
             print("Invalid choice. Please enter a number between 1 and 4.")
+
+
+def create_user(db):
+    """
+    Controller function to orchestrate the creation of a new user.
+    Steps:
+      1. Prompts the user for input via the view layer.
+      2. Validates and creates the user via the model layer.
+      3. Handles success/error feedback via the view layer.
+
+    Args:
+        db (sqlalchemy.orm.Session): Active database session.
+
+    Notes:
+        - All user interaction is delegated to the view layer.
+        - All business logic and data operations are delegated to the model layer.
+        - Error handling is centralized here, with display delegated to the view.
+    """
+    try:
+        # Step 1: Delegate user input to the view
+        user_data = prompt_user_creation()
+
+        # Step 2: Delegate user creation to the model
+        user = User.create_user(
+            db=db,
+            username=user_data["username"],
+            first_name=user_data["first_name"],
+            last_name=user_data["last_name"],
+            email=user_data["email"],
+            role=user_data["role"],
+            password="default_hashed_password"  # Note: Replace with secure password logic
+        )
+
+        # Step 3: Delegate success feedback to the view
+        display_user_creation_success(user)
+
+    except ValueError as e:
+        # Delegate error display to the view
+        display_validation_error(str(e))
+    except Exception as e:
+        # Delegate database error display to the view
+        display_database_error(str(e))
+        raise  # Re-raise for logging or further handling
 
 
 if __name__ == "__main__":

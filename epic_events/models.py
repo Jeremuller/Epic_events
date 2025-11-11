@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship, Session
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
-from epic_events.error_management import ErrorMessages
+from epic_events.utils import ErrorMessages
 
 Base = declarative_base()
 

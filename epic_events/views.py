@@ -1,9 +1,46 @@
 import click
 from epic_events.models import User, Client, Contract, Event
-from epic_events.error_management import ErrorMessages
+from epic_events.utils import ErrorMessages
 from epic_events.database import SessionLocal
 from sqlalchemy.exc import OperationalError, ProgrammingError, InternalError
 from datetime import datetime
+import click
+from epic_events.utils import ErrorMessages
+from utils import validate_length
+
+
+def prompt_user_creation():
+    """
+    Prompts the user to enter details for creating a new user.
+    Uses Click for input validation.
+    Returns:
+        dict: User details (username, first_name, last_name, email, role).
+    """
+    username = validate_length("Username (max 100 chars)", 100)
+    first_name = validate_length("First name (max 100 chars)", 100)
+    last_name = validate_length("Last name (max 100 chars)", 100)
+    email = click.prompt("Email")
+    role = click.prompt(
+        "Role",
+        type=click.Choice(["commercial", "management", "support"], case_sensitive=False)
+    )
+    return {
+        "username": username,
+        "first_name": first_name,
+        "last_name": last_name,
+        "email": email,
+        "role": role
+    }
+
+
+def display_success(message):
+    """Displays a success message."""
+    click.echo(f"✅ {message}")
+
+
+def display_error(message):
+    """Displays an error message."""
+    click.echo(f"❌ Error: {message}")
 
 
 @click.group()
