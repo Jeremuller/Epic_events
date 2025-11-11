@@ -51,8 +51,8 @@ def test_create_user_duplicate_username(runner, db_session):
     assert len(users) == 1
 
 
-def test_list_users_command(runner, db_session):
-    """Test the list_users CLI command."""
+def test_list_users_with_data(capsys, db_session):
+    """Test the list_users function with existing users."""
     User.create_user(
         db=db_session,
         username="jdoe",
@@ -62,19 +62,22 @@ def test_list_users_command(runner, db_session):
         role="commercial"
     )
 
-    result = runner.invoke(list_users, obj={"db": db_session})
+    users = User.get_all(db_session)
 
-    assert result.exit_code == 0
-    assert "=== List of Users ===" in result.output
-    assert "jdoe" in result.output
-    assert "John Doe" in result.output
+    list_users(users)
+
+    captured = capsys.readouterr()
+
+    assert "=== List of Users ===" in captured.out
+    assert "jdoe" in captured.out
+    assert "John Doe" in captured.out
 
 
-def test_list_users_empty_db(runner, db_session):
-    """Test list_users with an empty database."""
-    result = runner.invoke(list_users, obj={"db": db_session})
-    assert result.exit_code == 0
-    assert "No users found in the database." in result.output
+def test_list_users_empty(capsys, db_session):
+    """Test the list_users function with an empty database."""
+    list_users([])
+    captured = capsys.readouterr()
+    assert "No users found in the database." in captured.out
 
 
 def test_update_user_command(runner, db_session):

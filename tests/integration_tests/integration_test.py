@@ -151,20 +151,20 @@ def test_full_flow_integration(db_session):
     assert len(events) == 1
 
 
-def test_list_users_cli_integration(db_session, test_user):
+def test_list_users_integration(capsys, db_session, test_user):
     """
-    Test the list_users CLI command.
-    This test verifies that the CLI command correctly lists all users.
+    Test the list_users function with a pre-populated database.
+    This test verifies that the function correctly lists all users.
     """
-    runner = CliRunner()
+    users = User.get_all(db_session)
 
-    result = runner.invoke(list_users, obj={"db": db_session})
+    list_users(users)
 
-    assert result.exit_code == 0
+    captured = capsys.readouterr()
 
-    assert "=== List of Users ===" in result.output
-    assert f"ID: {test_user.user_id}" in result.output
-    assert f"{test_user.username}" in result.output
+    assert "=== List of Users ===" in captured.out
+    assert f"ID: {test_user.user_id}" in captured.out
+    assert f"{test_user.username}" in captured.out
 
 
 def test_update_user_cli_integration(db_session, test_user):
