@@ -1,3 +1,4 @@
+import click
 from models import User, Client, Contract, Event
 from views import (
     list_users, create_user, update_user, delete_user,
@@ -7,7 +8,7 @@ from views import (
 )
 from epic_events.database import SessionLocal
 
-db = SessionLocal
+db = SessionLocal()
 
 
 def display_main_menu():
@@ -50,8 +51,11 @@ def manage_users():
         choice = input("Enter your choice (1-5): ")
 
         if choice == "1":
-            users = User.get_all(db)
-            list_users(users)
+            try:
+                users = User.get_all(db)
+                list_users(users)
+            except Exception as e:
+                print(f"Error fetching users: {e}")
         elif choice == "2":
             create_user()
         elif choice == "3":
