@@ -1,4 +1,6 @@
 from enum import Enum
+import click
+
 
 class ErrorMessages(Enum):
     """
@@ -37,3 +39,19 @@ class ErrorMessages(Enum):
             return cls[error_key].value
         except KeyError:
             return cls.DATABASE_ERROR.value
+
+
+def validate_length(prompt_text, max_length):
+    """
+    Helper function to validate the length of user input.
+    Args:
+        prompt_text (str): The prompt to display.
+        max_length (int): Maximum allowed length.
+    Returns:
+        str: Validated user input.
+    """
+    while True:
+        value = click.prompt(prompt_text)
+        if len(value) <= max_length:
+            return value
+        print(f"Error: Input must be {max_length} characters or less. Try again.")
