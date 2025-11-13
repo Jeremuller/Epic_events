@@ -170,15 +170,13 @@ def create_user(db):
         )
 
         # Step 3: Delegate success feedback to the view
-        display_user_creation_success(user)
+        display_success(f"User created: {user.first_name} {user.last_name} (ID: {user.user_id})")
 
     except ValueError as e:
-        # Delegate error display to the view
-        display_validation_error(str(e))
+        display_error(str(e))
     except Exception as e:
-        # Delegate database error display to the view
-        display_database_error(str(e))
-        raise  # Re-raise for logging or further handling
+        display_error(str(e))
+        raise
 
 
 if __name__ == "__main__":

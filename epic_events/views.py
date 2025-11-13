@@ -38,9 +38,9 @@ def display_success(message):
     click.echo(f"✅ {message}")
 
 
-def display_error(message):
-    """Displays an error message."""
-    click.echo(f"❌ Error: {message}")
+def display_error(message_key):
+    """Displays error message using our ErrorMessages class."""
+    click.echo(f"❌ Error: {ErrorMessages.get_message(message_key)}")
 
 
 @click.group()
