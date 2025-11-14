@@ -1,5 +1,3 @@
-import click
-from utils import ErrorMessages
 from models import User, Client, Contract, Event
 from views import (list_users, list_clients, list_contracts, list_events, prompt_user_creation,
                    display_error, display_success)

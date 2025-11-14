@@ -47,6 +47,39 @@ class UserView:
             "role": role
         }
 
+    @staticmethod
+    def list_users(users):
+        """
+        Lists all users in the CRM system.
+
+        Args:
+            users (list[User]): List of User objects to display.
+                               If empty, a message is shown.
+
+        Notes:
+            This function is designed to be called from the controller.
+            It handles display and basic error feedback, but assumes the list of users
+            is already retrieved by the controller (via User.get_all(db)).
+        """
+        try:
+            if not users:
+                print("No users found in the database.")
+                return
+
+            print("\n=== List of Users ===")
+            for user in users:
+                print(
+                    f"ID: {user.user_id} | {user.username} | "
+                    f"{user.first_name} {user.last_name} | "
+                    f"Email: {user.email} | Role: {user.role}"
+                )
+
+        except (OperationalError, ProgrammingError, InternalError):
+            print(f"❌ Database error: {ErrorMessages.DATABASE_ERROR.value}")
+        except Exception:
+            print(f"❌ Unexpected error: {ErrorMessages.DATABASE_ERROR.value}")
+            raise
+
 
 @click.group()
 def cli():
@@ -106,39 +139,6 @@ def create_user(username, first_name, last_name, email, role):
     except Exception:
 
         click.echo(f"❌ Error: {ErrorMessages.DATABASE_ERROR.value}")
-        raise
-
-
-def list_users(users):
-    """
-    Lists all users in the CRM system.
-
-    Args:
-        users (list[User]): List of User objects to display.
-                           If empty, a message is shown.
-
-    Notes:
-        This function is designed to be called from the controller.
-        It handles display and basic error feedback, but assumes the list of users
-        is already retrieved by the controller (via User.get_all(db)).
-    """
-    try:
-        if not users:
-            print("No users found in the database.")
-            return
-
-        print("\n=== List of Users ===")
-        for user in users:
-            print(
-                f"ID: {user.user_id} | {user.username} | "
-                f"{user.first_name} {user.last_name} | "
-                f"Email: {user.email} | Role: {user.role}"
-            )
-
-    except (OperationalError, ProgrammingError, InternalError):
-        print(f"❌ Database error: {ErrorMessages.DATABASE_ERROR.value}")
-    except Exception:
-        print(f"❌ Unexpected error: {ErrorMessages.DATABASE_ERROR.value}")
         raise
 
 
