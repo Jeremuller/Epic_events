@@ -9,38 +9,44 @@ from epic_events.utils import ErrorMessages
 from utils import validate_length
 
 
-def prompt_user_creation():
-    """
-    Prompts the user to enter details for creating a new user.
-    Uses Click for input validation.
-    Returns:
-        dict: User details (username, first_name, last_name, email, role).
-    """
-    username = validate_length("Username (max 100 chars)", 100)
-    first_name = validate_length("First name (max 100 chars)", 100)
-    last_name = validate_length("Last name (max 100 chars)", 100)
-    email = click.prompt("Email")
-    role = click.prompt(
-        "Role",
-        type=click.Choice(["commercial", "management", "support"], case_sensitive=False)
-    )
-    return {
-        "username": username,
-        "first_name": first_name,
-        "last_name": last_name,
-        "email": email,
-        "role": role
-    }
+class DisplayMessages:
+    @staticmethod
+    def display_success(message):
+        """Displays a success message."""
+        click.echo(f"✅ {message}")
+
+    @staticmethod
+    def display_error(message_key):
+        """Displays error message using our ErrorMessages class."""
+        click.echo(f"❌ Error: {ErrorMessages.get_message(message_key)}")
 
 
-def display_success(message):
-    """Displays a success message."""
-    click.echo(f"✅ {message}")
+class UserView:
+    """Static methods for user-related view operations."""
 
-
-def display_error(message_key):
-    """Displays error message using our ErrorMessages class."""
-    click.echo(f"❌ Error: {ErrorMessages.get_message(message_key)}")
+    @staticmethod
+    def prompt_user_creation():
+        """
+        Prompts the user to enter details for creating a new user.
+        Uses Click for input validation.
+        Returns:
+            dict: User details (username, first_name, last_name, email, role).
+        """
+        username = validate_length("Username (max 100 chars)", 100)
+        first_name = validate_length("First name (max 100 chars)", 100)
+        last_name = validate_length("Last name (max 100 chars)", 100)
+        email = click.prompt("Email")
+        role = click.prompt(
+            "Role",
+            type=click.Choice(["commercial", "management", "support"], case_sensitive=False)
+        )
+        return {
+            "username": username,
+            "first_name": first_name,
+            "last_name": last_name,
+            "email": email,
+            "role": role
+        }
 
 
 @click.group()
