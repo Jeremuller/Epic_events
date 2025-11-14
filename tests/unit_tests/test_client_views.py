@@ -12,7 +12,7 @@ def runner():
 
 def test_create_client_command(runner, db_session):
     """Test the create_client CLI command with valid inputs."""
-    user = User.create_user(
+    user = User.create(
         db=db_session,
         username="commercial1",
         first_name="John",
@@ -37,7 +37,7 @@ def test_create_client_command(runner, db_session):
 
 def test_create_client_duplicate_email(runner, db_session):
     """Test create_client with a duplicate email."""
-    user = User.create_user(
+    user = User.create(
         db=db_session,
         username="commercial1",
         first_name="John",
@@ -82,7 +82,7 @@ def test_create_client_invalid_commercial_id(runner, db_session):
 
 def test_list_clients_command(runner, db_session):
     """Test the list_clients CLI command."""
-    user = User.create_user(
+    user = User.create(
         db=db_session,
         username="commercial1",
         first_name="John",
@@ -125,7 +125,7 @@ def test_update_client_command(runner, db_session, test_user, test_client):
 
 def test_update_client_duplicate_email(runner, db_session):
     """Test update_client with a duplicate email."""
-    user = User.create_user(
+    user = User.create(
         db=db_session,
         username="commercial1",
         first_name="John",

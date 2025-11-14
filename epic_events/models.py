@@ -44,8 +44,8 @@ class User(Base):
     events = relationship("Event", back_populates="support_contact")
 
     @classmethod
-    def create_user(cls, db: Session, username: str, first_name: str, last_name: str, email: str, role: str,
-                    password: str = "default_hashed_password"):
+    def create(cls, db: Session, username: str, first_name: str, last_name: str, email: str, role: str,
+               password: str = "default_hashed_password"):
         """
         Creates a new user in the database.
 

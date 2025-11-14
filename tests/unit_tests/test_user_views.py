@@ -31,7 +31,7 @@ def test_create_user_command(runner, db_session):
 
 def test_create_user_duplicate_username(runner, db_session):
     """Test create_user with a duplicate username."""
-    User.create_user(
+    User.create(
         db=db_session,
         username="mickey",
         first_name="John",
@@ -53,7 +53,7 @@ def test_create_user_duplicate_username(runner, db_session):
 
 def test_list_users_with_data(capsys, db_session):
     """Test the list_users function with existing users."""
-    User.create_user(
+    User.create(
         db=db_session,
         username="jdoe",
         first_name="John",
@@ -82,7 +82,7 @@ def test_list_users_empty(capsys, db_session):
 
 def test_update_user_command(runner, db_session):
     """Test the update_user CLI command."""
-    user = User.create_user(
+    user = User.create(
         db=db_session,
         username="test",
         first_name="John",
@@ -110,7 +110,7 @@ def test_update_user_command(runner, db_session):
 
 def test_update_user_duplicate_email(runner, db_session):
     """Test update_user with a duplicate email."""
-    user1 = User.create_user(
+    user1 = User.create(
         db=db_session,
         username="user1",
         first_name="John",
@@ -118,7 +118,7 @@ def test_update_user_duplicate_email(runner, db_session):
         email="john@example.com",
         role="commercial"
     )
-    user2 = User.create_user(
+    user2 = User.create(
         db=db_session,
         username="user2",
         first_name="Jane",
@@ -142,7 +142,7 @@ def test_update_user_duplicate_email(runner, db_session):
 def test_delete_user_command(runner, db_session):
     """Test the delete_user CLI command."""
 
-    user = User.create_user(
+    user = User.create(
         db=db_session,
         username="jdoe",
         first_name="John",
@@ -169,7 +169,7 @@ def test_delete_user_command(runner, db_session):
 
 def test_delete_user_cancelled(runner, db_session):
     """Test that delete_user cancels when user responds 'no'."""
-    user = User.create_user(
+    user = User.create(
         db=db_session,
         username="jdoe",
         first_name="John",

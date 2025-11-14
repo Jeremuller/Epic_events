@@ -1,6 +1,5 @@
 from models import User, Client, Contract, Event
-from views import (list_users, list_clients, list_contracts, list_events, prompt_user_creation,
-                   display_error, display_success)
+from views import (DisplayMessages, UserView)
 
 from epic_events.database import SessionLocal
 
@@ -22,13 +21,13 @@ class ControllerMenus:
             choice = input("Enter your choice (1-5): ")
 
             if choice == "1":
-                manage_users()
+                ControllerMenus.manage_users()
             elif choice == "2":
-                manage_clients()
+                ControllerMenus.manage_clients()
             elif choice == "3":
-                manage_contracts()
+                ControllerMenus.manage_contracts()
             elif choice == "4":
-                manage_events()
+                ControllerMenus.manage_events()
             elif choice == "5":
                 print("Exiting CRM. Goodbye!")
                 break
@@ -49,13 +48,9 @@ class ControllerMenus:
             choice = input("Enter your choice (1-5): ")
 
             if choice == "1":
-                try:
-                    users = User.get_all(db)
-                    list_users(users)
-                except Exception as e:
-                    print(f"Error fetching users: {e}")
+                UserController.list_users(db)
             elif choice == "2":
-                create_user(db)
+                UserController.create_user(db)
             elif choice == "3":
                 update_user()
             elif choice == "4":
@@ -170,10 +165,10 @@ class UserController:
         """
         try:
             # Step 1: Delegate user input to the view layer
-            user_data = prompt_user_creation()
+            user_data = UserView.prompt_user_creation()
 
             # Step 2: Delegate user validation and object creation to the model layer
-            user = User.create_user(
+            user = User.create(
                 db=db,
                 username=user_data["username"],
                 first_name=user_data["first_name"],
@@ -189,19 +184,45 @@ class UserController:
             db.refresh(user)
 
             # Step 4: Delegate success feedback to the view layer
-            display_success(f"User created: {user.first_name} {user.last_name} (ID: {user.user_id})")
+            DisplayMessages.display_success(f"User created: {user.first_name} {user.last_name} (ID: {user.user_id})")
 
         except ValueError as e:
             # Handle business logic validation errors
             db.rollback()
-            display_error(str(e))
+            DisplayMessages.display_error(str(e))
 
         except Exception:
             # Handle database/technical errors
             db.rollback()
-            display_error("DATABASE_ERROR")
+            DisplayMessages.display_error("DATABASE_ERROR")
+            raise
+
+    @staticmethod
+    def list_users(db):
+        """
+            Controller method to list all users in the CRM system.
+            This method orchestrates the retrieval of user data from the database,
+            handles potential errors, and delegates the display to the view layer.
+
+            Args:
+                db (sqlalchemy.orm.Session): Active SQLAlchemy database session for data retrieval.
+
+            Error Handling:
+                - Catches unexpected errors and provides a generic error message.
+                - Uses ErrorMessages enum for consistent error messaging across the application.
+            """
+        try:
+            # Step 1: Retrieve users from the database (model layer)
+            users = User.get_all(db)
+
+            # Step 2: Delegate display to the view layer
+            UserView.list_users(users)
+
+        except Exception:
+            # Handle unexpected errors
+            DisplayMessages.display_error("DATABASE_ERROR")
             raise
 
 
 if __name__ == "__main__":
-    display_main_menu()
+    ControllerMenus.display_main_menu()

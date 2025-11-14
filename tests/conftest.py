@@ -49,7 +49,7 @@ def db_session():
 @pytest.fixture()
 def test_user(db_session):
     """Fixture to create a test user."""
-    user = User.create_user(
+    user = User.create(
         db=db_session,
         username="test_user",
         first_name="Test",

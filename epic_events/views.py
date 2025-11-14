@@ -50,35 +50,22 @@ class UserView:
     @staticmethod
     def list_users(users):
         """
-        Lists all users in the CRM system.
+        Displays a list of users.
 
         Args:
             users (list[User]): List of User objects to display.
-                               If empty, a message is shown.
-
-        Notes:
-            This function is designed to be called from the controller.
-            It handles display and basic error feedback, but assumes the list of users
-            is already retrieved by the controller (via User.get_all(db)).
         """
-        try:
-            if not users:
-                print("No users found in the database.")
-                return
+        if not users:
+            print("No users found in the database.")
+            return
 
-            print("\n=== List of Users ===")
-            for user in users:
-                print(
-                    f"ID: {user.user_id} | {user.username} | "
-                    f"{user.first_name} {user.last_name} | "
-                    f"Email: {user.email} | Role: {user.role}"
-                )
-
-        except (OperationalError, ProgrammingError, InternalError):
-            print(f"❌ Database error: {ErrorMessages.DATABASE_ERROR.value}")
-        except Exception:
-            print(f"❌ Unexpected error: {ErrorMessages.DATABASE_ERROR.value}")
-            raise
+        print("\n=== List of Users ===")
+        for user in users:
+            print(
+                f"ID: {user.user_id} | {user.username} | "
+                f"{user.first_name} {user.last_name} | "
+                f"Email: {user.email} | Role: {user.role}"
+            )
 
 
 @click.group()
@@ -118,7 +105,7 @@ def create_user(username, first_name, last_name, email, role):
     db = click.get_current_context().obj['db']
     try:
         # Create the user using the class method (note: password is set to default here)
-        user = User.create_user(
+        user = User.create(
             db=db,
             username=username,
             first_name=first_name,

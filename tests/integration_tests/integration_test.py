@@ -276,7 +276,7 @@ def test_update_user_cli_integration_duplicate_email(db_session, test_user):
     This test verifies that the CLI command correctly handles duplicate emails during update.
     """
 
-    user2 = User.create_user(
+    user2 = User.create(
         db=db_session,
         username="test_user2",
         first_name="Test2",
