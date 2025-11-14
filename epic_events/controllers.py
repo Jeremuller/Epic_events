@@ -140,25 +140,35 @@ def manage_events():
 
 def create_user(db):
     """
-    Controller function to orchestrate the creation of a new user.
-    Steps:
-      1. Prompts the user for input via the view layer.
-      2. Validates and creates the user via the model layer.
-      3. Handles success/error feedback via the view layer.
+    Controller function to orchestrate the creation of a new user in the CRM system.
+    This function acts as an intermediary between the view (user interaction) and the model (business logic).
+    It handles transaction management (commit/rollback) and error feedback.
 
     Args:
-        db (sqlalchemy.orm.Session): Active database session.
+        db (sqlalchemy.orm.Session): Active database session for persistence operations.
 
-    Notes:
-        - All user interaction is delegated to the view layer.
-        - All business logic and data operations are delegated to the model layer.
-        - Error handling is centralized here, with display delegated to the view.
+    Workflow:
+        1. Delegates user input collection to the view layer (`prompt_user_creation`).
+        2. Delegates user validation and object creation to the model layer (`User.create_user`).
+        3. Manages database persistence (commit/rollback) based on operation success/failure.
+        4. Delegates success/error feedback to the view layer (`display_success`/`display_error`).
+
+    Transaction Management:
+        - Commits changes to the database if the operation succeeds.
+        - Rolls back changes if any error occurs (validation or database error).
+        - Ensures data consistency by handling exceptions explicitly.
+
+    Error Handling:
+        - Catches `ValueError` for business logic validation errors (e.g., duplicate username/email).
+        - Catches generic `Exception` for database/technical errors.
+        - Delegates error display to the view layer with appropriate error keys.
+
     """
     try:
-        # Step 1: Delegate user input to the view
+        # Step 1: Delegate user input to the view layer
         user_data = prompt_user_creation()
 
-        # Step 2: Delegate user creation to the model
+        # Step 2: Delegate user validation and object creation to the model layer
         user = User.create_user(
             db=db,
             username=user_data["username"],
@@ -166,16 +176,26 @@ def create_user(db):
             last_name=user_data["last_name"],
             email=user_data["email"],
             role=user_data["role"],
-            password="default_hashed_password"  # Note: Replace with secure password logic
+            password="default_hashed_password"
         )
 
-        # Step 3: Delegate success feedback to the view
+        # Step 3: Persist the user (controller responsibility)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+        # Step 4: Delegate success feedback to the view layer
         display_success(f"User created: {user.first_name} {user.last_name} (ID: {user.user_id})")
 
     except ValueError as e:
+        # Handle business logic validation errors
+        db.rollback()
         display_error(str(e))
-    except Exception as e:
-        display_error(str(e))
+
+    except Exception:
+        # Handle database/technical errors
+        db.rollback()
+        display_error("DATABASE_ERROR")
         raise
 
 

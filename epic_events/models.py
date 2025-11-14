@@ -64,40 +64,32 @@ class User(Base):
         Raises:
             ValueError: If username/email is taken, fields are empty, or role is invalid.
         """
-        try:
-            # Check for duplicate username
-            if db.query(cls).filter_by(username=username).first():
-                raise ValueError(ErrorMessages.USERNAME_TAKEN.name)
 
-            # Check for duplicate email
-            if db.query(cls).filter_by(email=email).first():
-                raise ValueError(ErrorMessages.EMAIL_TAKEN.name)
+        # Check for duplicate username
+        if db.query(cls).filter_by(username=username).first():
+            raise ValueError(ErrorMessages.USERNAME_TAKEN.name)
 
-            if role:
-                valid_roles = ["commercial", "management", "support"]
-                if role not in valid_roles:
-                    raise ValueError(ErrorMessages.INVALID_ROLE.name)
+        # Check for duplicate email
+        if db.query(cls).filter_by(email=email).first():
+            raise ValueError(ErrorMessages.EMAIL_TAKEN.name)
 
-            # Check for empty required fields
-            if not username or not first_name or not last_name or not email or not role:
-                raise ValueError(ErrorMessages.REQUIRED_FIELDS_EMPTY.name)
+        if role:
+            valid_roles = ["commercial", "management", "support"]
+            if role not in valid_roles:
+                raise ValueError(ErrorMessages.INVALID_ROLE.name)
 
-            user = cls(
-                username=username,
-                first_name=first_name,
-                last_name=last_name,
-                email=email,
-                role=role,
-                password=password
-            )
-            db.add(user)
-            db.commit()
-            db.refresh(user)
-            return user
+        # Check for empty required fields
+        if not all:
+            raise ValueError(ErrorMessages.REQUIRED_FIELDS_EMPTY.name)
 
-        except Exception:
-            db.rollback()
-            raise
+        return cls(
+            username=username,
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            role=role,
+            password=password
+        )
 
     @classmethod
     def get_all(cls, db: Session):
