@@ -1,4 +1,3 @@
-import click
 from epic_events.models import User, Client, Contract, Event
 from epic_events.utils import ErrorMessages
 from epic_events.database import SessionLocal
