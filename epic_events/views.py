@@ -20,6 +20,72 @@ class DisplayMessages:
         click.echo(f"❌ Error: {ErrorMessages.get_message(message_key)}")
 
 
+class MenuView:
+    """Static methods for displaying menus and capturing user choices."""
+
+    @staticmethod
+    def display_main_menu():
+        """Displays the main menu and captures user choice."""
+        print("\n=== CRM Main Menu ===")
+        print("1. Manage Users")
+        print("2. Manage Clients")
+        print("3. Manage Contracts")
+        print("4. Manage Events")
+        print("5. Quit")
+        return input("Enter your choice (1-5): ")
+
+    @staticmethod
+    def display_users_menu():
+        """Displays the Users submenu and captures user choice."""
+        print("\n=== Users Menu ===")
+        print("1. List Users")
+        print("2. Create User")
+        print("3. Update User")
+        print("4. Delete User")
+        print("5. Back to Main Menu")
+        return input("Enter your choice (1-5): ")
+
+    @staticmethod
+    def display_clients_menu():
+        """Displays the Clients submenu and captures user choice."""
+        print("\n=== Clients Menu ===")
+        print("1. List Clients")
+        print("2. Create Client")
+        print("3. Update Client")
+        print("4. Back to Main Menu")
+        return input("Enter your choice (1-4): ")
+
+    @staticmethod
+    def display_contracts_menu():
+        """Displays the Contracts submenu and captures user choice."""
+        print("\n=== Contracts Menu ===")
+        print("1. List Contracts")
+        print("2. Create Contract")
+        print("3. Update Contract")
+        print("4. Back to Main Menu")
+        return input("Enter your choice (1-4): ")
+
+    @staticmethod
+    def display_events_menu():
+        """Displays the Events submenu and captures user choice."""
+        print("\n=== Events Menu ===")
+        print("1. List Events")
+        print("2. Create Event")
+        print("3. Update Event")
+        print("4. Back to Main Menu")
+        return input("Enter your choice (1-4): ")
+
+    @staticmethod
+    def display_invalid_choice(menu_name):
+        """Displays an error message for invalid menu choices."""
+        print(f"Invalid choice. Please enter a valid number for the {menu_name} menu.")
+
+    @staticmethod
+    def display_goodbye():
+        """Displays a goodbye message when exiting the CRM."""
+        print("Exiting CRM. Goodbye!")
+
+
 class UserView:
     """Static methods for user-related view operations."""
 
