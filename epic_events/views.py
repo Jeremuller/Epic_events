@@ -133,6 +133,44 @@ class UserView:
                 f"Email: {user.email} | Role: {user.role}"
             )
 
+    @staticmethod
+    def prompt_update(user):
+        """
+        Prompts the user to update an existing user's information.
+        Args:
+            user (User): The user object to update.
+        Returns:
+            dict: Updated fields (only non-empty fields are included).
+                  Example: {"first_name": "NewName", "email": "new@example.com"}
+        """
+        click.echo(f"Updating user: {user.first_name} {user.last_name} (ID: {user.user_id})")
+
+        # Prompt for each field with current value as default
+        username = click.prompt("New username", default=user.username)
+        first_name = click.prompt("New first name", default=user.first_name)
+        last_name = click.prompt("New last name", default=user.last_name)
+        email = click.prompt("New email", default=user.email)
+        role = click.prompt(
+            "New role",
+            type=click.Choice(["commercial", "management", "support"]),
+            default=user.role
+        )
+
+        # Return only fields that were actually changed
+        updated_data = {}
+        if username != user.username:
+            updated_data["username"] = username
+        if first_name != user.first_name:
+            updated_data["first_name"] = first_name
+        if last_name != user.last_name:
+            updated_data["last_name"] = last_name
+        if email != user.email:
+            updated_data["email"] = email
+        if role != user.role:
+            updated_data["role"] = role
+
+        return updated_data
+
 
 @click.group()
 def cli():

@@ -189,6 +189,51 @@ class UserController:
             DisplayMessages.display_error("DATABASE_ERROR")
             raise
 
+    @staticmethod
+    def update(db):
+        """
+        Orchestrates the update of a user in the CRM system.
+        Steps:
+          1. Prompts the user for the user ID and updated data (via UserView).
+          2. Retrieves the user from the database (via User.get_by_id).
+          3. Updates the user (via User.update).
+          4. Handles database transactions (commit/rollback).
+          5. Delegates success/error feedback to the view.
+
+        Args:
+            db (sqlalchemy.orm.Session): Active database session.
+        """
+        try:
+            # Step 1: Prompt for user ID and updated data (view layer)
+            user_id = click.prompt("Enter the ID of the user to update", type=int)
+            user = User.get_by_id(db, user_id)
+            if not user:
+                DisplayMessages.display_error("USER_NOT_FOUND")
+                return
+
+            # Step 2: Get updated data from the user (view layer)
+            updated_data = UserView.prompt_update(user)
+
+            # Step 3: Update the user (model layer)
+            user.update(db, **updated_data)
+
+            # Step 4: Commit changes (controller responsibility)
+            db.commit()
+            db.refresh(user)
+
+            # Step 5: Display success (view layer)
+            DisplayMessages.display_success(f"User updated: {user.username} (ID: {user.user_id})")
+
+        except ValueError as e:
+            # Handle validation errors (e.g., duplicate email/username)
+            db.rollback()
+            DisplayMessages.display_error(str(e))
+
+        except Exception:
+            # Handle unexpected errors
+            db.rollback()
+            DisplayMessages.display_error("DATABASE_ERROR")
+
 
 if __name__ == "__main__":
     MenuController.run_main_menu(db)

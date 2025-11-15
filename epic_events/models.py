@@ -135,42 +135,36 @@ class User(Base):
         Raises:
             ValueError: If the new email is already taken by another user.
         """
-        try:
-            # Check for duplicate username (if provided and different from current)
-            if username is not None and username != self.username:
-                if db.query(User).filter(User.username == username, User.user_id != self.user_id).first():
-                    raise ValueError(ErrorMessages.USERNAME_TAKEN.name)
 
-            # Check for duplicate email (if provided and different from current)
-            if email is not None and email != self.email:
-                if db.query(User).filter(User.email == email, User.user_id != self.user_id).first():
-                    raise ValueError(ErrorMessages.EMAIL_TAKEN.name)
+        # Check for duplicate username (if provided and different from current)
+        if username is not None and username != self.username:
+            if db.query(User).filter(User.username == username, User.user_id != self.user_id).first():
+                raise ValueError(ErrorMessages.USERNAME_TAKEN.name)
 
-            # Validate role if provided
-            if role is not None:
-                valid_roles = ["commercial", "management", "support"]
-                if role not in valid_roles:
-                    raise ValueError(ErrorMessages.INVALID_ROLE.name)
+        # Check for duplicate email (if provided and different from current)
+        if email is not None and email != self.email:
+            if db.query(User).filter(User.email == email, User.user_id != self.user_id).first():
+                raise ValueError(ErrorMessages.EMAIL_TAKEN.name)
 
-            # Update fields
-            if username:
-                self.username = username
-            if first_name:
-                self.first_name = first_name
-            if last_name:
-                self.last_name = last_name
-            if email:
-                self.email = email
-            if role:
-                self.role = role
+        # Validate role if provided
+        if role is not None:
+            valid_roles = ["commercial", "management", "support"]
+            if role not in valid_roles:
+                raise ValueError(ErrorMessages.INVALID_ROLE.name)
 
-            db.commit()
-            db.refresh(self)
-            return self
+        # Update fields
+        if username:
+            self.username = username
+        if first_name:
+            self.first_name = first_name
+        if last_name:
+            self.last_name = last_name
+        if email:
+            self.email = email
+        if role:
+            self.role = role
 
-        except Exception:
-            db.rollback()
-            raise
+        return self
 
     def delete(self, db: Session):
         """
@@ -734,4 +728,3 @@ class Event(Base):
         if support_contact_id is not None:
             self.support_contact_id = support_contact_id
         db.commit()
-
