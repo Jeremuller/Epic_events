@@ -1,5 +1,6 @@
 from models import User, Client, Contract, Event
 from views import (DisplayMessages, UserView, MenuView)
+import click
 
 from epic_events.database import SessionLocal
 
@@ -42,7 +43,7 @@ class MenuController:
             elif choice == "2":
                 UserController.create_user(db)
             elif choice == "3":
-                UserController.update_user(db)
+                UserController.update(db)
             elif choice == "4":
                 UserController.delete_user(db)
             elif choice == "5":
