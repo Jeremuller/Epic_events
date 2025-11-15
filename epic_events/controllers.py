@@ -1,136 +1,102 @@
 from models import User, Client, Contract, Event
-from views import (DisplayMessages, UserView)
+from views import (DisplayMessages, UserView, MenuView)
 
 from epic_events.database import SessionLocal
 
 db = SessionLocal()
 
 
-class ControllerMenus:
+class MenuController:
+    """Static methods for handling menu navigation and controller delegation."""
+
     @staticmethod
-    def display_main_menu():
-        """Display the main menu and handle user navigation."""
+    def run_main_menu(db):
+        """
+        Runs the main menu loop and delegates actions to submenus.
+        Args:
+            db (sqlalchemy.orm.Session): Database session for data operations.
+        """
         while True:
-            print("\n=== CRM Main Menu ===")
-            print("1. Manage Users")
-            print("2. Manage Clients")
-            print("3. Manage Contracts")
-            print("4. Manage Events")
-            print("5. Quit")
-
-            choice = input("Enter your choice (1-5): ")
-
+            choice = MenuView.display_main_menu()
             if choice == "1":
-                ControllerMenus.manage_users()
+                MenuController.run_users_menu(db)
             elif choice == "2":
-                ControllerMenus.manage_clients()
+                MenuController.run_clients_menu(db)
             elif choice == "3":
-                ControllerMenus.manage_contracts()
+                MenuController.run_contracts_menu(db)
             elif choice == "4":
-                ControllerMenus.manage_events()
+                MenuController.run_events_menu(db)
             elif choice == "5":
-                print("Exiting CRM. Goodbye!")
+                DisplayMessages.display_goodbye()
                 break
             else:
-                print("Invalid choice. Please enter a number between 1 and 5.")
+                DisplayMessages.display_invalid_choice("main")
 
     @staticmethod
-    def manage_users():
-        """Display the Users submenu and handle user actions."""
+    def run_users_menu(db):
+        """Runs the Users submenu loop and delegates actions to UserController."""
         while True:
-            print("\n=== Users Menu ===")
-            print("1. List Users")
-            print("2. Create User")
-            print("3. Update User")
-            print("4. Delete User")
-            print("5. Back to Main Menu")
-
-            choice = input("Enter your choice (1-5): ")
-
+            choice = MenuView.display_users_menu()
             if choice == "1":
                 UserController.list_users(db)
             elif choice == "2":
                 UserController.create_user(db)
             elif choice == "3":
-                update_user()
+                UserController.update_user(db)
             elif choice == "4":
-                delete_user()
+                UserController.delete_user(db)
             elif choice == "5":
                 break
             else:
-                print("Invalid choice. Please enter a number between 1 and 5.")
+                DisplayMessages.display_invalid_choice("users")
 
     @staticmethod
-    def manage_clients():
-        """Display the Clients submenu and handle user actions."""
+    def run_clients_menu(db):
+        """Runs the Clients submenu loop and delegates actions to ClientController."""
         while True:
-            print("\n=== Clients Menu ===")
-            print("1. List Clients")
-            print("2. Create Client")
-            print("3. Update Client")
-            print("4. Back to Main Menu")
-
-            choice = input("Enter your choice (1-4): ")
-
+            choice = MenuView.display_clients_menu()
             if choice == "1":
-                clients = Client.get_all(db)
-                list_clients(clients)
+                ClientController.list_clients(db)
             elif choice == "2":
-                create_client()
+                ClientController.create_client(db)
             elif choice == "3":
-                update_client()
+                ClientController.update_client(db)
             elif choice == "4":
                 break
             else:
-                print("Invalid choice. Please enter a number between 1 and 4.")
+                DisplayMessages.display_invalid_choice("clients")
 
     @staticmethod
-    def manage_contracts():
-        """Display the Contracts submenu and handle user actions."""
+    def run_contracts_menu(db):
+        """Runs the Contracts submenu loop and delegates actions to ContractController."""
         while True:
-            print("\n=== Contracts Menu ===")
-            print("1. List Contracts")
-            print("2. Create Contract")
-            print("3. Update Contract")
-            print("4. Back to Main Menu")
-
-            choice = input("Enter your choice (1-4): ")
-
+            choice = MenuView.display_contracts_menu()
             if choice == "1":
-                contracts = Contract.get_all(db)
-                list_contracts(contracts)
+                ContractController.list_contracts(db)
             elif choice == "2":
-                create_contract()
+                ContractController.create_contract(db)
             elif choice == "3":
-                update_contract()
+                ContractController.update_contract(db)
             elif choice == "4":
                 break
             else:
-                print("Invalid choice. Please enter a number between 1 and 4.")
+                DisplayMessages.display_invalid_choice("contracts")
 
     @staticmethod
-    def manage_events():
-        """Display the Events submenu and handle user actions."""
+    def run_events_menu(db):
+        """Runs the Events submenu loop and delegates actions to EventController."""
         while True:
-            print("\n=== Events Menu ===")
-            print("1. List Events")
-            print("2. Create Event")
-            print("3. Update Event")
-            print("4. Back to Main Menu")
-
-            choice = input("Enter your choice (1-4): ")
-
+            choice = MenuView.display_events_menu()
             if choice == "1":
-                events = Event.get_all(db)
-                list_events(events)
+                EventController.list_events(db)
             elif choice == "2":
-                create_event()
+                EventController.create_event(db)
             elif choice == "3":
-                update_event()
+                EventController.update_event(db)
             elif choice == "4":
                 break
             else:
-                print("Invalid choice. Please enter a number between 1 and 4.")
+                DisplayMessages.display_invalid_choice("events")
 
 
 class UserController:
@@ -225,4 +191,4 @@ class UserController:
 
 
 if __name__ == "__main__":
-    ControllerMenus.display_main_menu()
+    MenuController.run_main_menu(db)

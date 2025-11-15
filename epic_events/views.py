@@ -19,6 +19,16 @@ class DisplayMessages:
         """Displays error message using our ErrorMessages class."""
         click.echo(f"❌ Error: {ErrorMessages.get_message(message_key)}")
 
+    @staticmethod
+    def display_invalid_choice(menu_name):
+        """Displays an error message for invalid menu choices."""
+        print(f"Invalid choice. Please enter a valid number for the {menu_name} menu.")
+
+    @staticmethod
+    def display_goodbye():
+        """Displays a goodbye message when exiting the CRM."""
+        print("Exiting CRM. Goodbye!")
+
 
 class MenuView:
     """Static methods for displaying menus and capturing user choices."""
@@ -74,16 +84,6 @@ class MenuView:
         print("3. Update Event")
         print("4. Back to Main Menu")
         return input("Enter your choice (1-4): ")
-
-    @staticmethod
-    def display_invalid_choice(menu_name):
-        """Displays an error message for invalid menu choices."""
-        print(f"Invalid choice. Please enter a valid number for the {menu_name} menu.")
-
-    @staticmethod
-    def display_goodbye():
-        """Displays a goodbye message when exiting the CRM."""
-        print("Exiting CRM. Goodbye!")
 
 
 class UserView:
