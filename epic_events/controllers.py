@@ -206,7 +206,7 @@ class UserController:
         """
         try:
             # Step 1: Prompt for user ID and updated data (view layer)
-            user_id = click.prompt("Enter the ID of the user to update", type=int)
+            user_id = MenuView.prompt_for_id("user")
             user = User.get_by_id(db, user_id)
             if not user:
                 DisplayMessages.display_error("USER_NOT_FOUND")
