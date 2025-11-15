@@ -85,6 +85,17 @@ class MenuView:
         print("4. Back to Main Menu")
         return input("Enter your choice (1-4): ")
 
+    @staticmethod
+    def prompt_for_id(entity_name):
+        """
+        Prompts the user for an entity ID (generic method for any entity).
+        Args:
+            entity_name (str): Name of the entity (e.g., "user", "client").
+        Returns:
+            int: The ID entered by the user.
+        """
+        return click.prompt(f"Enter the ID of the {entity_name} to update/delete", type=int)
+
 
 class UserView:
     """Static methods for user-related view operations."""
