@@ -182,6 +182,46 @@ class UserView:
 
         return updated_data
 
+    @staticmethod
+    def prompt_delete_confirmation(user):
+        """
+        Prompts the user for confirmation before deleting a user.
+        Args:
+            user (User): The user object to delete.
+        Returns:
+            bool: True if the user confirms deletion, False otherwise.
+        """
+        return click.confirm(
+            f"Are you sure you want to delete user {user.username} "
+            f"(ID: {user.user_id})? This action cannot be undone."
+        )
+
+
+class ClientView:
+    """Static methods for client-related view operations."""
+
+    @staticmethod
+    def list_clients(clients):
+        """
+        Displays a list of clients in the CRM system.
+
+        Args:
+            clients (list[Client]): List of Client objects to display.
+                                    If empty, a message is shown.
+        """
+        if not clients:
+            print("No clients found in the database.")
+            return
+
+        print("\n=== List of Clients ===")
+        for client in clients:
+            print(
+                f"ID: {client.client_id} | Name: {client.name} | "
+                f"Email: {client.email} | Phone: {client.phone} | "
+                f"Company: {client.company_name} | "
+                f"Status: {client.status}"
+            )
+
 
 @click.group()
 def cli():
@@ -438,7 +478,7 @@ def update_client(client_id):
                                              type=int)
 
         # Update the client
-        client.update(
+        client.update_user(
             db=db,
             first_name=first_name,
             last_name=last_name,
@@ -563,7 +603,7 @@ def update_contract(contract_id):
         rest_to_pay = click.prompt("Rest to pay", type=float, default=contract.rest_to_pay)
         signed = click.prompt("Is the contract signed?", type=bool, default=contract.signed)
 
-        contract.update(
+        contract.update_user(
             db=db,
             total_price=total_price,
             rest_to_pay=rest_to_pay,
@@ -707,7 +747,7 @@ def update_event(event_id):
         start_datetime = datetime.strptime(start_datetime_str, "%Y-%m-%d %H:%M")
         end_datetime = datetime.strptime(end_datetime_str, "%Y-%m-%d %H:%M")
 
-        event.update(
+        event.update_user(
             db=db,
             name=name,
             notes=notes,

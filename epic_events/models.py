@@ -194,6 +194,7 @@ class User(Base):
 
             db.delete(self)
             db.commit()
+
         except Exception:
             db.rollback()
             raise ValueError(ErrorMessages.DELETE_FAILED.name)

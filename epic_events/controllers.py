@@ -1,6 +1,5 @@
 from models import User, Client, Contract, Event
-from views import (DisplayMessages, UserView, MenuView)
-import click
+from views import (DisplayMessages, UserView,ClientView, MenuView)
 
 from epic_events.database import SessionLocal
 
@@ -43,7 +42,7 @@ class MenuController:
             elif choice == "2":
                 UserController.create_user(db)
             elif choice == "3":
-                UserController.update(db)
+                UserController.update_user(db)
             elif choice == "4":
                 UserController.delete_user(db)
             elif choice == "5":
@@ -191,7 +190,7 @@ class UserController:
             raise
 
     @staticmethod
-    def update(db):
+    def update_user(db):
         """
         Orchestrates the update of a user in the CRM system.
         Steps:
@@ -234,6 +233,85 @@ class UserController:
             # Handle unexpected errors
             db.rollback()
             DisplayMessages.display_error("DATABASE_ERROR")
+
+    @staticmethod
+    def delete_user(db):
+        """
+        Orchestrates the deletion of a user in the CRM system.
+        Steps:
+          1. Prompts the user for the user ID (via MenuView.prompt_for_id).
+          2. Retrieves the user from the database (via User.get_by_id).
+          3. Asks for confirmation (via UserView.prompt_delete_confirmation).
+          4. Deletes the user (via db.delete) and handles transactions.
+          5. Delegates success/error feedback to the view.
+
+        Args:
+            db (sqlalchemy.orm.Session): Active database session.
+        """
+        try:
+            # Step 1: Prompt for user ID (generic view method)
+            user_id = MenuView.prompt_for_id("user")
+
+            # Step 2: Retrieve the user (model layer)
+            user = User.get_by_id(db, user_id)
+            if not user:
+                DisplayMessages.display_error("USER_NOT_FOUND")
+                return
+
+            # Step 3: Ask for confirmation (specific view method)
+            if not UserView.prompt_delete_confirmation(user):
+                DisplayMessages.display_success("Deletion cancelled.")
+                return
+
+            # Step 4: Delete the user and handle transaction (controller)
+            db.delete(user)
+            db.commit()
+
+            # Step 5: Display success (view layer)
+            DisplayMessages.display_success(
+                f"User deleted: {user.username} (ID: {user.user_id})"
+            )
+
+        except Exception:
+            # Rollback on any error
+            db.rollback()
+            DisplayMessages.display_error("DATABASE_ERROR")
+
+
+class ClientController:
+    """Static methods for client-related controller operations."""
+
+    @staticmethod
+    def list_clients(db):
+        """
+        Controller method to list all clients in the CRM system.
+        This method orchestrates the retrieval of client data from the database,
+        handles potential errors, and delegates the display to the view layer.
+
+        Args:
+            db (sqlalchemy.orm.Session): Active SQLAlchemy database session for data retrieval.
+
+        Workflow:
+            1. Retrieves all clients from the database (via Client.get_all).
+            2. Delegates the display of clients to the view layer (via ClientView.list_clients).
+            3. Handles any unexpected errors and provides feedback via DisplayMessages.
+
+        Error Handling:
+            - Catches unexpected errors (e.g., database issues) and displays a generic error message.
+            - Uses ErrorMessages enum for consistent error messaging across the application.
+            - Re-raises the exception for potential higher-level handling (e.g., logging).
+        """
+        try:
+            # Step 1: Retrieve clients from the database (model layer)
+            clients = Client.get_all(db)
+
+            # Step 2: Delegate display to the view layer
+            ClientView.list_clients(clients)
+
+        except Exception:
+            # Handle unexpected errors
+            DisplayMessages.display_error("DATABASE_ERROR")
+            raise
 
 
 if __name__ == "__main__":

@@ -104,7 +104,7 @@ def test_update_event(db_session, test_user, test_client, test_event):
     """Test that an event can be updated."""
     new_start_datetime = datetime.now() + timedelta(days=35)
     new_end_datetime = datetime.now() + timedelta(days=36)
-    test_event.update(
+    test_event.update_user(
         db=db_session,
         name="Updated Event",
         notes="Updated notes",
