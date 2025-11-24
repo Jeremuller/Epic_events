@@ -332,5 +332,37 @@ class ClientController:
         pass
 
 
+class ContractController:
+    """Static methods for contract-related controller operations."""
+
+    @staticmethod
+    def list_contracts(db):
+        pass
+
+    @staticmethod
+    def create_contract(db):
+        pass
+
+    @staticmethod
+    def update_contract(db):
+        pass
+
+
+class EventController:
+    """Static methods for event-related controller operations."""
+
+    @staticmethod
+    def list_events(db):
+        pass
+
+    @staticmethod
+    def create_event(db):
+        pass
+
+    @staticmethod
+    def update_event(db):
+        pass
+
+
 if __name__ == "__main__":
     MenuController.run_main_menu(db)
