@@ -215,11 +215,25 @@ class ClientView:
 
         print("\n=== List of Clients ===")
         for client in clients:
+            # Format the dates for better readability
+            first_contact = client.first_contact.strftime("%Y-%m-%d %H:%M") if client.first_contact else "N/A"
+            last_update = client.last_update.strftime("%Y-%m-%d %H:%M") if client.last_update else "N/A"
+
+            # Get commercial contact name if available
+            commercial_name = (
+                f"{client.commercial_contact.first_name} {client.commercial_contact.last_name}"
+                if client.commercial_contact else "None"
+            )
+
             print(
-                f"ID: {client.client_id} | Name: {client.name} | "
-                f"Email: {client.email} | Phone: {client.phone} | "
-                f"Company: {client.company_name} | "
-                f"Status: {client.status}"
+                f"ID: {client.client_id} | "
+                f"Name: {client.first_name} {client.last_name} | "
+                f"Business: {client.business_name} | "
+                f"Email: {client.email} | "
+                f"Phone: {client.telephone} | "
+                f"First Contact: {first_contact} | "
+                f"Last Update: {last_update} | "
+                f"Commercial: {commercial_name}"
             )
 
 
