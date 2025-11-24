@@ -1,5 +1,5 @@
 from models import User, Client, Contract, Event
-from views import (DisplayMessages, UserView,ClientView, MenuView)
+from views import (DisplayMessages, UserView, ClientView, MenuView)
 
 from epic_events.database import SessionLocal
 
@@ -103,6 +103,32 @@ class UserController:
     """Static methods for user-related controller operations."""
 
     @staticmethod
+    def list_users(db):
+        """
+            Controller method to list all users in the CRM system.
+            This method orchestrates the retrieval of user data from the database,
+            handles potential errors, and delegates the display to the view layer.
+
+            Args:
+                db (sqlalchemy.orm.Session): Active SQLAlchemy database session for data retrieval.
+
+            Error Handling:
+                - Catches unexpected errors and provides a generic error message.
+                - Uses ErrorMessages enum for consistent error messaging across the application.
+            """
+        try:
+            # Step 1: Retrieve users from the database
+            users = User.get_all(db)
+
+            # Step 2: Delegate display to the view layer
+            UserView.list_users(users)
+
+        except Exception:
+            # Handle unexpected errors
+            DisplayMessages.display_error("DATABASE_ERROR")
+            raise
+
+    @staticmethod
     def create_user(db):
         """
         Controller function to orchestrate the creation of a new user in the CRM system.
@@ -144,7 +170,7 @@ class UserController:
                 password="default_hashed_password"
             )
 
-            # Step 3: Persist the user (controller responsibility)
+            # Step 3: Persist the user
             db.add(user)
             db.commit()
             db.refresh(user)
@@ -164,32 +190,6 @@ class UserController:
             raise
 
     @staticmethod
-    def list_users(db):
-        """
-            Controller method to list all users in the CRM system.
-            This method orchestrates the retrieval of user data from the database,
-            handles potential errors, and delegates the display to the view layer.
-
-            Args:
-                db (sqlalchemy.orm.Session): Active SQLAlchemy database session for data retrieval.
-
-            Error Handling:
-                - Catches unexpected errors and provides a generic error message.
-                - Uses ErrorMessages enum for consistent error messaging across the application.
-            """
-        try:
-            # Step 1: Retrieve users from the database (model layer)
-            users = User.get_all(db)
-
-            # Step 2: Delegate display to the view layer
-            UserView.list_users(users)
-
-        except Exception:
-            # Handle unexpected errors
-            DisplayMessages.display_error("DATABASE_ERROR")
-            raise
-
-    @staticmethod
     def update_user(db):
         """
         Orchestrates the update of a user in the CRM system.
@@ -204,24 +204,24 @@ class UserController:
             db (sqlalchemy.orm.Session): Active database session.
         """
         try:
-            # Step 1: Prompt for user ID and updated data (view layer)
+            # Step 1: Prompt for user ID and updated data
             user_id = MenuView.prompt_for_id("user")
             user = User.get_by_id(db, user_id)
             if not user:
                 DisplayMessages.display_error("USER_NOT_FOUND")
                 return
 
-            # Step 2: Get updated data from the user (view layer)
+            # Step 2: Get updated data from the user
             updated_data = UserView.prompt_update(user)
 
-            # Step 3: Update the user (model layer)
+            # Step 3: Update the user
             user.update(db, **updated_data)
 
-            # Step 4: Commit changes (controller responsibility)
+            # Step 4: Commit changes
             db.commit()
             db.refresh(user)
 
-            # Step 5: Display success (view layer)
+            # Step 5: Display success
             DisplayMessages.display_success(f"User updated: {user.username} (ID: {user.user_id})")
 
         except ValueError as e:
@@ -322,6 +322,14 @@ class ClientController:
             # Handle unexpected errors
             DisplayMessages.display_error("DATABASE_ERROR")
             raise
+
+    @staticmethod
+    def create_client(db):
+        pass
+
+    @staticmethod
+    def update_client(db):
+        pass
 
 
 if __name__ == "__main__":
