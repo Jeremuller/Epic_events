@@ -192,8 +192,7 @@ class User(Base):
             for event in self.events:
                 event.support_contact_id = None
 
-            db.delete(self)
-            db.commit()
+            return self
 
         except Exception:
             db.rollback()

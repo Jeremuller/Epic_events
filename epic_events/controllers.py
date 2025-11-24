@@ -233,6 +233,7 @@ class UserController:
             # Handle unexpected errors
             db.rollback()
             DisplayMessages.display_error("DATABASE_ERROR")
+            raise
 
     @staticmethod
     def delete_user(db):
@@ -249,33 +250,42 @@ class UserController:
             db (sqlalchemy.orm.Session): Active database session.
         """
         try:
-            # Step 1: Prompt for user ID (generic view method)
+            # Step 1: Prompt for user ID
             user_id = MenuView.prompt_for_id("user")
 
-            # Step 2: Retrieve the user (model layer)
+            # Step 2: Retrieve the user
             user = User.get_by_id(db, user_id)
             if not user:
                 DisplayMessages.display_error("USER_NOT_FOUND")
                 return
 
-            # Step 3: Ask for confirmation (specific view method)
+            # Step 3: Ask for confirmation
             if not UserView.prompt_delete_confirmation(user):
                 DisplayMessages.display_success("Deletion cancelled.")
                 return
 
-            # Step 4: Delete the user and handle transaction (controller)
+            # Step 4: Handle dependencies
+            user.delete(db)
+
+            # Step 5: Delete the user and handle transaction
             db.delete(user)
             db.commit()
 
-            # Step 5: Display success (view layer)
+            # Step 6: Display success
             DisplayMessages.display_success(
                 f"User deleted: {user.username} (ID: {user.user_id})"
             )
+
+        except ValueError as e:
+            # Handle model-specific errors (e.g., dependency handling failed)
+            db.rollback()
+            DisplayMessages.display_error(str(e))
 
         except Exception:
             # Rollback on any error
             db.rollback()
             DisplayMessages.display_error("DATABASE_ERROR")
+            raise
 
 
 class ClientController:
