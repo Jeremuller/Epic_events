@@ -245,13 +245,15 @@ class Client(Base):
     events = relationship("Event", back_populates="client")
 
     @classmethod
-    def create(cls, db: Session, first_name: str, last_name: str, email: str, commercial_contact_id: int,
-               business_name: str = None, telephone: str = None):
+    def create(cls, db: Session, first_name: str, last_name: str, email: str,
+               commercial_contact_id: int, business_name: str = None,
+               telephone: str = None):
         """
-        Creates a new client linked to a commercial user.
+        Creates a new client with validation.
+        Does NOT persist the client to the database (handled by the controller).
 
         Args:
-            db (Session): SQLAlchemy database session.
+            db (Session): SQLAlchemy database session (for validation only).
             first_name (str): Client's first name.
             last_name (str): Client's last name.
             email (str): Client's email address.
@@ -260,43 +262,34 @@ class Client(Base):
             telephone (str, optional): Client's phone number.
 
         Returns:
-            Client: The created Client object.
+            Client: The created Client object (not persisted).
+
+        Raises:
+            ValueError: If validation fails (duplicate email, missing fields, invalid commercial contact).
         """
-        try:
-            # Check for duplicate email
-            if db.query(cls).filter_by(email=email).first():
-                raise ValueError(ErrorMessages.EMAIL_TAKEN.name)
-
-            # Check for empty required fields
-            if not first_name or not last_name or not email or not commercial_contact_id:
-                raise ValueError(ErrorMessages.REQUIRED_FIELDS_EMPTY.name)
-
-            # Check if commercial_contact_id exists
-            if not db.query(User).filter_by(user_id=commercial_contact_id).first():
-                raise ValueError(ErrorMessages.CONTACT_NOT_FOUND.name)
-
-            # Create client
-            client = cls(
-                first_name=first_name,
-                last_name=last_name,
-                email=email,
-                commercial_contact_id=commercial_contact_id,
-                business_name=business_name,
-                telephone=telephone,
-                first_contact=datetime.now(),
-                last_update=datetime.now()
-            )
-            db.add(client)
-            db.commit()
-            db.refresh(client)
-            return client
-
-        except IntegrityError:
-            db.rollback()
+        # Check for duplicate email
+        if db.query(cls).filter_by(email=email).first():
             raise ValueError(ErrorMessages.EMAIL_TAKEN.name)
-        except Exception:
-            db.rollback()
-            raise
+
+        # Check for empty required fields
+        if not all([first_name, last_name, email, commercial_contact_id]):
+            raise ValueError(ErrorMessages.REQUIRED_FIELDS_EMPTY.name)
+
+        # Check if commercial_contact_id exists
+        if not db.query(User).filter_by(user_id=commercial_contact_id).first():
+            raise ValueError(ErrorMessages.CONTACT_NOT_FOUND.name)
+
+        # Create and return the client object (not persisted)
+        return cls(
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            commercial_contact_id=commercial_contact_id,
+            business_name=business_name,
+            telephone=telephone,
+            first_contact=datetime.now(),
+            last_update=datetime.now()
+        )
 
     def update(self, db: Session, first_name: str = None, last_name: str = None, email: str = None,
                business_name: str = None, telephone: str = None, commercial_contact_id: int = None):

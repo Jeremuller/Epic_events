@@ -96,6 +96,17 @@ class MenuView:
         """
         return click.prompt(f"Enter the ID of the {entity_name} to update/delete", type=int)
 
+    @staticmethod
+    def prompt_for_contact_id(entity_name):
+        """
+        Prompts the user for an entity ID (generic method for any entity).
+        Args:
+            entity_name (str): Name of the entity (e.g., "user", "client").
+        Returns:
+            int: The ID entered by the user.
+        """
+        return click.prompt(f"Enter the ID of the {entity_name}", type=int)
+
 
 class UserView:
     """Static methods for user-related view operations."""
@@ -235,6 +246,31 @@ class ClientView:
                 f"Last Update: {last_update} | "
                 f"Commercial: {commercial_name}"
             )
+
+    @staticmethod
+    def prompt_client_creation():
+        """
+        Prompts the user for new client information.
+
+        Returns:
+            dict: Client data including:
+                  - first_name (str)
+                  - last_name (str)
+                  - email (str)
+                  - commercial_contact_id (int)
+                  - business_name (str, optional)
+                  - telephone (str, optional)
+        """
+
+        # Prompt for other client details
+        return {
+            "first_name": click.prompt("First name", type=str),
+            "last_name": click.prompt("Last name", type=str),
+            "email": click.prompt("Email", type=str),
+            "commercial_contact_id": click.prompt("Commercial contact", type=int),
+            "business_name": click.prompt("Business name (optional)", default="", type=str) or None,
+            "telephone": click.prompt("Phone (optional)", default="", type=str) or None
+        }
 
 
 @click.group()

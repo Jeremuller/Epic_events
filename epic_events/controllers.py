@@ -325,7 +325,66 @@ class ClientController:
 
     @staticmethod
     def create_client(db):
-        pass
+        """
+        Controller function to orchestrate the creation of a new client in the CRM system.
+        This function acts as an intermediary between the view (user interaction) and the model (business logic).
+        It handles transaction management (commit/rollback) and error feedback.
+
+        Args:
+            db (sqlalchemy.orm.Session): Active database session for persistence operations.
+
+        Workflow:
+            1. Delegates client input collection to the view layer (`prompt_client_creation`).
+            2. Delegates client validation and object creation to the model layer (`Client.create`).
+            3. Manages database persistence (commit/rollback) based on operation success/failure.
+            4. Delegates success/error feedback to the view layer (`display_success`/`display_error`).
+
+        Transaction Management:
+            - Commits changes to the database if the operation succeeds.
+            - Rolls back changes if any error occurs (validation or database error).
+            - Ensures data consistency by handling exceptions explicitly.
+
+        Error Handling:
+            - Catches `ValueError` for business logic validation errors (e.g., duplicate email, missing fields).
+            - Catches generic `Exception` for database/technical errors.
+            - Delegates error display to the view layer with appropriate error keys.
+        """
+        try:
+            # Step 1: Delegate client input to the view layer
+            client_data = ClientView.prompt_client_creation()
+
+            # Step 2: Delegate client validation and object creation to the model layer
+            client = Client.create(
+                db=db,
+                first_name=client_data["first_name"],
+                last_name=client_data["last_name"],
+                email=client_data["email"],
+                commercial_contact_id=client_data["commercial_contact_id"],
+                business_name=client_data.get("business_name"),
+                telephone=client_data.get("telephone")
+            )
+
+            # Step 3: Persist the client (controller responsibility)
+            db.add(client)
+            db.commit()
+            db.refresh(client)
+
+            # Step 4: Delegate success feedback to the view layer
+            DisplayMessages.display_success(
+                f"Client created: {client.business_name or f'{client.first_name} {client.last_name}'} "
+                f"(ID: {client.client_id})"
+            )
+
+        except ValueError as e:
+            # Handle business logic validation errors
+            db.rollback()
+            DisplayMessages.display_error(str(e))
+
+        except Exception:
+            # Handle database/technical errors
+            db.rollback()
+            DisplayMessages.display_error("DATABASE_ERROR")
+            raise
 
     @staticmethod
     def update_client(db):
