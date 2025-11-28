@@ -619,7 +619,55 @@ class EventController:
 
     @staticmethod
     def create_event(db):
-        pass
+        """
+        Controller function to orchestrate the creation of a new event in the CRM system.
+        This function acts as an intermediary between the view (user interaction) and the model (business logic).
+        It handles transaction management (commit/rollback) and error feedback.
+
+        Args:
+            db (sqlalchemy.orm.Session): Active database session for persistence operations.
+
+        Workflow:
+            1. Delegates event input collection to the view layer (`prompt_event_creation`).
+            2. Delegates event validation and object creation to the model layer (`Event.create`).
+            3. Manages database persistence (commit/rollback) based on operation success/failure.
+            4. Delegates success/error feedback to the view layer.
+        """
+        try:
+            # Step 1: Delegate event input to the view layer
+            event_data = EventView.prompt_event_creation()
+
+            # Step 2: Delegate event validation and object creation to the model layer
+            event = Event.create(
+                db=db,
+                name=event_data["name"],
+                notes=event_data.get("notes"),
+                start_datetime=event_data["start_datetime"],
+                end_datetime=event_data["end_datetime"],
+                location=event_data.get("location"),
+                attendees=event_data["attendees"],
+                client_id=event_data["client_id"],
+                support_contact_id=event_data["support_contact_id"]
+            )
+
+            # Step 3: Persist the event (controller responsibility)
+            db.add(event)
+            db.commit()
+            db.refresh(event)
+
+            # Step 4: Delegate success feedback
+            DisplayMessages.display_success(
+                f"Event created: {event.name} (ID: {event.event_id})"
+            )
+
+        except ValueError as e:
+            db.rollback()
+            DisplayMessages.display_error(str(e))
+
+        except Exception:
+            db.rollback()
+            DisplayMessages.display_error("DATABASE_ERROR")
+            raise
 
     @staticmethod
     def update_event(db):

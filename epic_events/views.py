@@ -427,6 +427,49 @@ class EventView:
                 f"Attendees: {event.attendees}"
             )
 
+    @staticmethod
+    def prompt_event_creation():
+        """
+        Prompts the user for new event information.
+        Handles datetime input parsing and validation.
+
+        Returns:
+            dict: Event data including:
+                  - name (str)
+                  - notes (str, optional)
+                  - start_datetime (datetime)
+                  - end_datetime (datetime)
+                  - location (str, optional)
+                  - attendees (int)
+                  - client_id (int)
+                  - support_contact_id (int)
+        """
+        from datetime import datetime
+
+        # Handle datetime format
+        def parse_datetime(prompt_text):
+            """Helper to parse datetime input from user."""
+            while True:
+                try:
+                    return datetime.strptime(
+                        click.prompt(prompt_text + " (YYYY-MM-DD HH:MM)"),
+                        "%Y-%m-%d %H:%M"
+                    )
+                except ValueError:
+                    print("Invalid format. Please use YYYY-MM-DD HH:MM (e.g., 2023-12-25 14:30).")
+
+        return {
+            "name": click.prompt("Event name", type=str),
+            "notes": click.prompt("Notes (optional)", default="", type=str) or None,
+            "start_datetime": parse_datetime("Start date and time"),
+            "end_datetime": parse_datetime("End date and time"),
+            "location": click.prompt("Location (optional)", default="", type=str) or None,
+            "attendees": click.prompt("Number of attendees", type=int),
+            "client_id": click.prompt("client", type=int),
+            "support_contact_id": click.prompt("Support contact", type=int),
+
+        }
+
 
 @click.group()
 def cli():

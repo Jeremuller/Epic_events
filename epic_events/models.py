@@ -574,39 +574,50 @@ class Event(Base):
     support_contact = relationship("User", back_populates="events")
 
     @classmethod
-    def create(cls, db, name, notes, start_datetime, end_datetime, location, attendees, client_id, support_contact_id):
+    def create(cls, db: Session, name: str, notes: str, start_datetime: datetime,
+               end_datetime: datetime, location: str, attendees: int,
+               client_id: int, support_contact_id: int):
         """
-        Creates a new event linked to a client and a support user.
+        Creates a new event with full validation.
+        Does NOT persist the event to the database (handled by the controller).
+
         Args:
-            db (Session): SQLAlchemy database session.
-            name (str): Name of the event.
-            notes (str): Notes for the event.
-            start_datetime (DateTime): Start date and time of the event.
-            end_datetime (DateTime): End date and time of the event.
-            location (str): Location of the event.
-            attendees (int): Number of attendees for the event.
+            db (Session): SQLAlchemy database session (for validation only).
+            name (str): Event name.
+            notes (str, optional): Event notes.
+            start_datetime (datetime): Start date and time (must be in the future).
+            end_datetime (datetime): End date and time (must be after start_datetime).
+            location (str, optional): Event location.
+            attendees (int): Number of attendees.
             client_id (int): ID of the associated client (must exist).
-            support_contact_id (int): ID of the support user responsible (must exist).
+            support_contact_id (int): ID of the support contact (must exist).
+
         Returns:
-            Event: The created Contract object.
+            Event: The created Event object (not persisted).
+
         Raises:
-            ValueError: If total_price/rest_to_pay are invalid, or if client_id/commercial_contact_id are not found.
+            ValueError: If validation fails:
+                        - CLIENT_NOT_FOUND: client_id does not exist
+                        - CONTACT_NOT_FOUND: support_contact_id does not exist
+                        - EVENT_DATE_IN_PAST: start_datetime is in the past
+                        - END_BEFORE_START: end_datetime is before start_datetime
         """
-        client = db.query(Client).filter_by(client_id=client_id).first()
-        if not client:
+        # Check if client exists
+        if not db.query(Client).filter_by(client_id=client_id).first():
             raise ValueError(ErrorMessages.CLIENT_NOT_FOUND.name)
 
-        contact = db.query(User).filter_by(user_id=support_contact_id).first()
-        if not contact:
+        # Check if support contact exists
+        if not db.query(User).filter_by(user_id=support_contact_id).first():
             raise ValueError(ErrorMessages.CONTACT_NOT_FOUND.name)
 
+        # Validate dates
         if start_datetime < datetime.now():
             raise ValueError(ErrorMessages.EVENT_DATE_IN_PAST.name)
-
         if end_datetime < start_datetime:
             raise ValueError(ErrorMessages.END_BEFORE_START.name)
 
-        event = cls(
+        # Create and return the event object (not persisted)
+        return cls(
             name=name,
             notes=notes,
             start_datetime=start_datetime,
@@ -616,10 +627,6 @@ class Event(Base):
             client_id=client_id,
             support_contact_id=support_contact_id
         )
-        db.add(event)
-        db.commit()
-        db.refresh(event)
-        return event
 
     @classmethod
     def get_all(cls, db: Session):
