@@ -671,7 +671,52 @@ class EventController:
 
     @staticmethod
     def update_event(db):
-        pass
+        """
+        Orchestrates the update of an event in the CRM system.
+        Steps:
+          1. Prompts the user for the event ID (via MenuView).
+          2. Retrieves the event from the database (via Event.get_by_id).
+          3. Prompts for updated event data (via EventView).
+          4. Validates and updates the event (via Event.update).
+          5. Handles database transactions (commit/rollback).
+          6. Delegates success/error feedback to the view.
+
+        Args:
+            db (sqlalchemy.orm.Session): Active database session.
+        """
+        try:
+            # Step 1: Prompt for event ID
+            event_id = MenuView.prompt_for_id("event")
+            event = Event.get_by_id(db, event_id)
+            if not event:
+                DisplayMessages.display_error("EVENT_NOT_FOUND")
+                return
+
+            # Step 2: Get updated data from the user
+            updated_data = EventView.prompt_update(event)
+
+            # Step 3: Update the event (model layer)
+            event.update(db, **updated_data)
+
+            # Step 4: Commit changes (controller responsibility)
+            db.commit()
+            db.refresh(event)
+
+            # Step 5: Display success
+            DisplayMessages.display_success(
+                f"Event updated: {event.name} (ID: {event.event_id})"
+            )
+
+        except ValueError as e:
+            # Handle validation errors
+            db.rollback()
+            DisplayMessages.display_error(str(e))
+
+        except Exception:
+            # Handle unexpected errors
+            db.rollback()
+            DisplayMessages.display_error("DATABASE_ERROR")
+            raise
 
 
 if __name__ == "__main__":

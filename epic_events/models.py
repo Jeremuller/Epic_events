@@ -499,9 +499,6 @@ class Contract(Base):
         if signed is not None:
             self.signed = signed
 
-        # Update last modification timestamp
-        self.last_update = datetime.now()
-
         return self
 
     @classmethod
@@ -657,53 +654,74 @@ class Event(Base):
 
         return db.query(cls).filter_by(event_id=event_id).first()
 
-    def update(self, db, name=None, notes=None, start_datetime=None, end_datetime=None, location=None, attendees=None,
-               client_id=None, support_contact_id=None):
+    def update(self, db: Session, name: str = None, notes: str = None,
+               start_datetime: datetime = None, end_datetime: datetime = None,
+               location: str = None, attendees: int = None,
+               client_id: int = None, support_contact_id: int = None):
         """
-        Updates the event's information in the database with validation checks.
-        Args:
-            db (Session): SQLAlchemy database session.
-            name (str): Name of the event.
-            notes (str): Notes for the event.
-            start_datetime (DateTime): Start date and time of the event.
-            end_datetime (DateTime): End date and time of the event.
-            location (str): Location of the event.
-            attendees (int): Number of attendees for the event.
-            client_id (int): ID of the associated client (must exist).
-            support_contact_id (int): ID of the support user responsible (must exist).
-        Returns:
-            Event: The updated Contract object.
-        Raises:
-            ValueError: If validations fail (invalid prices, IDs not found).
-        """
-        if start_datetime is not None and start_datetime < datetime.now():
-            raise ValueError(ErrorMessages.EVENT_DATE_IN_PAST.name)
-        if end_datetime is not None and start_datetime is not None and end_datetime < start_datetime:
-            raise ValueError(ErrorMessages.END_BEFORE_START.name)
-        if client_id is not None:
-            client = db.query(Client).filter_by(client_id=client_id).first()
-            if not client:
-                raise ValueError(ErrorMessages.CLIENT_NOT_FOUND.name)
-        if support_contact_id is not None:
-            contact = db.query(User).filter_by(user_id=support_contact_id).first()
-            if not contact:
-                raise ValueError(ErrorMessages.CONTACT_NOT_FOUND.name)
+        Updates the event's information with validation.
+        Does NOT persist changes to the database (handled by the controller).
 
-        # Update only if every verification bellow is passing
+        Args:
+            db (Session): SQLAlchemy database session (for validation only).
+            name (str, optional): New event name.
+            notes (str, optional): New event notes.
+            start_datetime (datetime, optional): New start date and time.
+            end_datetime (datetime, optional): New end date and time.
+            location (str, optional): New event location.
+            attendees (int, optional): New number of attendees.
+            client_id (int, optional): New client ID.
+            support_contact_id (int, optional): New support contact ID.
+
+        Returns:
+            Event: The updated Event object (not persisted).
+
+        Raises:
+            ValueError: If validation fails:
+                        - EVENT_DATE_IN_PAST: start_datetime is in the past
+                        - END_BEFORE_START: end_datetime is before start_datetime
+                        - CLIENT_NOT_FOUND: client_id does not exist
+                        - CONTACT_NOT_FOUND: support_contact_id does not exist
+        """
+        # Update name if provided
         if name is not None:
             self.name = name
+
+        # Update notes if provided
         if notes is not None:
             self.notes = notes
-        if start_datetime is not None:
-            self.start_datetime = start_datetime
-        if end_datetime is not None:
-            self.end_datetime = end_datetime
+
+        # Update location if provided
         if location is not None:
             self.location = location
+
+        # Update attendees if provided
         if attendees is not None:
             self.attendees = attendees
-        if client_id is not None:
+
+        # Update start_datetime if provided
+        if start_datetime is not None:
+            if start_datetime < datetime.now():
+                raise ValueError(ErrorMessages.EVENT_DATE_IN_PAST.name)
+            self.start_datetime = start_datetime
+
+        # Update end_datetime if provided
+        if end_datetime is not None:
+            current_start = self.start_datetime if start_datetime is None else start_datetime
+            if end_datetime < current_start:
+                raise ValueError(ErrorMessages.END_BEFORE_START.name)
+            self.end_datetime = end_datetime
+
+        # Update client_id if provided
+        if client_id is not None and client_id != self.client_id:
+            if not db.query(Client).filter_by(client_id=client_id).first():
+                raise ValueError(ErrorMessages.CLIENT_NOT_FOUND.name)
             self.client_id = client_id
-        if support_contact_id is not None:
+
+        # Update support_contact_id if provided
+        if support_contact_id is not None and support_contact_id != self.support_contact_id:
+            if not db.query(User).filter_by(user_id=support_contact_id).first():
+                raise ValueError(ErrorMessages.CONTACT_NOT_FOUND.name)
             self.support_contact_id = support_contact_id
-        db.commit()
+
+        return self

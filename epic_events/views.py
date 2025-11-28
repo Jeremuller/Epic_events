@@ -444,8 +444,6 @@ class EventView:
                   - client_id (int)
                   - support_contact_id (int)
         """
-        from datetime import datetime
-
         # Handle datetime format
         def parse_datetime(prompt_text):
             """Helper to parse datetime input from user."""
@@ -468,6 +466,53 @@ class EventView:
             "client_id": click.prompt("client", type=int),
             "support_contact_id": click.prompt("Support contact", type=int),
 
+        }
+
+    @staticmethod
+    def prompt_update(event):
+        """
+        Prompts the user to update an existing event's information.
+        Only returns fields that were actually modified by the user.
+
+        Args:
+            event (Event): The event object to update.
+
+        Returns:
+            dict: Updated fields (only modified fields are included).
+        """
+        from datetime import datetime
+
+        print(f"\nUpdating event: {event.name} (ID: {event.event_id})")
+
+        def parse_datetime(prompt_text, current_value):
+            """Helper to parse datetime input from user."""
+            if not click.confirm(f"Update {prompt_text}?", default=False):
+                return current_value
+            while True:
+                try:
+                    return datetime.strptime(
+                        click.prompt(f"New {prompt_text} (YYYY-MM-DD HH:MM)"),
+                        "%Y-%m-%d %H:%M"
+                    )
+                except ValueError:
+                    print("Invalid format. Please use YYYY-MM-DD HH:MM.")
+
+        # Prompt for each field with current value as default
+        updated_data = {
+            "name": click.prompt("Event name", default=event.name),
+            "notes": click.prompt("Notes (optional)", default=event.notes or ""),
+            "start_datetime": parse_datetime("start date and time", event.start_datetime),
+            "end_datetime": parse_datetime("end date and time", event.end_datetime),
+            "location": click.prompt("Location (optional)", default=event.location or ""),
+            "attendees": click.prompt("Number of attendees", default=event.attendees, type=int),
+            "client_id": click.prompt("Client ID", default=event.client_id, type=int),
+            "support_contact_id": click.prompt("Support contact ID", default=event.support_contact_id, type=int)
+        }
+
+        # Filter out fields that were not modified
+        return {
+            key: value for key, value in updated_data.items()
+            if value != getattr(event, key)
         }
 
 
@@ -606,13 +651,6 @@ def delete_user(user_id):
     finally:
         db.close()
 
-
-@click.command()
-def clients():
-    """
-    Commands related to client management.
-    """
-    pass
 
 
 @click.command()
