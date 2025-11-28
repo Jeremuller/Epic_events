@@ -272,6 +272,35 @@ class ClientView:
             "telephone": click.prompt("Phone (optional)", default="", type=str) or None
         }
 
+    @staticmethod
+    def prompt_update(client):
+        """
+        Prompts the user to update an existing client's information.
+        Only returns fields that were actually modified by the user.
+        Args:
+            client (Client): The client object to update.
+        Returns:
+            dict: Updated fields (only modified fields are included).
+        """
+        print(
+            f"\nUpdating client: {client.business_name or f'{client.first_name} {client.last_name}'} "
+            f"(ID: {client.client_id})")
+
+        # Prompt for each field with current value as default
+        updated_data = {
+            "first_name": click.prompt("First name", default=client.first_name),
+            "last_name": click.prompt("Last name", default=client.last_name),
+            "email": click.prompt("Email", default=client.email),
+            "business_name": click.prompt("Business name (optional)", default=client.business_name or ""),
+            "telephone": click.prompt("Phone (optional)", default=client.telephone or ""),
+        }
+
+        # Filter out fields that were not modified (user pressed Enter without typing)
+        return {
+            key: value for key, value in updated_data.items()
+            if value != getattr(client, key) and value != ""  # Ignore empty strings unless the original was None
+        }
+
 
 @click.group()
 def cli():

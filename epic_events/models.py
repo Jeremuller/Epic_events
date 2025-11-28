@@ -291,57 +291,40 @@ class Client(Base):
             last_update=datetime.now()
         )
 
-    def update(self, db: Session, first_name: str = None, last_name: str = None, email: str = None,
-               business_name: str = None, telephone: str = None, commercial_contact_id: int = None):
+    def update(self, db: Session, **kwargs):
         """
-        Updates the client's information in the database.
+        Updates the client's information with validation.
+        Only provided fields are updated. Optional fields (business_name, telephone) are set to None if empty.
 
         Args:
-            db (Session): SQLAlchemy database session.
-            first_name (str, optional): New first name.
-            last_name (str, optional): New last name.
-            email (str, optional): New email address.
-            business_name (str, optional): New business name.
-            telephone (str, optional): New phone number.
-            commercial_contact_id (int, optional): New commercial contact ID.
+            db (Session): SQLAlchemy session for validation.
+            **kwargs: Fields to update (e.g., email="new@example.com", telephone="1234567890").
+                     Only provided fields are modified.
 
         Returns:
-            Client: The updated Client object.
+            Client: Updated client object (not persisted).
+
+        Raises:
+            ValueError: If email is already taken by another client.
         """
-        try:
-            # Check for duplicate email (if email is provided and different from current)
-            if email and email != self.email:
-                if db.query(Client).filter(Client.email == email, Client.client_id != self.client_id).first():
-                    raise ValueError(ErrorMessages.EMAIL_TAKEN.name)
+        # Validate email uniqueness if provided and different
+        if "email" in kwargs and kwargs["email"] != self.email:
+            if db.query(Client).filter(Client.email == kwargs["email"], Client.client_id != self.client_id).first():
+                raise ValueError(ErrorMessages.EMAIL_TAKEN.name)
 
-            # Check if commercial_contact_id exists (if provided)
-            if commercial_contact_id and commercial_contact_id != self.commercial_contact_id:
-                if not db.query(User).filter_by(user_id=commercial_contact_id).first():
-                    raise ValueError(ErrorMessages.CONTACT_NOT_FOUND.name)
+        # Update fields (only provided ones)
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                # Handle empty strings for optional fields
+                if value == "" and key in ["business_name", "telephone"]:
+                    setattr(self, key, None)
+                else:
+                    setattr(self, key, value)
 
-            # Update fields
-            if first_name:
-                self.first_name = first_name
-            if last_name:
-                self.last_name = last_name
-            if email:
-                self.email = email
-            if business_name:
-                self.business_name = business_name
-            if telephone:
-                self.telephone = telephone
-            if commercial_contact_id:
-                self.commercial_contact_id = commercial_contact_id
-            self.last_update = datetime.now()
-            db.commit()
-            db.refresh(self)
-            return self
-        except IntegrityError:
-            db.rollback()
-            raise ValueError(ErrorMessages.EMAIL_TAKEN.name)
-        except Exception:
-            db.rollback()
-            raise
+        # Update last_update timestamp
+        self.last_update = datetime.now()
+
+        return self
 
     @classmethod
     def get_all(cls, db: Session):

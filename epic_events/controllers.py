@@ -388,7 +388,53 @@ class ClientController:
 
     @staticmethod
     def update_client(db):
-        pass
+        """
+            Orchestrates the update of a client in the CRM system.
+            Steps:
+              1. Prompts the user for the client ID (via MenuView).
+              2. Retrieves the client from the database (via Client.get_by_id).
+              3. Prompts for updated client data (via ClientView).
+              4. Validates and updates the client (via Client.update).
+              5. Handles database transactions (commit/rollback).
+              6. Delegates success/error feedback to the view.
+
+            Args:
+                db (sqlalchemy.orm.Session): Active database session.
+            """
+        try:
+            # Step 1: Prompt for client ID
+            client_id = MenuView.prompt_for_id("client")
+            client = Client.get_by_id(db, client_id)
+            if not client:
+                DisplayMessages.display_error("CLIENT_NOT_FOUND")
+                return
+
+            # Step 2: Get updated data from the user
+            updated_data = ClientView.prompt_update(client)
+
+            # Step 3: Update the client (model layer)
+            client.update(db, **updated_data)
+
+            # Step 4: Commit changes (controller responsibility)
+            db.commit()
+            db.refresh(client)
+
+            # Step 5: Display success
+            DisplayMessages.display_success(
+                f"Client updated: {client.business_name or f'{client.first_name} {client.last_name}'} "
+                f"(ID: {client.client_id})"
+            )
+
+        except ValueError as e:
+            # Handle validation errors (e.g., duplicate email)
+            db.rollback()
+            DisplayMessages.display_error(str(e))
+
+        except Exception:
+            # Handle unexpected errors
+            db.rollback()
+            DisplayMessages.display_error("DATABASE_ERROR")
+            raise
 
 
 class ContractController:
