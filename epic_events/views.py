@@ -291,6 +291,7 @@ class ClientView:
             "first_name": click.prompt("First name", default=client.first_name),
             "last_name": click.prompt("Last name", default=client.last_name),
             "email": click.prompt("Email", default=client.email),
+            "commercial_contact_id": click.prompt("Commercial contact", type=int),
             "business_name": click.prompt("Business name (optional)", default=client.business_name or ""),
             "telephone": click.prompt("Phone (optional)", default=client.telephone or ""),
         }
