@@ -1,5 +1,5 @@
 from models import User, Client, Contract, Event
-from views import (DisplayMessages, UserView, ClientView, MenuView)
+from views import (DisplayMessages, UserView, ClientView, ContractView, MenuView)
 
 from epic_events.database import SessionLocal
 
@@ -442,7 +442,35 @@ class ContractController:
 
     @staticmethod
     def list_contracts(db):
-        pass
+        """
+        Controller method to list all contracts in the CRM system.
+        This method orchestrates the retrieval of contract data from the database,
+        handles potential errors, and delegates the display to the view layer.
+
+        Args:
+            db (sqlalchemy.orm.Session): Active SQLAlchemy database session for data retrieval.
+
+        Workflow:
+            1. Retrieves all contracts from the database (via Contract.get_all).
+            2. Delegates the display of contracts to the view layer (via ContractView.list_contracts).
+            3. Handles any unexpected errors and provides feedback via DisplayMessages.
+
+        Error Handling:
+            - Catches unexpected errors (e.g., database issues) and displays a generic error message.
+            - Uses ErrorMessages enum for consistent error messaging across the application.
+            - Re-raises the exception for potential higher-level handling (e.g., logging).
+        """
+        try:
+            # Step 1: Retrieve contracts from the database (model layer)
+            contracts = Contract.get_all(db)
+
+            # Step 2: Delegate display to the view layer
+            ContractView.list_contracts(contracts)
+
+        except Exception:
+            # Handle unexpected errors
+            DisplayMessages.display_error("DATABASE_ERROR")
+            raise
 
     @staticmethod
     def create_contract(db):

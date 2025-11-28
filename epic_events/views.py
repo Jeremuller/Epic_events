@@ -302,6 +302,42 @@ class ClientView:
         }
 
 
+class ContractView:
+    """Static methods for contract-related view operations."""
+
+    @staticmethod
+    def list_contracts(contracts):
+        """
+        Displays a list of contracts in the CRM system.
+
+        Args:
+            contracts (list[Contract]): List of Contract objects to display.
+                                       If empty, a message is shown.
+        """
+        if not contracts:
+            print("No contracts found in the database.")
+            return
+
+        print("\n=== List of Contracts ===")
+        for contract in contracts:
+            # Format client and commercial names
+            client_name = f"{contract.client.first_name} {contract.client.last_name}" if contract.client else "N/A"
+            commercial_name = (
+                f"{contract.commercial_contact.first_name} {contract.commercial_contact.last_name}"
+                if contract.commercial_contact else "N/A"
+            )
+
+            print(
+                f"ID: {contract.contract_id} | "
+                f"Client: {client_name} | "
+                f"Commercial: {commercial_name} | "
+                f"Total: {contract.total_price}€ | "
+                f"Remaining: {contract.rest_to_pay}€ | "
+                f"Signed: {'Yes' if contract.signed else 'No'} | "
+                f"Created: {contract.creation.strftime('%Y-%m-%d %H:%M') if contract.creation else 'N/A'}"
+            )
+
+
 @click.group()
 def cli():
     """
