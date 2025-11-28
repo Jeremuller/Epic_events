@@ -337,6 +337,27 @@ class ContractView:
                 f"Created: {contract.creation.strftime('%Y-%m-%d %H:%M') if contract.creation else 'N/A'}"
             )
 
+    @staticmethod
+    def prompt_contract_creation():
+        """
+        Prompts the user for new contract information.
+
+        Returns:
+            dict: Contract data including:
+                  - total_price (float): Total amount of the contract.
+                  - rest_to_pay (float): Remaining amount to be paid.
+                  - client_id (int): ID of the associated client.
+                  - commercial_contact_id (int): ID of the commercial user responsible.
+                  - signed (bool, optional): Whether the contract is signed. Defaults to False.
+        """
+        return {
+            "total_price": float(click.prompt("Total price (€)", type=float)),
+            "rest_to_pay": float(click.prompt("Remaining amount to pay (€)", type=float)),
+            "client_id": click.prompt("Client", type=int),
+            "commercial_contact_id": click.prompt("Commercial contact", type=int),
+            "signed": click.confirm("Is the contract already signed?", default=False)
+        }
+
 
 @click.group()
 def cli():

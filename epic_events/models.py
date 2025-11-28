@@ -395,59 +395,58 @@ class Contract(Base):
     commercial_contact = relationship("User", back_populates="contracts")
 
     @classmethod
-    def create(cls, db: Session, total_price: float, rest_to_pay: float, client_id: int, commercial_contact_id: int,
-               signed: bool = None):
+    def create(cls, db: Session, total_price: float, rest_to_pay: float,
+               client_id: int, commercial_contact_id: int, signed: bool = False):
         """
-        Creates a new contract linked to a client and a commercial user.
+        Creates a new contract with full validation.
+        Does NOT persist the contract to the database (handled by the controller).
+
         Args:
-            db (Session): SQLAlchemy database session.
+            db (Session): SQLAlchemy database session (for validation only).
             total_price (float): Total amount of the contract (must be > 0).
             rest_to_pay (float): Remaining amount to be paid (must be ≥ 0 and ≤ total_price).
             client_id (int): ID of the associated client (must exist).
             commercial_contact_id (int): ID of the commercial user responsible (must exist).
-            signed (bool, optional): New signed status.
+            signed (bool, optional): Whether the contract is signed. Defaults to False.
+
         Returns:
-            Contract: The created Contract object.
+            Contract: The created Contract object (not persisted).
+
         Raises:
-            ValueError: If total_price/rest_to_pay are invalid, or if client_id/commercial_contact_id are not found.
+            ValueError: If validation fails:
+                        - INVALID_TOTAL_PRICE: total_price ≤ 0
+                        - INFERIOR_TOTAL_PRICE: rest_to_pay > total_price
+                        - NEGATIVE_REST_TO_PAY: rest_to_pay < 0
+                        - CLIENT_NOT_FOUND: client_id does not exist
+                        - CONTACT_NOT_FOUND: commercial_contact_id does not exist
         """
-        try:
-            # Validate total_price and rest_to_pay
-            if total_price <= 0:
-                raise ValueError(ErrorMessages.INVALID_TOTAL_PRICE.name)
-            if rest_to_pay > total_price:
-                raise ValueError(ErrorMessages.INFERIOR_TOTAL_PRICE.name)
-            if rest_to_pay < 0:
-                raise ValueError(ErrorMessages.NEGATIVE_REST_TO_PAY.name)
+        # Validate total_price
+        if total_price <= 0:
+            raise ValueError(ErrorMessages.INVALID_TOTAL_PRICE.name)
 
-            # Check if client_id exists
-            if not db.query(Client).filter_by(client_id=client_id).first():
-                raise ValueError(ErrorMessages.CLIENT_NOT_FOUND.name)
+        # Validate rest_to_pay
+        if rest_to_pay < 0:
+            raise ValueError(ErrorMessages.NEGATIVE_REST_TO_PAY.name)
+        if rest_to_pay > total_price:
+            raise ValueError(ErrorMessages.INFERIOR_TOTAL_PRICE.name)
 
-            # Check if commercial_contact_id exists
-            if not db.query(User).filter_by(user_id=commercial_contact_id).first():
-                raise ValueError(ErrorMessages.CONTACT_NOT_FOUND.name)
+        # Check if client exists
+        if not db.query(Client).filter_by(client_id=client_id).first():
+            raise ValueError(ErrorMessages.CLIENT_NOT_FOUND.name)
 
-            # Create the contract
-            contract = cls(
-                total_price=total_price,
-                rest_to_pay=rest_to_pay,
-                creation=datetime.now(),
-                client_id=client_id,
-                commercial_contact_id=commercial_contact_id,
-                signed=signed
-            )
-            db.add(contract)
-            db.commit()
-            db.refresh(contract)
-            return contract
+        # Check if commercial contact exists
+        if not db.query(User).filter_by(user_id=commercial_contact_id).first():
+            raise ValueError(ErrorMessages.CONTACT_NOT_FOUND.name)
 
-        except IntegrityError:
-            db.rollback()
-            raise ValueError(ErrorMessages.DATABASE_ERROR.name)
-        except Exception:
-            db.rollback()
-            raise
+        # Create and return the contract object (not persisted)
+        return cls(
+            total_price=total_price,
+            rest_to_pay=rest_to_pay,
+            creation=datetime.now(),
+            client_id=client_id,
+            commercial_contact_id=commercial_contact_id,
+            signed=signed
+        )
 
     def update(self, db: Session, total_price: float = None, rest_to_pay: float = None,
                client_id: int = None, commercial_contact_id: int = None, signed: bool = None):

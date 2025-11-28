@@ -474,7 +474,66 @@ class ContractController:
 
     @staticmethod
     def create_contract(db):
-        pass
+        """
+        Controller function to orchestrate the creation of a new contract in the CRM system.
+        This function acts as an intermediary between the view (user interaction) and the model (business logic).
+        It handles transaction management (commit/rollback) and error feedback.
+
+        Args:
+            db (sqlalchemy.orm.Session): Active database session for persistence operations.
+
+        Workflow:
+            1. Delegates contract input collection to the view layer (`prompt_contract_creation`).
+            2. Delegates contract validation and object creation to the model layer (`Contract.create`).
+            3. Manages database persistence (commit/rollback) based on operation success/failure.
+            4. Delegates success/error feedback to the view layer (`display_success`/`display_error`).
+
+        Transaction Management:
+            - Commits changes to the database if the operation succeeds.
+            - Rolls back changes if any error occurs (validation or database error).
+            - Ensures data consistency by handling exceptions explicitly.
+
+        Error Handling:
+            - Catches `ValueError` for business logic validation errors (e.g., invalid client/commercial contact).
+            - Catches generic `Exception` for database/technical errors.
+            - Delegates error display to the view layer with appropriate error keys.
+        """
+        try:
+            # Step 1: Delegate contract input to the view layer
+            contract_data = ContractView.prompt_contract_creation()
+
+            # Step 2: Delegate contract validation and object creation to the model layer
+            contract = Contract.create(
+                db=db,
+                total_price=contract_data["total_price"],
+                rest_to_pay=contract_data["rest_to_pay"],
+                client_id=contract_data["client_id"],
+                commercial_contact_id=contract_data["commercial_contact_id"],
+                signed=contract_data.get("signed", False)
+            )
+
+            # Step 3: Persist the contract (controller responsibility)
+            db.add(contract)
+            db.commit()
+            db.refresh(contract)
+
+            # Step 4: Delegate success feedback to the view layer
+            DisplayMessages.display_success(
+                f"Contract created: ID {contract.contract_id} | "
+                f"Client: {contract.client.business_name if contract.client else 'N/A'} | "
+                f"Total: {contract.total_price}€"
+            )
+
+        except ValueError as e:
+            # Handle business logic validation errors
+            db.rollback()
+            DisplayMessages.display_error(str(e))
+
+        except Exception:
+            # Handle database/technical errors
+            db.rollback()
+            DisplayMessages.display_error("DATABASE_ERROR")
+            raise
 
     @staticmethod
     def update_contract(db):
