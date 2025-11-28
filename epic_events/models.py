@@ -451,61 +451,58 @@ class Contract(Base):
     def update(self, db: Session, total_price: float = None, rest_to_pay: float = None,
                client_id: int = None, commercial_contact_id: int = None, signed: bool = None):
         """
-        Updates the contract's information in the database with validation checks.
+        Updates the contract's information with validation.
+        Does NOT persist changes to the database (handled by the controller).
+
         Args:
-            db (Session): SQLAlchemy database session.
+            db (Session): SQLAlchemy database session (for validation only).
             total_price (float, optional): New total price (must be > 0).
             rest_to_pay (float, optional): New remaining amount (must be ≥ 0 and ≤ total_price).
             client_id (int, optional): New client ID (must exist).
             commercial_contact_id (int, optional): New commercial contact ID (must exist).
             signed (bool, optional): New signed status.
+
         Returns:
-            Contract: The updated Contract object.
+            Contract: The updated Contract object (not persisted).
+
         Raises:
             ValueError: If validations fail (invalid prices, IDs not found).
         """
-        try:
-            # Update total_price if provided
-            if total_price is not None:
-                if total_price <= 0:
-                    raise ValueError(ErrorMessages.INVALID_TOTAL_PRICE.name)
-                self.total_price = total_price
+        # Update total_price if provided
+        if total_price is not None:
+            if total_price <= 0:
+                raise ValueError(ErrorMessages.INVALID_TOTAL_PRICE.name)
+            self.total_price = total_price
 
-            # Update rest_to_pay if provided
-            if rest_to_pay is not None:
-                current_total = self.total_price if total_price is None else total_price
-                if rest_to_pay < 0:
-                    raise ValueError(ErrorMessages.NEGATIVE_REST_TO_PAY.name)
-                if rest_to_pay > current_total:
-                    raise ValueError(ErrorMessages.INFERIOR_TOTAL_PRICE.name)
-                self.rest_to_pay = rest_to_pay
+        # Update rest_to_pay if provided
+        if rest_to_pay is not None:
+            current_total = self.total_price if total_price is None else total_price
+            if rest_to_pay < 0:
+                raise ValueError(ErrorMessages.NEGATIVE_REST_TO_PAY.name)
+            if rest_to_pay > current_total:
+                raise ValueError(ErrorMessages.INFERIOR_TOTAL_PRICE.name)
+            self.rest_to_pay = rest_to_pay
 
-            # Update client_id if provided
-            if client_id is not None and client_id != self.client_id:
-                if not db.query(Client).filter_by(client_id=client_id).first():
-                    raise ValueError(ErrorMessages.CLIENT_NOT_FOUND.name)
-                self.client_id = client_id
+        # Update client_id if provided
+        if client_id is not None and client_id != self.client_id:
+            if not db.query(Client).filter_by(client_id=client_id).first():
+                raise ValueError(ErrorMessages.CLIENT_NOT_FOUND.name)
+            self.client_id = client_id
 
-            # Update commercial_contact_id if provided
-            if commercial_contact_id is not None and commercial_contact_id != self.commercial_contact_id:
-                if not db.query(User).filter_by(user_id=commercial_contact_id).first():
-                    raise ValueError(ErrorMessages.CONTACT_NOT_FOUND.name)
-                self.commercial_contact_id = commercial_contact_id
+        # Update commercial_contact_id if provided
+        if commercial_contact_id is not None and commercial_contact_id != self.commercial_contact_id:
+            if not db.query(User).filter_by(user_id=commercial_contact_id).first():
+                raise ValueError(ErrorMessages.CONTACT_NOT_FOUND.name)
+            self.commercial_contact_id = commercial_contact_id
 
-            # Update signed status if provided
-            if signed is not None:
-                self.signed = signed
+        # Update signed status if provided
+        if signed is not None:
+            self.signed = signed
 
-            db.commit()
-            db.refresh(self)
-            return self
+        # Update last modification timestamp
+        self.last_update = datetime.now()
 
-        except IntegrityError:
-            db.rollback()
-            raise ValueError(ErrorMessages.DATABASE_ERROR.name)
-        except Exception:
-            db.rollback()
-            raise
+        return self
 
     @classmethod
     def get_all(cls, db: Session):

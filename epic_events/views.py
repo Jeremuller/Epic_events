@@ -359,6 +359,38 @@ class ContractView:
             "signed": click.confirm("Is the contract already signed?", default=False)
         }
 
+    @staticmethod
+    def prompt_update(contract):
+        """
+        Prompts the user to update an existing contract's information.
+        Only returns fields that were actually modified by the user.
+
+        Args:
+            contract (Contract): The contract object to update.
+
+        Returns:
+            dict: Updated fields (only modified fields are included).
+        """
+        print(f"\nUpdating contract ID: {contract.contract_id}")
+        print(f"Current client: {contract.client.business_name if contract.client else 'N/A'}")
+        print(f"Current commercial: {contract.commercial_contact.first_name if contract.commercial_contact else 'N/A'}")
+
+        # Prompt for each field with current value as default
+        updated_data = {
+            "total_price": click.prompt("Total price (€)", default=contract.total_price, type=float),
+            "rest_to_pay": click.prompt("Remaining amount to pay (€)", default=contract.rest_to_pay, type=float),
+            "client_id": click.prompt("Client ID", default=contract.client_id, type=int),
+            "commercial_contact_id": click.prompt("Commercial contact ID", default=contract.commercial_contact_id,
+                                                  type=int),
+            "signed": click.confirm("Is the contract signed?", default=contract.signed)
+        }
+
+        # Filter out fields that were not modified
+        return {
+            key: value for key, value in updated_data.items()
+            if value != getattr(contract, key)
+        }
+
 
 @click.group()
 def cli():

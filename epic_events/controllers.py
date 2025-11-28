@@ -537,7 +537,54 @@ class ContractController:
 
     @staticmethod
     def update_contract(db):
-        pass
+        """
+        Orchestrates the update of a contract in the CRM system.
+        Steps:
+          1. Prompts the user for the contract ID (via MenuView).
+          2. Retrieves the contract from the database (via Contract.get_by_id).
+          3. Prompts for updated contract data (via ContractView).
+          4. Validates and updates the contract (via Contract.update).
+          5. Handles database transactions (commit/rollback).
+          6. Delegates success/error feedback to the view.
+
+        Args:
+            db (sqlalchemy.orm.Session): Active database session.
+        """
+        try:
+            # Step 1: Prompt for contract ID
+            contract_id = MenuView.prompt_for_id("contract")
+            contract = Contract.get_by_id(db, contract_id)
+            if not contract:
+                DisplayMessages.display_error("CONTRACT_NOT_FOUND")
+                return
+
+            # Step 2: Get updated data from the user
+            updated_data = ContractView.prompt_update(contract)
+
+            # Step 3: Update the contract (model layer)
+            contract.update(db, **updated_data)
+
+            # Step 4: Commit changes (controller responsibility)
+            db.commit()
+            db.refresh(contract)
+
+            # Step 5: Display success
+            DisplayMessages.display_success(
+                f"Contract updated: ID {contract.contract_id} | "
+                f"Client: {contract.client.business_name if contract.client else 'N/A'} | "
+                f"Total: {contract.total_price}€"
+            )
+
+        except ValueError as e:
+            # Handle validation errors
+            db.rollback()
+            DisplayMessages.display_error(str(e))
+
+        except Exception:
+            # Handle unexpected errors
+            db.rollback()
+            DisplayMessages.display_error("DATABASE_ERROR")
+            raise
 
 
 class EventController:
