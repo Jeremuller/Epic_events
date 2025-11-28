@@ -392,6 +392,42 @@ class ContractView:
         }
 
 
+class EventView:
+    """Static methods for event-related view operations."""
+
+    @staticmethod
+    def list_events(events):
+        """
+        Displays a list of events in the CRM system.
+
+        Args:
+            events (list[Event]): List of Event objects to display.
+        """
+        if not events:
+            print("No events found in the database.")
+            return
+
+        print("\n=== List of Events ===")
+        for event in events:
+            # Format client and support contact names
+            client_name = f"{event.client.business_name}" if event.client else "N/A"
+            support_name = (
+                f"{event.support_contact.first_name} {event.support_contact.last_name}"
+                if event.support_contact else "N/A"
+            )
+
+            print(
+                f"ID: {event.event_id} | "
+                f"Name: {event.name} | "
+                f"Client: {client_name} | "
+                f"Support: {support_name} | "
+                f"Start: {event.start_datetime} | "
+                f"End: {event.end_datetime} | "
+                f"Location: {event.location} | "
+                f"Attendees: {event.attendees}"
+            )
+
+
 @click.group()
 def cli():
     """

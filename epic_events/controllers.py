@@ -1,5 +1,5 @@
 from models import User, Client, Contract, Event
-from views import (DisplayMessages, UserView, ClientView, ContractView, MenuView)
+from views import (DisplayMessages, UserView, ClientView, ContractView, EventView, MenuView)
 
 from epic_events.database import SessionLocal
 
@@ -592,7 +592,30 @@ class EventController:
 
     @staticmethod
     def list_events(db):
-        pass
+        """
+        Controller method to list all events in the CRM system.
+        This method orchestrates the retrieval of event data from the database,
+        handles potential errors, and delegates the display to the view layer.
+
+        Args:
+            db (sqlalchemy.orm.Session): Active SQLAlchemy database session for data retrieval.
+
+        Workflow:
+            1. Retrieves all events from the database (via Event.get_all).
+            2. Delegates the display of events to the view layer (via EventView.list_events).
+            3. Handles any unexpected errors and provides feedback via DisplayMessages.
+        """
+        try:
+            # Step 1: Retrieve events from the database (model layer)
+            events = Event.get_all(db)
+
+            # Step 2: Delegate display to the view layer
+            EventView.list_events(events)
+
+        except Exception:
+            # Handle unexpected errors
+            DisplayMessages.display_error("DATABASE_ERROR")
+            raise
 
     @staticmethod
     def create_event(db):
