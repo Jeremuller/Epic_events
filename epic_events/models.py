@@ -78,7 +78,8 @@ class User(Base):
                 raise ValueError(ErrorMessages.INVALID_ROLE.name)
 
         # Check for empty required fields
-        if not all:
+        required_fields = [username, first_name, last_name, email, role]
+        if not all(required_fields):
             raise ValueError(ErrorMessages.REQUIRED_FIELDS_EMPTY.name)
 
         return cls(

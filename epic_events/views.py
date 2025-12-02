@@ -1,11 +1,10 @@
 from epic_events.models import User, Client, Contract, Event
-from epic_events.utils import ErrorMessages
+from epic_events.utils import ErrorMessages, validate_length
 from epic_events.database import SessionLocal
 from sqlalchemy.exc import OperationalError, ProgrammingError, InternalError
 from datetime import datetime
 import click
 from epic_events.utils import ErrorMessages
-from utils import validate_length
 
 
 class DisplayMessages:

@@ -19,11 +19,17 @@ def test_create_user(db_session):
     assert user.username == "jdoe"
 
 
-def test_create_user_duplicate_username(db_session):
+def test_create_user_duplicate_username(db_session, test_user):
     """Test that creating a user with a duplicate username raises a ValueError."""
-    User.create(db_session, "jdoe", "John", "Doe", "john@example.com", "commercial")
     with pytest.raises(ValueError, match="USERNAME_TAKEN"):
-        User.create(db_session, "jdoe", "Jane", "Doe", "jane@example.com", "management")
+        User.create(
+            db=db_session,
+            username="test_user",  # Même username que test_user
+            first_name="Jane",
+            last_name="Doe",
+            email="another@example.com",  # Différent email
+            role="management"
+        )
 
 
 def test_create_user_duplicate_email(db_session):

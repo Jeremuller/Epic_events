@@ -1,8 +1,6 @@
 import pytest
 from click.testing import CliRunner
-from epic_events.views import (cli, create_user, create_client,
-                               list_users, update_user, delete_user,
-                               create_contract, list_contracts, update_contract, create_event)
+from epic_events.views import (UserView, ClientView, ContractView, EventView)
 from epic_events.models import User, Client, Contract, Event
 from datetime import datetime, timedelta
 
@@ -159,7 +157,7 @@ def test_list_users_integration(capsys, db_session, test_user):
     """
     users = User.get_all(db_session)
 
-    list_users(users)
+    UserView.list_users(users)
 
     captured = capsys.readouterr()
 
