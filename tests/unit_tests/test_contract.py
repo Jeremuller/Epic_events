@@ -110,6 +110,19 @@ def test_update_contract_with_invalid_client_id(db_session, test_user, test_clie
         )
 
 
+def test_update_contract_negative_rest_to_pay(db_session, test_user, test_client):
+    """Test that updating a contract with a negative rest_to_pay raises a ValueError."""
+    contract = Contract.create(
+        db=db_session,
+        total_price=1000.0,
+        rest_to_pay=500.0,
+        client_id=test_client.client_id,
+        commercial_contact_id=test_user.user_id
+    )
+    with pytest.raises(ValueError, match="NEGATIVE_REST_TO_PAY"):
+        contract.update(db=db_session, rest_to_pay=-100.0)
+
+
 def test_update_contract_with_invalid_commercial_id(db_session, test_user, test_client):
     """Test that updating a contract with an invalid commercial_contact_id raises a ValueError."""
     contract = Contract.create(
