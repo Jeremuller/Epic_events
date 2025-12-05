@@ -104,7 +104,7 @@ def test_update_event(db_session, test_user, test_client, test_event):
     """Test that an event can be updated."""
     new_start_datetime = datetime.now() + timedelta(days=35)
     new_end_datetime = datetime.now() + timedelta(days=36)
-    test_event.update_user(
+    test_event.update(
         db=db_session,
         name="Updated Event",
         notes="Updated notes",
@@ -123,6 +123,34 @@ def test_update_event(db_session, test_user, test_client, test_event):
     assert test_event.attendees == 75
 
 
+def test_update_event_invalid_client_id(db_session, test_user, test_client, test_event):
+    """Test that updating an event with an invalid client_id raises a ValueError."""
+    with pytest.raises(ValueError, match="CLIENT_NOT_FOUND"):
+        test_event.update(
+            db=db_session,
+            client_id=9999
+        )
+
+
+def test_update_event_past_date(db_session, test_user, test_client, test_event):
+    """Test that updating an event with a past start_datetime raises a ValueError."""
+    with pytest.raises(ValueError, match="EVENT_DATE_IN_PAST"):
+        test_event.update(
+            db=db_session,
+            start_datetime=datetime.now() - timedelta(days=1)
+        )
+
+
+def test_update_event_end_before_start(db_session, test_user, test_client, test_event):
+    """Test that updating an event with end_datetime before start_datetime raises a ValueError."""
+    with pytest.raises(ValueError, match="END_BEFORE_START"):
+        test_event.update(
+            db=db_session,
+            start_datetime=datetime.now() + timedelta(days=35),
+            end_datetime=datetime.now() + timedelta(days=34)
+        )
+
+
 def test_get_all_events(db_session, test_user, test_client):
     """Test that all events can be retrieved."""
     event1 = Event.create(
@@ -136,6 +164,8 @@ def test_get_all_events(db_session, test_user, test_client):
         client_id=test_client.client_id,
         support_contact_id=test_user.user_id
     )
+    db_session.add(event1)
+    db_session.commit()
     event2 = Event.create(
         db=db_session,
         name="Event 2",
@@ -147,6 +177,8 @@ def test_get_all_events(db_session, test_user, test_client):
         client_id=test_client.client_id,
         support_contact_id=test_user.user_id
     )
+    db_session.add(event2)
+    db_session.commit()
     events = Event.get_all(db_session)
     assert len(events) == 2
     assert events[0].name in ["Event 1", "Event 2"]
