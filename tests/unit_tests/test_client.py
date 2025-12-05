@@ -99,6 +99,48 @@ def test_update_client(db_session, test_user):
     assert client.last_update > client.first_contact
 
 
+def test_update_client_empty_optional_fields(db_session, test_user):
+    """Test that updating a client with empty optional fields sets them to None."""
+    client = Client.create(
+        db=db_session,
+        first_name="John",
+        last_name="Doe",
+        email="john@example.com",
+        commercial_contact_id=test_user.user_id,
+        business_name="Business Inc.",
+        telephone="1234567890"
+    )
+    client.update(db=db_session, business_name="", telephone="")
+    assert client.business_name is None
+    assert client.telephone is None
+
+
+def test_update_client_duplicate_email(db_session, test_user):
+    """Test that updating a client with a duplicate email raises a ValueError."""
+    client1 = Client.create(
+        db=db_session,
+        first_name="John",
+        last_name="Doe",
+        email="john@example.com",
+        commercial_contact_id=test_user.user_id
+    )
+    db_session.add(client1)
+    db_session.commit()
+
+    client2 = Client.create(
+        db=db_session,
+        first_name="Jane",
+        last_name="Doe",
+        email="jane@example.com",
+        commercial_contact_id=test_user.user_id
+    )
+    db_session.add(client2)
+    db_session.commit()
+
+    with pytest.raises(ValueError, match="EMAIL_TAKEN"):
+        client2.update(db=db_session, email="john@example.com")
+
+
 def test_get_all_clients(db_session, test_user):
     """Test that all clients can be retrieved."""
     client1 = Client.create(
