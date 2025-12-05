@@ -57,6 +57,8 @@ def test_user(db_session):
         email="test@example.com",
         role="commercial"
     )
+    db_session.add(user)
+    db_session.commit()
     return user
 
 
@@ -70,6 +72,8 @@ def test_client(db_session, test_user):
         email="test.client@example.com",
         commercial_contact_id=test_user.user_id
     )
+    db_session.add(client)
+    db_session.commit()
     return client
 
 
@@ -84,6 +88,8 @@ def test_contract(db_session, test_user, test_client):
         commercial_contact_id=test_user.user_id,
         signed=False
     )
+    db_session.add(contract)
+    db_session.commit()
     return contract
 
 
@@ -102,4 +108,6 @@ def test_event(db_session, test_user, test_client, test_contract):
         client_id=test_client.client_id,
         support_contact_id=test_user.user_id
     )
+    db_session.add(event)
+    db_session.commit()
     return event

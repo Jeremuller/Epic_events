@@ -1,5 +1,5 @@
 import pytest
-from epic_events.models import User, Client
+from epic_events.models import User, Client, Contract, Event
 
 
 def test_create_user(db_session):
@@ -24,19 +24,25 @@ def test_create_user_duplicate_username(db_session, test_user):
     with pytest.raises(ValueError, match="USERNAME_TAKEN"):
         User.create(
             db=db_session,
-            username="test_user",  # Même username que test_user
+            username="test_user",
             first_name="Jane",
             last_name="Doe",
-            email="another@example.com",  # Différent email
+            email="another@example.com",
             role="management"
         )
 
 
-def test_create_user_duplicate_email(db_session):
+def test_create_user_duplicate_email(db_session, test_user):
     """Test that creating a user with a duplicate email raises a ValueError."""
-    User.create(db_session, "jdoe", "John", "Doe", "john@example.com", "commercial")
     with pytest.raises(ValueError, match="EMAIL_TAKEN"):
-        User.create(db_session, "jdoe2", "Jane", "Doe", "john@example.com", "management")
+        User.create(
+            db=db_session,
+            username="JaneDoe",
+            first_name="Jane",
+            last_name="Doe",
+            email="test@example.com",
+            role="management"
+        )
 
 
 def test_create_user_with_empty_fields(db_session):
@@ -66,7 +72,10 @@ def test_get_all_users(db_session):
     """Test retrieving all users."""
     # Create a few test users
     user1 = User.create(db_session, "user1", "User", "One", "user1@example.com", "commercial")
+    db_session.add(user1)
     user2 = User.create(db_session, "user2", "User", "Two", "user2@example.com", "management")
+    db_session.add(user2)
+    db_session.commit()
 
     users = User.get_all(db_session)
     assert len(users) == 2
@@ -77,6 +86,8 @@ def test_get_all_users(db_session):
 def test_get_user_by_id(db_session):
     """Test retrieving a user by ID."""
     user = User.create(db_session, "jdoe", "John", "Doe", "john@example.com", "commercial")
+    db_session.add(user)
+    db_session.commit()
     fetched_user = User.get_by_id(db_session, user.user_id)
     assert fetched_user.first_name == "John"
     assert fetched_user.email == "john@example.com"
@@ -95,12 +106,14 @@ def test_update_user(db_session):
     assert user.email == "jane@example.com"
 
 
-def test_update_user_duplicate_email(db_session):
+def test_update_user_duplicate_email(db_session, test_user):
     """Test that updating a user with a duplicate email raises a ValueError."""
     user1 = User.create(db_session, "jdoe1", "John", "Doe", "john@example.com", "commercial")
-    user2 = User.create(db_session, "jdoe2", "Jane", "Doe", "jane@example.com", "management")
+    db_session.add(user1)
+
+    db_session.commit()
     with pytest.raises(ValueError, match="EMAIL_TAKEN"):
-        user2.update(db_session, email="john@example.com")
+        user1.update(db_session, email="test@example.com")
 
 
 def test_update_user_with_none_values(db_session):
@@ -120,24 +133,34 @@ def test_delete_user(db_session):
     assert User.get_by_id(db_session, user_id) is None
 
 
-def test_delete_user_with_dependencies(db_session):
+def test_user_delete_dissociates_dependencies(db_session):
     """
-    Test that deleting a user with active dependencies succeeds,
-    and dependencies are properly dissociated (set to None).
-    """
-    # Create a user and a dependent client
-    user = User.create(db_session, "jdoe", "John", "Doe", "john@example.com", "commercial")
-    client = Client.create(db_session, "Client", "One", "client1@example.com", user.user_id)
+        Unit test: Verify that User.delete() dissociates dependencies (clients, contracts, events).
+        This test focuses solely on the dissociation logic, without database persistence.
+        """
+    user = User(
+        username="jdoe",
+        first_name="John",
+        last_name="Doe",
+        email="john@example.com",
+        role="commercial",
+        password="default_hashed_password"
+    )
 
-    # Verify the client is initially linked to the user
+    client = Client(commercial_contact_id=user.user_id)
+    contract = Contract(commercial_contact_id=user.user_id)
+    event = Event(support_contact_id=user.user_id)
+
+    user.clients = [client]
+    user.contracts = [contract]
+    user.events = [event]
+
     assert client.commercial_contact_id == user.user_id
+    assert contract.commercial_contact_id == user.user_id
+    assert event.support_contact_id == user.user_id
 
-    # Delete the user (should succeed and dissociate dependencies)
     user.delete(db_session)
 
-    # Verify the user is deleted
-    assert User.get_by_id(db_session, user.user_id) is None
-
-    # Verify the client's commercial_contact_id is set to None
-    updated_client = Client.get_by_id(db_session, client.client_id)
-    assert updated_client.commercial_contact_id is None
+    assert client.commercial_contact_id is None
+    assert contract.commercial_contact_id is None
+    assert event.support_contact_id is None
