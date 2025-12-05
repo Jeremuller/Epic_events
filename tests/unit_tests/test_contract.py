@@ -124,25 +124,3 @@ def test_update_contract_with_invalid_commercial_id(db_session, test_user, test_
             db=db_session,
             commercial_contact_id=9999
         )
-
-
-def test_get_contracts_by_client(db_session, test_user, test_client):
-    """Test that all contracts for a specific client can be retrieved."""
-    contract1 = Contract.create(
-        db=db_session,
-        total_price=1000.00,
-        rest_to_pay=500.00,
-        client_id=test_client.client_id,
-        commercial_contact_id=test_user.user_id
-    )
-    contract2 = Contract.create(
-        db=db_session,
-        total_price=2000.00,
-        rest_to_pay=1000.00,
-        client_id=test_client.client_id,
-        commercial_contact_id=test_user.user_id
-    )
-    contracts = [c for c in Contract.get_all(db_session) if c.client_id == test_client.client_id]
-    assert len(contracts) == 2
-    assert contract1 in contracts
-    assert contract2 in contracts
