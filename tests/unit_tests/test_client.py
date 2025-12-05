@@ -21,13 +21,15 @@ def test_create_client_valid(db_session, test_user):
 
 def test_create_client_duplicate_email(db_session, test_user):
     """Test that creating a client with a duplicate email raises a ValueError."""
-    Client.create(
+    client = Client.create(
         db=db_session,
         first_name="John",
         last_name="Doe",
         email="john@example.com",
         commercial_contact_id=test_user.user_id
     )
+    db_session.add(client)
+    db_session.commit()
     with pytest.raises(ValueError, match="EMAIL_TAKEN"):
         Client.create(
             db=db_session,
@@ -106,6 +108,8 @@ def test_get_all_clients(db_session, test_user):
         email="john@example.com",
         commercial_contact_id=test_user.user_id
     )
+    db_session.add(client1)
+    db_session.commit()
     client2 = Client.create(
         db=db_session,
         first_name="Jane",
@@ -113,6 +117,8 @@ def test_get_all_clients(db_session, test_user):
         email="jane@example.com",
         commercial_contact_id=test_user.user_id
     )
+    db_session.add(client2)
+    db_session.commit()
     clients = Client.get_all(db_session)
     assert len(clients) == 2
     assert clients[0].first_name in ["John", "Jane"]
@@ -128,6 +134,8 @@ def test_get_client_by_id(db_session, test_user):
         email="john@example.com",
         commercial_contact_id=test_user.user_id
     )
+    db_session.add(client)
+    db_session.commit()
     fetched_client = Client.get_by_id(db_session, client.client_id)
     assert fetched_client.first_name == "John"
     assert fetched_client.email == "john@example.com"
