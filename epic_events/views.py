@@ -4,7 +4,6 @@ from epic_events.database import SessionLocal
 from sqlalchemy.exc import OperationalError, ProgrammingError, InternalError
 from datetime import datetime
 import click
-from epic_events.utils import ErrorMessages
 
 
 class DisplayMessages:
