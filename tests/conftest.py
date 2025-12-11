@@ -101,7 +101,7 @@ def test_event(db_session, test_user, test_client, test_contract):
         db=db_session,
         name="Test Event",
         notes="Test event notes",
-        start_datetime=datetime.now() + timedelta(days=30),  # Date dans le futur
+        start_datetime=datetime.now() + timedelta(days=30),
         end_datetime=datetime.now() + timedelta(days=31),
         location="Paris",
         attendees=50,
