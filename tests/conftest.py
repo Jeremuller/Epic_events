@@ -70,6 +70,7 @@ def test_client(db_session, test_user):
         first_name="Test",
         last_name="Client",
         email="test.client@example.com",
+        business_name="business test",
         commercial_contact_id=test_user.user_id
     )
     db_session.add(client)
