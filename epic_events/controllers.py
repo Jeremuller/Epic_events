@@ -1,5 +1,5 @@
-from models import User, Client, Contract, Event
-from views import (DisplayMessages, UserView, ClientView, ContractView, EventView, MenuView)
+from epic_events.models import User, Client, Contract, Event
+from epic_events.views import (DisplayMessages, UserView, ClientView, ContractView, EventView, MenuView)
 
 from epic_events.database import SessionLocal
 
