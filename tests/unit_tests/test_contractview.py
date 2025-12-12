@@ -3,7 +3,7 @@ import click
 from epic_events.views import ContractView
 
 
-def test_list_contracts_empty(capsys):
+def test_list_contracts_empty(capsys, db_session):
     """Test that list_contracts prints a message when no contracts exist."""
     ContractView.list_contracts([])
 
@@ -11,7 +11,7 @@ def test_list_contracts_empty(capsys):
     assert "No contracts found in the database." in output
 
 
-def test_list_contracts_with_contract(capsys, test_contract, test_client, test_user):
+def test_list_contracts_with_contract(capsys, db_session, test_contract, test_client, test_user):
     """Test that list_contracts prints all contract information correctly."""
 
     ContractView.list_contracts([test_contract])
@@ -29,7 +29,7 @@ def test_list_contracts_with_contract(capsys, test_contract, test_client, test_u
     assert test_contract.creation.strftime("%Y-%m-%d") in output
 
 
-def test_prompt_contract_creation_full(monkeypatch):
+def test_prompt_contract_creation_full(monkeypatch, db_session):
     """Test full contract creation workflow with all fields filled."""
 
     answers = iter([
@@ -60,7 +60,7 @@ def test_prompt_contract_creation_full(monkeypatch):
     }
 
 
-def test_prompt_contract_creation_unsigned(monkeypatch):
+def test_prompt_contract_creation_unsigned(monkeypatch, db_session):
     """Test that signed=False is returned when user declines confirmation."""
 
     answers = iter([
@@ -78,7 +78,7 @@ def test_prompt_contract_creation_unsigned(monkeypatch):
     assert result["signed"] is False
 
 
-def test_prompt_contract_creation_abort(monkeypatch):
+def test_prompt_contract_creation_abort(monkeypatch, db_session):
     """Test that Click's Abort exception is properly propagated."""
 
     monkeypatch.setattr(
@@ -90,7 +90,7 @@ def test_prompt_contract_creation_abort(monkeypatch):
         ContractView.prompt_contract_creation()
 
 
-def test_prompt_update_no_changes(monkeypatch, test_contract):
+def test_prompt_update_no_changes(monkeypatch, db_session, test_contract):
     contract = test_contract
 
     answers = iter([
@@ -108,7 +108,7 @@ def test_prompt_update_no_changes(monkeypatch, test_contract):
     assert result == {}  # Nothing changed
 
 
-def test_prompt_update_some_changes(monkeypatch, test_contract):
+def test_prompt_update_some_changes(monkeypatch, db_session, test_contract):
     contract = test_contract
 
     answers = iter([
@@ -129,7 +129,7 @@ def test_prompt_update_some_changes(monkeypatch, test_contract):
     }
 
 
-def test_prompt_update_abort(monkeypatch, test_contract):
+def test_prompt_update_abort(monkeypatch, db_session, test_contract):
     monkeypatch.setattr(
         "click.prompt",
         lambda *a, **kw: (_ for _ in ()).throw(click.Abort())

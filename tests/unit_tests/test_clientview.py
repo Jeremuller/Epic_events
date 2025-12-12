@@ -3,7 +3,7 @@ import click
 from epic_events.views import ClientView
 
 
-def test_list_clients_empty(capsys):
+def test_list_clients_empty(capsys, db_session):
     """Test that list_clients prints a message when no clients exist."""
     ClientView.list_clients([])
 
@@ -11,7 +11,7 @@ def test_list_clients_empty(capsys):
     assert "No clients found in the database." in output
 
 
-def test_list_clients_with_commercial(capsys, test_client, test_user):
+def test_list_clients_with_commercial(capsys, db_session, test_client, test_user):
     """
     Test that list_clients prints the correct commercial contact information.
     """
@@ -36,7 +36,7 @@ def test_list_clients_with_commercial(capsys, test_client, test_user):
     assert expected_commercial in output
 
 
-def test_prompt_client_creation_full(monkeypatch):
+def test_prompt_client_creation_full(monkeypatch, db_session):
     """Test that prompt_client_creation returns correct dict when all fields are filled."""
 
     answers = iter([
@@ -65,7 +65,7 @@ def test_prompt_client_creation_full(monkeypatch):
     }
 
 
-def test_prompt_client_creation_optional_fields_none(monkeypatch):
+def test_prompt_client_creation_optional_fields_none(monkeypatch, db_session):
     """Test that empty optional fields return None."""
 
     answers = iter([
@@ -88,7 +88,7 @@ def test_prompt_client_creation_optional_fields_none(monkeypatch):
     assert result["telephone"] is None
 
 
-def test_prompt_client_creation_abort(monkeypatch):
+def test_prompt_client_creation_abort(monkeypatch, db_session):
     """Test that Click's Abort exception is propagated."""
 
     monkeypatch.setattr(
@@ -100,7 +100,7 @@ def test_prompt_client_creation_abort(monkeypatch):
         ClientView.prompt_client_creation()
 
 
-def test_prompt_update_single_change(monkeypatch, test_client, capsys):
+def test_prompt_update_single_change(monkeypatch, db_session, test_client, capsys):
     """Test that only modified fields are returned by prompt_update."""
 
     answers = iter([
@@ -129,7 +129,7 @@ def test_prompt_update_single_change(monkeypatch, test_client, capsys):
     assert f"Updating client: {expected_name} (ID: {test_client.client_id})" in output
 
 
-def test_prompt_update_no_changes(monkeypatch, test_client):
+def test_prompt_update_no_changes(monkeypatch, db_session, test_client):
     """Test that an empty dict is returned when no field is changed."""
 
     answers = iter([
@@ -150,7 +150,7 @@ def test_prompt_update_no_changes(monkeypatch, test_client):
     assert result == {}
 
 
-def test_prompt_update_optional_empty_ignored(monkeypatch, test_client):
+def test_prompt_update_optional_empty_ignored(monkeypatch, db_session, test_client):
     """Test that empty optional values are ignored unless original was None."""
 
     answers = iter([
@@ -171,7 +171,7 @@ def test_prompt_update_optional_empty_ignored(monkeypatch, test_client):
     assert result == {}
 
 
-def test_prompt_update_abort(monkeypatch, test_client):
+def test_prompt_update_abort(monkeypatch, db_session, test_client):
     """Test that Click's Abort exception is propagated."""
 
     monkeypatch.setattr(
