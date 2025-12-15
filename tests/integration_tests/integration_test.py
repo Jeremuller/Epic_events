@@ -2,6 +2,7 @@ import pytest
 from epic_events.controllers import UserController, ClientController, ContractController, EventController
 from epic_events.views import UserView, MenuView, ClientView, ContractView, EventView
 from epic_events.models import User, Client, Contract, Event
+from datetime import datetime, timedelta
 
 
 def test_list_users_integration(db_session, test_user, capsys):
@@ -480,3 +481,157 @@ def test_update_contract_integration_inferior_total_price_error(
     finally:
         MenuView.prompt_for_id = original_prompt_id
         ContractView.prompt_update = original_prompt_update
+
+
+def test_list_events_integration_success(db_session, test_event, capsys):
+    """
+    Full integration test:
+    list_events should retrieve events from DB
+    and display them via EventView.
+    """
+
+    # Act
+    EventController.list_events(db_session)
+
+    # Assert (stdout)
+    captured = capsys.readouterr()
+    output = captured.out
+
+    assert "=== List of Events ===" in output
+    assert str(test_event.event_id) in output
+    assert test_event.name in output
+
+    if test_event.client:
+        assert test_event.client.business_name in output
+
+    if test_event.support_contact:
+        assert test_event.support_contact.first_name in output
+
+
+def test_create_event_success(db_session, test_client, test_user, capsys):
+    """
+    Full integration test: successful event creation.
+    """
+
+    future_start = datetime.now() + timedelta(days=1)
+    future_end = future_start + timedelta(hours=2)
+
+    event_data = {
+        "name": "Integration Test Event",
+        "notes": "Notes for testing",
+        "start_datetime": future_start,
+        "end_datetime": future_end,
+        "location": "Test location",
+        "attendees": 10,
+        "client_id": test_client.client_id,
+        "support_contact_id": test_user.user_id
+    }
+
+    EventView.prompt_event_creation = staticmethod(lambda: event_data)
+
+    # Act
+    EventController.create_event(db_session)
+
+    # Assert stdout
+    captured = capsys.readouterr()
+    output = captured.out
+    assert "Event created" in output
+    assert "Integration Test Event" in output
+
+    event_in_db = db_session.query(Event).filter_by(name="Integration Test Event").first()
+    assert event_in_db is not None
+    assert event_in_db.client_id == test_client.client_id
+    assert event_in_db.support_contact_id == test_user.user_id
+
+
+def test_create_event_failure_past_date(db_session, test_client, test_user, capsys):
+    """
+    Full integration test: event creation fails because start_datetime is in the past.
+    """
+
+    past_start = datetime.now() - timedelta(days=1)
+    future_end = datetime.now() + timedelta(hours=2)
+
+    event_data = {
+        "name": "Past Event",
+        "notes": "Should fail",
+        "start_datetime": past_start,
+        "end_datetime": future_end,
+        "location": "Test location",
+        "attendees": 5,
+        "client_id": test_client.client_id,
+        "support_contact_id": test_user.user_id
+    }
+
+    EventView.prompt_event_creation = staticmethod(lambda: event_data)
+
+    # Act
+    EventController.create_event(db_session)
+
+    # Assert stdout
+    captured = capsys.readouterr()
+    output = captured.out
+    assert "❌ Error: Event date must be in the future.\n" in output
+
+    event_in_db = db_session.query(Event).filter_by(name="Past Event").first()
+    assert event_in_db is None
+
+
+def test_update_event_success_integration(db_session, test_event, capsys):
+    """
+    Full integration test:
+    Successfully updating an event using mocked prompts.
+    """
+    original_prompt_id = MenuView.prompt_for_id
+    original_prompt_update = EventView.prompt_update
+
+    MenuView.prompt_for_id = staticmethod(lambda _: test_event.event_id)
+    EventView.prompt_update = staticmethod(lambda event: {
+        "name": "Updated Event Name",
+        "location": "Updated Location"
+    })
+
+    try:
+        EventController.update_event(db_session)
+
+        updated_event = db_session.query(Event).get(test_event.event_id)
+        assert updated_event.name == "Updated Event Name"
+        assert updated_event.location == "Updated Location"
+
+        captured = capsys.readouterr()
+        assert "✅ Event updated: Updated Event Name (ID: 1)\n" in captured.out
+
+    finally:
+        MenuView.prompt_for_id = original_prompt_id
+        EventView.prompt_update = original_prompt_update
+
+
+def test_update_event_failure_end_before_start_integration(db_session, test_event, capsys):
+    """
+    Full integration test:
+    Updating an event with end_datetime before start_datetime
+    should raise a ValueError and rollback changes.
+    """
+    original_prompt_id = MenuView.prompt_for_id
+    original_prompt_update = EventView.prompt_update
+
+    MenuView.prompt_for_id = staticmethod(lambda _: test_event.event_id)
+    EventView.prompt_update = staticmethod(lambda event: {
+        "start_datetime": test_event.start_datetime,
+        "end_datetime": test_event.start_datetime - timedelta(hours=1)  # invalid
+    })
+
+    try:
+        EventController.update_event(db_session)
+
+        # Event should remain unchanged
+        unchanged_event = db_session.query(Event).get(test_event.event_id)
+        assert unchanged_event.end_datetime == test_event.end_datetime
+
+        captured = capsys.readouterr()
+        assert "❌ Error: End date must be after start date.\n" in captured.out
+
+    finally:
+        MenuView.prompt_for_id = original_prompt_id
+        EventView.prompt_update = original_prompt_update
+
