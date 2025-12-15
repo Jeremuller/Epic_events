@@ -327,3 +327,156 @@ def test_update_client_integration_duplicate_email(db_session, test_client, test
     finally:
         MenuView.prompt_for_id = original_prompt_id
         ClientView.prompt_update = original_prompt_update
+
+
+def test_list_contracts_integration(db_session, test_contract, capsys):
+    """
+    Full integration test:
+    Calls ContractController.list_contracts and verifies that
+    the existing contract is displayed by the view.
+    """
+
+    ContractController.list_contracts(db_session)
+
+    captured = capsys.readouterr()
+
+    assert str(test_contract.contract_id) in captured.out
+    assert str(test_contract.total_price) in captured.out
+    assert str(test_contract.rest_to_pay) in captured.out
+    assert "Yes" in captured.out or "No" in captured.out
+
+
+def test_create_contract_integration_success(
+        db_session, test_user, test_client, capsys
+):
+    """
+    Full integration test:
+    Successfully creates a contract via ContractController.create_contract.
+    Verifies persistence and success message output.
+    """
+
+    original_prompt = ContractView.prompt_contract_creation
+    ContractView.prompt_contract_creation = staticmethod(lambda: {
+        "total_price": 2000.0,
+        "rest_to_pay": 500.0,
+        "client_id": test_client.client_id,
+        "commercial_contact_id": test_user.user_id,
+        "signed": False
+    })
+
+    try:
+        ContractController.create_contract(db_session)
+
+        contract = db_session.query(Contract).first()
+        assert contract is not None
+        assert float(contract.total_price) == 2000.0
+        assert float(contract.rest_to_pay) == 500.0
+        assert contract.client_id == test_client.client_id
+        assert contract.commercial_contact_id == test_user.user_id
+        assert contract.signed is False
+
+        captured = capsys.readouterr()
+        assert "Contract created" in captured.out
+        assert str(contract.contract_id) in captured.out
+
+    finally:
+        ContractView.prompt_contract_creation = original_prompt
+
+
+def test_create_contract_integration_invalid_total_price(
+        db_session, test_user, test_client, capsys
+):
+    """
+    Full integration test:
+    Creating a contract with an invalid total_price should raise
+    a ValueError and display the corresponding error message.
+    """
+
+    original_prompt = ContractView.prompt_contract_creation
+    ContractView.prompt_contract_creation = staticmethod(lambda: {
+        "total_price": 0.0,  # invalid
+        "rest_to_pay": 0.0,
+        "client_id": test_client.client_id,
+        "commercial_contact_id": test_user.user_id,
+        "signed": False
+    })
+
+    try:
+        ContractController.create_contract(db_session)
+
+        # No contract should be persisted
+        contracts = db_session.query(Contract).all()
+        assert len(contracts) == 0
+
+        captured = capsys.readouterr()
+        assert "❌ Error: Total_price can't be <= 0.\n" in captured.out
+
+    finally:
+        ContractView.prompt_contract_creation = original_prompt
+
+
+def test_update_contract_integration_success(
+        db_session, test_contract, capsys
+):
+    """
+    Full integration test:
+    Successfully updates a contract via ContractController.update_contract.
+    Verifies persistence and success message output.
+    """
+
+    original_prompt_id = MenuView.prompt_for_id
+    original_prompt_update = ContractView.prompt_update
+
+    MenuView.prompt_for_id = staticmethod(lambda _: test_contract.contract_id)
+    ContractView.prompt_update = staticmethod(lambda contract: {
+        "rest_to_pay": 0.0,
+        "signed": True
+    })
+
+    try:
+        ContractController.update_contract(db_session)
+
+        updated_contract = db_session.query(Contract).get(test_contract.contract_id)
+        assert updated_contract.rest_to_pay == 0
+        assert updated_contract.signed is True
+
+        captured = capsys.readouterr()
+        assert "Contract updated" in captured.out
+        assert str(test_contract.contract_id) in captured.out
+
+    finally:
+        MenuView.prompt_for_id = original_prompt_id
+        ContractView.prompt_update = original_prompt_update
+
+
+def test_update_contract_integration_inferior_total_price_error(
+        db_session, test_contract, capsys
+):
+    """
+    Full integration test:
+    Updating a contract with rest_to_pay greater than total_price
+    should raise a ValueError and rollback changes.
+    """
+
+    original_prompt_id = MenuView.prompt_for_id
+    original_prompt_update = ContractView.prompt_update
+
+    MenuView.prompt_for_id = staticmethod(lambda _: test_contract.contract_id)
+    ContractView.prompt_update = staticmethod(lambda contract: {
+        "total_price": 1000.0,
+        "rest_to_pay": 2000.0  # invalid
+    })
+
+    try:
+        ContractController.update_contract(db_session)
+
+        # Contract should remain unchanged
+        unchanged_contract = db_session.query(Contract).get(test_contract.contract_id)
+        assert float(unchanged_contract.rest_to_pay) == float(test_contract.rest_to_pay)
+
+        captured = capsys.readouterr()
+        assert "❌ Error: Total price can't be inferior to rest to pay.\n" in captured.out
+
+    finally:
+        MenuView.prompt_for_id = original_prompt_id
+        ContractView.prompt_update = original_prompt_update
