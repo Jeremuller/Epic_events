@@ -16,7 +16,7 @@ class User(Base):
             first_name (str): User's first name (max 100 characters).
             last_name (str): User's last name (max 100 characters).
             username (str): Unique username for authentication (max 100 characters).
-            password (str): Hashed password for authentication (max 100 characters).
+            password_hash (str): Hashed password for authentication (max 100 characters).
             email (str): Unique email address of the user.
             role (str): Role of the user (commercial/management/support).
 
@@ -33,7 +33,7 @@ class User(Base):
     first_name = Column(String(100))
     last_name = Column(String(100))
     username = Column(String(100), unique=True)
-    password = Column(String(100))
+    password_hash = Column(String(100), nullable=False)
     email = Column(String(100), unique=True)
     role = Column(Enum('commercial', 'management', 'support'))
 
@@ -44,7 +44,7 @@ class User(Base):
 
     @classmethod
     def create(cls, db: Session, username: str, first_name: str, last_name: str, email: str, role: str,
-               password: str = "default_hashed_password"):
+               password_hash: str):
         """
         Creates a new user in the database.
 
@@ -56,7 +56,7 @@ class User(Base):
             If already taken, a suffix will be added (e.g., "john_doe_1").
             email (str): Unique email address of the user.
             role (str): Role of the user (commercial/management/support).
-            password (str, optional): Hashed password for authentication.
+            password_hash (str, optional): Hashed password for authentication.
 
         Returns:
             User: The newly created User object.
@@ -88,7 +88,7 @@ class User(Base):
             last_name=last_name,
             email=email,
             role=role,
-            password=password
+            password_hash=password_hash
         )
 
     @classmethod
