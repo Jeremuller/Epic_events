@@ -1,5 +1,5 @@
 from epic_events.models import User, Client, Contract, Event
-from epic_events.views import (DisplayMessages, UserView, ClientView, ContractView, EventView, MenuView)
+from epic_events.views import (DisplayMessages, UserView, ClientView, ContractView, EventView, MenuView, LoginView)
 from epic_events.auth import hash_password, verify_password
 from epic_events.database import SessionLocal
 
@@ -97,6 +97,35 @@ class MenuController:
                 break
             else:
                 DisplayMessages.display_invalid_choice("events")
+
+
+class LoginController:
+    @staticmethod
+    def login(db):
+        """
+        Authenticate a user using username and password.
+
+        Args:
+            db (Session): SQLAlchemy database session.
+
+        Returns:
+            User | None: Authenticated user if credentials are valid, otherwise None.
+        """
+        credentials = LoginView.prompt_login()
+        username = credentials["username"]
+        password = credentials["password"]
+
+        user = User.get_by_username(db, username)
+
+        if not user:
+            DisplayMessages.display_error("INVALID_CREDENTIALS")
+            return None
+
+        if not verify_password(password, user.password_hash):
+            DisplayMessages.display_error("INVALID_CREDENTIALS")
+            return None
+
+        return user
 
 
 class UserController:

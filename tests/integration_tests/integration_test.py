@@ -1,8 +1,9 @@
 import pytest
 from epic_events.controllers import UserController, ClientController, ContractController, EventController
+from epic_events.controllers import LoginController
 from epic_events.views import UserView, MenuView, ClientView, ContractView, EventView
 from epic_events.models import User, Client, Contract, Event
-from epic_events.auth import verify_password
+from epic_events.auth import verify_password, hash_password
 
 from datetime import datetime, timedelta
 
@@ -676,3 +677,38 @@ def test_create_user_hashes_and_verifies_password(db_session, monkeypatch):
     assert user.password_hash != plain_password
 
     assert verify_password(plain_password, user.password_hash) is True
+
+
+def test_login_success_creates_authenticated_session(monkeypatch, db_session):
+    """
+    Integration test:
+    Given an existing user with a hashed password,
+    When valid credentials are provided,
+    Then an authenticated session is returned.
+    """
+
+    plain_password = "secure_password"
+    hashed_password = hash_password(plain_password)
+
+    user = User.create(
+        db=db_session,
+        username="john_doe",
+        first_name="John",
+        last_name="Doe",
+        email="john@example.com",
+        role="commercial",
+        password_hash=hashed_password
+    )
+    db_session.add(user)
+    db_session.commit()
+
+    answers = iter(["john_doe", plain_password])
+    monkeypatch.setattr(
+        "click.prompt",
+        lambda msg, **kwargs: next(answers)
+    )
+
+    session = LoginController.login(db_session)
+
+    assert session.user.username == "john_doe"
+    assert session.user.role == "commercial"

@@ -118,6 +118,20 @@ class User(Base):
         """
         return db.query(cls).filter_by(user_id=user_id).first()
 
+    @classmethod
+    def get_by_username(cls, db: Session, username: str):
+        """
+        Retrieve a user by username.
+
+        Args:
+            db (Session): SQLAlchemy database session.
+            username (str): Username to search for.
+
+        Returns:
+            User | None: The user if found, otherwise None.
+        """
+        return db.query(cls).filter_by(username=username).first()
+
     def update(self, db: Session, username: str = None, first_name: str = None, last_name: str = None,
                email: str = None, role: str = None):
         """

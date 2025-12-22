@@ -105,6 +105,33 @@ def test_get_user_by_id(db_session):
     assert fetched_user.email == "john@example.com"
 
 
+def test_get_user_by_username_found(db_session):
+    """Should return the user when username exists in database."""
+    user = User.create(
+        db=db_session,
+        username="john_doe",
+        first_name="John",
+        last_name="Doe",
+        email="john@example.com",
+        role="commercial",
+        password_hash="securepassword"
+    )
+    db_session.add(user)
+    db_session.commit()
+
+    result = User.get_by_username(db_session, "john_doe")
+
+    assert result is not None
+    assert result.username == "john_doe"
+
+
+def test_get_user_by_username_not_found(db_session):
+    """Should return None when username does not exist."""
+    result = User.get_by_username(db_session, "unknown_user")
+
+    assert result is None
+
+
 def test_get_user_by_invalid_id(db_session):
     """Test that retrieving a user with an invalid ID returns None."""
     assert User.get_by_id(db_session, 9999) is None

@@ -104,6 +104,24 @@ class MenuView:
         return click.prompt(f"Enter the ID of the {entity_name}", type=int)
 
 
+class LoginView:
+    @staticmethod
+    def prompt_login():
+        """
+        Prompt the user for login credentials.
+
+        Returns:
+            dict: Dictionary containing username and password.
+        """
+        username = click.prompt("Username")
+        password = click.prompt("Password")
+
+        return {
+            "username": username,
+            "password": password
+        }
+
+
 class UserView:
     """Static methods for user-related view operations."""
 
