@@ -10,6 +10,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from epic_events.models import Base, User, Client, Contract, Event
+from epic_events.auth import hash_password
 
 # Create an in-memory SQLite engine for testing.
 # This avoids affecting the production database and ensures tests run in isolation.
@@ -49,13 +50,17 @@ def db_session():
 @pytest.fixture()
 def test_user(db_session):
     """Fixture to create a test user."""
+    TEST_PASSWORD = "test_password"
+    password_hash = hash_password(TEST_PASSWORD)
     user = User.create(
         db=db_session,
         username="test_user",
         first_name="Test",
         last_name="User",
         email="test@example.com",
-        role="commercial"
+        role="commercial",
+        password_hash=password_hash
+
     )
     db_session.add(user)
     db_session.commit()

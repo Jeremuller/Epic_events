@@ -1,6 +1,6 @@
 from epic_events.models import User, Client, Contract, Event
 from epic_events.views import (DisplayMessages, UserView, ClientView, ContractView, EventView, MenuView)
-
+from epic_events.auth import hash_password, verify_password
 from epic_events.database import SessionLocal
 
 db = SessionLocal()
@@ -159,7 +159,10 @@ class UserController:
             # Step 1: Delegate user input to the view layer
             user_data = UserView.prompt_user_creation()
 
-            # Step 2: Delegate user validation and object creation to the model layer
+            # Step 2: Hash the plaintext password
+            password_hash = hash_password(user_data["password"])
+
+            # Step 3: Delegate user validation and object creation to the model layer
             user = User.create(
                 db=db,
                 username=user_data["username"],
@@ -167,7 +170,7 @@ class UserController:
                 last_name=user_data["last_name"],
                 email=user_data["email"],
                 role=user_data["role"],
-                password="default_hashed_password"
+                password_hash=password_hash,
             )
 
             # Step 3: Persist the user

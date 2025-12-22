@@ -13,7 +13,7 @@ def test_prompt_user_creation(monkeypatch, db_session):
     )
 
     # Mock click.prompt for email and role
-    answers = iter(["john@example.com", "commercial"])
+    answers = iter(["john@example.com", "commercial", "testpassword"])
     monkeypatch.setattr("click.prompt", lambda msg, **kwargs: next(answers))
 
     result = UserView.prompt_user_creation()
@@ -24,6 +24,7 @@ def test_prompt_user_creation(monkeypatch, db_session):
         "last_name": "fake_Last name (max 100 chars)",
         "email": "john@example.com",
         "role": "commercial",
+        "password": "testpassword"
     }
 
 

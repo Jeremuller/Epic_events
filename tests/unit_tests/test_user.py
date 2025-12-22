@@ -10,7 +10,8 @@ def test_create_user(db_session):
         first_name="John",
         last_name="Doe",
         email="john@example.com",
-        role="commercial"
+        role="commercial",
+        password_hash="testpassword"
     )
     assert user.first_name == "John"
     assert user.last_name == "Doe"
@@ -28,7 +29,8 @@ def test_create_user_duplicate_username(db_session, test_user):
             first_name="Jane",
             last_name="Doe",
             email="another@example.com",
-            role="management"
+            role="management",
+            password_hash="testpassword"
         )
 
 
@@ -41,7 +43,8 @@ def test_create_user_duplicate_email(db_session, test_user):
             first_name="Jane",
             last_name="Doe",
             email="test@example.com",
-            role="management"
+            role="management",
+            password_hash="testpassword"
         )
 
 
@@ -51,29 +54,37 @@ def test_create_user_with_empty_fields(db_session):
     Required fields: username, first_name, last_name, email, role.
     """
     with pytest.raises(ValueError, match="REQUIRED_FIELDS_EMPTY"):
-        User.create(db_session, "", "John", "Doe", "john@example.com", "commercial")
+        User.create(db_session, "", "John", "Doe", "john@example.com", "commercial",
+                    password_hash="testpassword")
     with pytest.raises(ValueError, match="REQUIRED_FIELDS_EMPTY"):
-        User.create(db_session, "jdoe", "", "Doe", "john@example.com", "commercial")
+        User.create(db_session, "jdoe", "", "Doe", "john@example.com", "commercial",
+                    password_hash="testpassword")
     with pytest.raises(ValueError, match="REQUIRED_FIELDS_EMPTY"):
-        User.create(db_session, "jdoe", "John", "", "john@example.com", "commercial")
+        User.create(db_session, "jdoe", "John", "", "john@example.com", "commercial",
+                    password_hash="testpassword")
     with pytest.raises(ValueError, match="REQUIRED_FIELDS_EMPTY"):
-        User.create(db_session, "jdoe", "John", "Doe", "", "commercial")
+        User.create(db_session, "jdoe", "John", "Doe", "", "commercial",
+                    password_hash="testpassword")
     with pytest.raises(ValueError, match="REQUIRED_FIELDS_EMPTY"):
-        User.create(db_session, "jdoe", "John", "Doe", "john@example.com", "")
+        User.create(db_session, "jdoe", "John", "Doe", "john@example.com", "",
+                    password_hash="testpassword")
 
 
 def test_create_user_invalid_role(db_session):
     """Test that creating a user with an invalid role raises a ValueError."""
     with pytest.raises(ValueError, match="INVALID_ROLE"):
-        User.create(db_session, "jdoe", "John", "Doe", "john@example.com", "invalid_role")
+        User.create(db_session, "jdoe", "John", "Doe", "john@example.com", "invalid_role",
+                    password_hash="testpassword")
 
 
 def test_get_all_users(db_session):
     """Test retrieving all users."""
     # Create a few test users
-    user1 = User.create(db_session, "user1", "User", "One", "user1@example.com", "commercial")
+    user1 = User.create(db_session, "user1", "User", "One", "user1@example.com", "commercial",
+                        password_hash="testpassword")
     db_session.add(user1)
-    user2 = User.create(db_session, "user2", "User", "Two", "user2@example.com", "management")
+    user2 = User.create(db_session, "user2", "User", "Two", "user2@example.com", "management",
+                        password_hash="testpassword")
     db_session.add(user2)
     db_session.commit()
 
@@ -85,7 +96,8 @@ def test_get_all_users(db_session):
 
 def test_get_user_by_id(db_session):
     """Test retrieving a user by ID."""
-    user = User.create(db_session, "jdoe", "John", "Doe", "john@example.com", "commercial")
+    user = User.create(db_session, "jdoe", "John", "Doe", "john@example.com", "commercial",
+                       password_hash="testpassword")
     db_session.add(user)
     db_session.commit()
     fetched_user = User.get_by_id(db_session, user.user_id)
@@ -100,7 +112,8 @@ def test_get_user_by_invalid_id(db_session):
 
 def test_update_user(db_session):
     """Test updating a user's information."""
-    user = User.create(db_session, "jdoe", "John", "Doe", "john@example.com", "commercial")
+    user = User.create(db_session, "jdoe", "John", "Doe", "john@example.com", "commercial",
+                       password_hash="testpassword")
     user.update(db_session, first_name="Jane", email="jane@example.com")
     assert user.first_name == "Jane"
     assert user.email == "jane@example.com"
@@ -108,7 +121,8 @@ def test_update_user(db_session):
 
 def test_update_user_duplicate_email(db_session, test_user):
     """Test that updating a user with a duplicate email raises a ValueError."""
-    user1 = User.create(db_session, "jdoe1", "John", "Doe", "john@example.com", "commercial")
+    user1 = User.create(db_session, "jdoe1", "John", "Doe", "john@example.com", "commercial",
+                        password_hash="testpassword")
     db_session.add(user1)
 
     db_session.commit()
@@ -118,7 +132,8 @@ def test_update_user_duplicate_email(db_session, test_user):
 
 def test_update_user_with_none_values(db_session):
     """Test that updating a user with None values does not change existing values."""
-    user = User.create(db_session, "jdoe", "John", "Doe", "john@example.com", "commercial")
+    user = User.create(db_session, "jdoe", "John", "Doe", "john@example.com", "commercial",
+                       password_hash="testpassword")
     original_first_name = user.first_name
     user.update(db_session, first_name=None, email=None)
     assert user.first_name == original_first_name
@@ -127,7 +142,8 @@ def test_update_user_with_none_values(db_session):
 
 def test_delete_user(db_session):
     """Test deleting a user."""
-    user = User.create(db_session, "jdoe", "John", "Doe", "john@example.com", "commercial")
+    user = User.create(db_session, "jdoe", "John", "Doe", "john@example.com", "commercial",
+                       password_hash="testpassword")
     user_id = user.user_id
     user.delete(db_session)
     assert User.get_by_id(db_session, user_id) is None
@@ -144,7 +160,7 @@ def test_user_delete_dissociates_dependencies(db_session):
         last_name="Doe",
         email="john@example.com",
         role="commercial",
-        password="default_hashed_password"
+        password_hash="testpassword"
     )
 
     client = Client(commercial_contact_id=user.user_id)

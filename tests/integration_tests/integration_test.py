@@ -2,6 +2,8 @@ import pytest
 from epic_events.controllers import UserController, ClientController, ContractController, EventController
 from epic_events.views import UserView, MenuView, ClientView, ContractView, EventView
 from epic_events.models import User, Client, Contract, Event
+from epic_events.auth import verify_password
+
 from datetime import datetime, timedelta
 
 
@@ -33,7 +35,8 @@ def test_create_user_integration(db_session, capsys):
         "first_name": "Integration",
         "last_name": "Test",
         "email": "integration@test.com",
-        "role": "commercial"
+        "role": "commercial",
+        "password": "testpassword"
     })
 
     try:
@@ -100,7 +103,8 @@ def test_update_user_duplicate_username_integration(db_session, test_user, capsy
         first_name="Other",
         last_name="User",
         email="other@example.com",
-        role="commercial"
+        role="commercial",
+        password_hash="testpassword"
     )
     db_session.add(other_user)
     db_session.commit()
@@ -635,3 +639,40 @@ def test_update_event_failure_end_before_start_integration(db_session, test_even
         MenuView.prompt_for_id = original_prompt_id
         EventView.prompt_update = original_prompt_update
 
+
+def test_create_user_hashes_and_verifies_password(db_session, monkeypatch):
+    """
+    Integration test for user creation with password hashing.
+
+    This test verifies that:
+    1. The user creation workflow goes through the controller layer.
+    2. The plaintext password provided by the view is NOT stored in the database.
+    3. The password is properly hashed before persistence.
+    4. The stored password hash can be successfully verified using `verify_password`.
+
+    The view layer is mocked to provide controlled input data,
+    while the controller, authentication logic, model, and database
+    are exercised as real components.
+    """
+    plain_password = "super_secret_password"
+
+    fake_user_data = {
+        "username": "jdoe",
+        "first_name": "John",
+        "last_name": "Doe",
+        "email": "jdoe@test.com",
+        "role": "commercial",
+        "password": plain_password,
+    }
+
+    monkeypatch.setattr(
+        "epic_events.views.UserView.prompt_user_creation",
+        lambda: fake_user_data
+    )
+    UserController.create_user(db_session)
+
+    user = db_session.query(User).filter_by(username="jdoe").one()
+
+    assert user.password_hash != plain_password
+
+    assert verify_password(plain_password, user.password_hash) is True

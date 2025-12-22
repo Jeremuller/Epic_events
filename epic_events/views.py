@@ -123,12 +123,14 @@ class UserView:
             "Role",
             type=click.Choice(["commercial", "management", "support"], case_sensitive=False)
         )
+        password = click.prompt("Password")
         return {
             "username": username,
             "first_name": first_name,
             "last_name": last_name,
             "email": email,
-            "role": role
+            "role": role,
+            "password": password
         }
 
     @staticmethod

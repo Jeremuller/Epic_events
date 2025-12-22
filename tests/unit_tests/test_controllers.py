@@ -71,7 +71,7 @@ def test_create_user_success(db_session):
         last_name="User",
         email="test@example.com",
         role="commercial",
-        password="default_hashed_password"
+        password_hash="testpassword"
     )
     fake_user.user_id = 42  # simulate ID after commit
 
@@ -80,7 +80,8 @@ def test_create_user_success(db_session):
         "first_name": "Test",
         "last_name": "User",
         "email": "test@example.com",
-        "role": "commercial"
+        "role": "commercial",
+        "password": "testpassword"
     }):
         with patch.object(User, "create", return_value=fake_user):
             with patch.object(DisplayMessages, "display_success") as mock_success:
@@ -98,7 +99,8 @@ def test_create_user_value_error(db_session):
         "first_name": "Test",
         "last_name": "User",
         "email": "test@example.com",
-        "role": "commercial"
+        "role": "commercial",
+        "password": "testpassword"
     }):
         with patch.object(User, "create", side_effect=ValueError("USERNAME_TAKEN")):
             with patch.object(DisplayMessages, "display_error") as mock_error:
@@ -113,7 +115,8 @@ def test_create_user_exception(db_session):
         "first_name": "Test",
         "last_name": "User",
         "email": "test@example.com",
-        "role": "commercial"
+        "role": "commercial",
+        "password": "testpassword"
     }):
         with patch.object(User, "create", side_effect=Exception("DB fail")):
             with patch.object(DisplayMessages, "display_error") as mock_error:
