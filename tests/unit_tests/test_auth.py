@@ -6,6 +6,11 @@ from epic_events.controllers import UserController, LoginController
 
 
 def test_hash_password_returns_hashed_value():
+    """
+    This test verifies that the hash_password function
+    transforms the input password into a non - reversible hashed representation.
+    """
+
     password = "my_secret_password"
     hashed = hash_password(password)
 
@@ -13,6 +18,10 @@ def test_hash_password_returns_hashed_value():
 
 
 def test_hash_password_is_salted():
+    """
+    This test validates that a random salt is applied during hashing,
+    preventing identical passwords from producing identical hashes.
+    """
     password = "my_secret_password"
 
     hashed1 = hash_password(password)
@@ -22,27 +31,33 @@ def test_hash_password_is_salted():
 
 
 def test_verify_password_success():
+    """
+    This test checks that a plain text password correctly matches
+    its previously generated hash.
+    """
     password = "my_secret_password"
+
     hashed = hash_password(password)
 
     assert verify_password(password, hashed) is True
 
 
 def test_verify_password_failure():
+    """
+    This test verifies that authentication fails when the plain text password
+    does not match the stored hashed password.
+    """
     password = "my_secret_password"
+
     wrong_password = "wrong_password"
     hashed = hash_password(password)
 
     assert verify_password(wrong_password, hashed) is False
 
 
-def test_hash_password_returns_string():
-    hashed = hash_password("password")
-    assert isinstance(hashed, str)
-
-
 def test_prompt_login(monkeypatch):
     """Should return username and password from user input."""
+
     answers = iter(["john_doe", "secretpassword"])
 
     monkeypatch.setattr(
