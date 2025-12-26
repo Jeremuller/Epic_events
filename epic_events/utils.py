@@ -22,6 +22,7 @@ class ErrorMessages(Enum):
     EVENT_DATE_IN_PAST = "Event date must be in the future."
     END_BEFORE_START = "End date must be after start date."
     INVALID_CREDENTIALS = "The credentials you have selected are not recognized. Please try again."
+    ACCESS_DENIED = "You do not have the permission to perform this action."
 
     @classmethod
     def get_message(cls, error_key):
