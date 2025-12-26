@@ -29,5 +29,31 @@ def verify_password(password: str, hashed_password: str) -> bool:
     )
 
 
-class Session:
-    pass
+class SessionContext:
+    """
+    Represents the authentication context of the current user.
+
+    This class is a lightweight, framework-agnostic object used to:
+    - Store authentication state
+    - Carry user identity and role information
+    - Serve as a basis for permission checks
+
+    It deliberately avoids any dependency on the database layer.
+    """
+
+    def __init__(
+            self,
+            username: str,
+            role: str,
+            is_authenticated: bool = False
+    ):
+        self.username = username
+        self.role = role
+        self.is_authenticated = is_authenticated
+
+    def __repr__(self) -> str:
+        return (
+            f"<SessionContext username={self.username!r} "
+            f"role={self.role!r} "
+            f"authenticated={self.is_authenticated}>"
+        )
