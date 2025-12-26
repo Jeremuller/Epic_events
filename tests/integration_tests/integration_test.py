@@ -1,9 +1,9 @@
 import pytest
 from epic_events.controllers import UserController, ClientController, ContractController, EventController
 from epic_events.controllers import LoginController
-from epic_events.views import UserView, MenuView, ClientView, ContractView, EventView
+from epic_events.views import UserView, MenuView, ClientView, ContractView, EventView, LoginView
 from epic_events.models import User, Client, Contract, Event
-from epic_events.auth import verify_password, hash_password
+from epic_events.auth import verify_password, hash_password, SessionContext
 
 from datetime import datetime, timedelta
 
@@ -679,36 +679,55 @@ def test_create_user_hashes_and_verifies_password(db_session, monkeypatch):
     assert verify_password(plain_password, user.password_hash) is True
 
 
-def test_login_success_creates_authenticated_session(monkeypatch, db_session):
-    """
-    Integration test:
-    Given an existing user with a hashed password,
-    When valid credentials are provided,
-    Then an authenticated session is returned.
-    """
+def test_login_integration_success(db_session):
+    """Integration test: successful login creates a SessionContext with correct data."""
 
-    plain_password = "secure_password"
-    hashed_password = hash_password(plain_password)
-
+    password = "integration_pass"
     user = User.create(
         db=db_session,
-        username="john_doe",
-        first_name="John",
-        last_name="Doe",
-        email="john@example.com",
-        role="commercial",
-        password_hash=hashed_password
+        username="int_user",
+        first_name="Integration",
+        last_name="Tester",
+        email="int_user@example.com",
+        role="support",
+        password_hash=hash_password(password)
     )
     db_session.add(user)
     db_session.commit()
 
-    answers = iter(["john_doe", plain_password])
-    monkeypatch.setattr(
-        "click.prompt",
-        lambda msg, **kwargs: next(answers)
-    )
-
+    LoginView.prompt_login = staticmethod(lambda: {"username": "int_user", "password": password})
     session = LoginController.login(db_session)
 
-    assert session.user.username == "john_doe"
-    assert session.user.role == "commercial"
+    assert isinstance(session, SessionContext)
+    assert session.is_authenticated is True
+    assert session.username == "int_user"
+    assert session.role == "support"
+
+
+def test_login_integration_failure(db_session):
+    """Integration test: login fails with wrong password or unknown user."""
+    from epic_events.auth import hash_password
+    from epic_events.controllers import LoginController
+    from epic_events.views import LoginView
+    from epic_events.models import User
+
+    password = "right_password"
+    user = User.create(
+        db=db_session,
+        username="fail_user",
+        first_name="Fail",
+        last_name="Tester",
+        email="fail_user@example.com",
+        role="commercial",
+        password_hash=hash_password(password)
+    )
+    db_session.add(user)
+    db_session.commit()
+
+    LoginView.prompt_login = staticmethod(lambda: {"username": "fail_user", "password": "wrong_pass"})
+    session = LoginController.login(db_session)
+    assert session is None
+
+    LoginView.prompt_login = staticmethod(lambda: {"username": "unknown_user", "password": "any"})
+    session = LoginController.login(db_session)
+    assert session is None

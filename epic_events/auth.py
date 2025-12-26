@@ -1,5 +1,5 @@
 import bcrypt
-from models import User
+from epic_events.models import User
 
 
 def hash_password(password: str) -> str:
