@@ -9,7 +9,8 @@ def requires_authentication(func):
         session = kwargs.get("session")
 
         if not session or not session.is_authenticated:
-            raise PermissionError("AUTHENTICATION_REQUIRED")
+            DisplayMessages.display_error("ACCESS_DENIED")
+            return None
 
         return func(*args, **kwargs)
 
