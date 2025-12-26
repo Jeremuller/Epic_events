@@ -1,6 +1,6 @@
 from epic_events.models import User, Client, Contract, Event
 from epic_events.views import (DisplayMessages, UserView, ClientView, ContractView, EventView, MenuView, LoginView)
-from epic_events.auth import hash_password, verify_password
+from epic_events.auth import hash_password, verify_password, SessionContext
 from epic_events.database import SessionLocal
 
 db = SessionLocal()
@@ -105,12 +105,26 @@ class LoginController:
         """
         Authenticate a user using username and password.
 
+        This controller method orchestrates the full login process:
+        - Prompts the user for credentials via the view layer
+        - Retrieves the user from the database
+        - Verifies the provided password against the stored hash
+        - Returns a SessionContext object upon successful authentication
+
         Args:
             db (Session): SQLAlchemy database session.
 
         Returns:
-            User | None: Authenticated user if credentials are valid, otherwise None.
+            SessionContext | None:
+                - A SessionContext instance if authentication succeeds
+                - None if authentication fails (invalid credentials)
+
+        Security notes:
+            - Password verification is delegated to the auth layer (bcrypt-based)
+            - No User ORM object is returned to avoid leaking database entities
+            - Error messages are generic to prevent user enumeration
         """
+
         credentials = LoginView.prompt_login()
         username = credentials["username"]
         password = credentials["password"]
@@ -125,7 +139,17 @@ class LoginController:
             DisplayMessages.display_error("INVALID_CREDENTIALS")
             return None
 
-        return user
+        session = SessionContext(
+            username=user.username,
+            role=user.role,
+            is_authenticated=True
+        )
+
+        DisplayMessages.display_success(
+            f"Authentication succeeded. Welcome {session.username}."
+        )
+
+        return session
 
 
 class UserController:
