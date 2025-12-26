@@ -1,8 +1,8 @@
 import pytest
-from epic_events.auth import hash_password, verify_password
-from epic_events.views import LoginView, UserView
+from epic_events.auth import hash_password, verify_password, SessionContext
+from epic_events.views import LoginView
 from epic_events.models import User
-from epic_events.controllers import UserController, LoginController
+from epic_events.controllers import LoginController
 
 
 def test_hash_password_returns_hashed_value():
@@ -126,3 +126,15 @@ def test_login_controller_success(monkeypatch, db_session, test_user):
     # Assert
     assert user is not None
     assert user.username == test_user.username
+
+
+def test_session_context_authenticated():
+    session = SessionContext(
+        username="john_doe",
+        role="commercial",
+        is_authenticated=True
+    )
+
+    assert session.is_authenticated is True
+    assert session.username == "john_doe"
+    assert session.role == "commercial"
