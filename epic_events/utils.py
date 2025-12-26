@@ -21,6 +21,7 @@ class ErrorMessages(Enum):
     CONTRACT_NOT_FOUND = "The specified contract does not exist."
     EVENT_DATE_IN_PAST = "Event date must be in the future."
     END_BEFORE_START = "End date must be after start date."
+    INVALID_CREDENTIALS = "The credentials you have selected are not recognized. Please try again."
 
     @classmethod
     def get_message(cls, error_key):
