@@ -10,11 +10,12 @@ class MenuController:
     """Static methods for handling menu navigation and controller delegation."""
 
     @staticmethod
-    def run_main_menu(db):
+    def run_main_menu(db, session):
         """
         Runs the main menu loop and delegates actions to submenus.
         Args:
             db (sqlalchemy.orm.Session): Database session for data operations.
+
         """
         while True:
             choice = MenuView.display_main_menu()
@@ -141,6 +142,7 @@ class LoginController:
 
         session = SessionContext(
             username=user.username,
+            user_id=user.user_id,
             role=user.role,
             is_authenticated=True
         )
@@ -776,4 +778,10 @@ class EventController:
 
 
 if __name__ == "__main__":
-    MenuController.run_main_menu(db)
+    session = LoginController.login(db)
+
+    if not session or not session.is_authenticated:
+        DisplayMessages.display_error("AUTHENTICATION_REQUIRED")
+        exit()
+
+    MenuController.run_main_menu(db, session)
