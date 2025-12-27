@@ -44,10 +44,12 @@ class SessionContext:
     def __init__(
             self,
             username: str,
+            user_id: int,
             role: str,
             is_authenticated: bool = False
     ):
         self.username = username
+        self.user_id = user_id
         self.role = role
         self.is_authenticated = is_authenticated
 
