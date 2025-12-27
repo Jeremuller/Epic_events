@@ -199,6 +199,7 @@ def test_login_with_empty_password(monkeypatch, db_session):
 def test_session_context_authenticated():
     session = SessionContext(
         username="john_doe",
+        user_id=98,
         role="commercial",
         is_authenticated=True
     )
@@ -210,7 +211,7 @@ def test_session_context_authenticated():
 
 def test_session_context_default_authentication():
     """A newly created session should be unauthenticated by default."""
-    session = SessionContext(username="alice", role="support")
+    session = SessionContext(username="alice", user_id=98, role="support")
     assert session.is_authenticated is False
     assert session.username == "alice"
     assert session.role == "support"
@@ -218,6 +219,6 @@ def test_session_context_default_authentication():
 
 def test_session_context_repr():
     """The __repr__ method should return a readable string representation."""
-    session = SessionContext(username="bob", role="management", is_authenticated=True)
+    session = SessionContext(username="bob", user_id=98, role="management", is_authenticated=True)
     expected = "<SessionContext username='bob' role='management' authenticated=True>"
     assert repr(session) == expected

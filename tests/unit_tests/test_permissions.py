@@ -26,7 +26,7 @@ def test_commercial_only_with_wrong_role(monkeypatch):
     """Should deny access when user role is not commercial."""
 
     session = SessionContext(
-        username="john",
+        username="john", user_id=98,
         role="support",
         is_authenticated=True
     )
@@ -50,7 +50,7 @@ def test_commercial_only_with_valid_session():
     """Should allow access when user is authenticated and commercial."""
 
     session = SessionContext(
-        username="john",
+        username="john", user_id=98,
         role="commercial",
         is_authenticated=True
     )
