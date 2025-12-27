@@ -237,6 +237,8 @@ class UserController:
         """
         try:
             # Step 1: Prompt for user ID and updated data
+            users = User.get_all(db)
+            UserView.display_user_id_list(users)
             user_id = MenuView.prompt_for_id("user")
             user = User.get_by_id(db, user_id)
             if not user:
@@ -283,6 +285,8 @@ class UserController:
         """
         try:
             # Step 1: Prompt for user ID
+            users = User.get_all(db)
+            UserView.display_user_id_list(users)
             user_id = MenuView.prompt_for_id("user")
 
             # Step 2: Retrieve the user

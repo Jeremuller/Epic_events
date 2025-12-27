@@ -44,12 +44,11 @@ class MenuView:
     def display_users_menu():
         """Displays the Users submenu and captures user choice."""
         print("\n=== Users Menu ===")
-        print("1. List Users")
-        print("2. Create User")
-        print("3. Update User")
-        print("4. Delete User")
-        print("5. Back to Main Menu")
-        return input("Enter your choice (1-5): ")
+        print("1. Create User")
+        print("2. Update User")
+        print("3. Delete User")
+        print("4. Back to Main Menu")
+        return input("Enter your choice (1-4): ")
 
     @staticmethod
     def display_clients_menu():
@@ -124,6 +123,14 @@ class LoginView:
 
 class UserView:
     """Static methods for user-related view operations."""
+
+    @staticmethod
+    def display_user_id_list(users):
+        print("\nAvailable users:")
+        print("ID | Username")
+        print("----------")
+        for user in users:
+            print(f"{user.user_id} | {user.username}")
 
     @staticmethod
     def prompt_user_creation():

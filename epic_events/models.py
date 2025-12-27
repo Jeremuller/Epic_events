@@ -92,6 +92,19 @@ class User(Base):
         )
 
     @classmethod
+    def get_all(cls, db: Session):
+        """
+        Retrieves all clients from the database.
+
+        Args:
+            db (Session): SQLAlchemy database session.
+
+        Returns:
+            list[Client]: List of all Client objects.
+        """
+        return db.query(cls).all()
+
+    @classmethod
     def get_by_id(cls, db: Session, user_id: int):
         """
         Retrieves a user by their ID.
