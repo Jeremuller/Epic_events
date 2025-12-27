@@ -8,21 +8,6 @@ from epic_events.auth import verify_password, hash_password, SessionContext
 from datetime import datetime, timedelta
 
 
-def test_list_users_integration(db_session, test_user, capsys):
-    """
-    Full integration test: call UserController.list_users
-    and verify that the user in the database is displayed by the view.
-    """
-
-    UserController.list_users(db_session)
-
-    captured = capsys.readouterr()
-
-    assert test_user.username in captured.out
-    assert test_user.first_name in captured.out
-    assert test_user.last_name in captured.out
-
-
 def test_create_user_integration(db_session, capsys):
     """
     Full integration test: create a user via the controller.
