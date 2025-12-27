@@ -15,18 +15,20 @@ class MenuController:
         Runs the main menu loop and delegates actions to submenus.
         Args:
             db (sqlalchemy.orm.Session): Database session for data operations.
-
+            session (SessionContext):
+            Authentication context of the currently logged-in user.
+            Contains identity and role information used for permission checks.
         """
         while True:
             choice = MenuView.display_main_menu()
             if choice == "1":
-                MenuController.run_users_menu(db)
+                MenuController.run_users_menu(db, session)
             elif choice == "2":
-                MenuController.run_clients_menu(db)
+                MenuController.run_clients_menu(db, session)
             elif choice == "3":
-                MenuController.run_contracts_menu(db)
+                MenuController.run_contracts_menu(db, session)
             elif choice == "4":
-                MenuController.run_events_menu(db)
+                MenuController.run_events_menu(db, session)
             elif choice == "5":
                 DisplayMessages.display_goodbye()
                 break
@@ -34,66 +36,64 @@ class MenuController:
                 DisplayMessages.display_invalid_choice("main")
 
     @staticmethod
-    def run_users_menu(db):
+    def run_users_menu(db, session):
         """Runs the Users submenu loop and delegates actions to UserController."""
         while True:
             choice = MenuView.display_users_menu()
             if choice == "1":
-                UserController.list_users(db)
+                UserController.create_user(db, session)
             elif choice == "2":
-                UserController.create_user(db)
+                UserController.update_user(db, session)
             elif choice == "3":
-                UserController.update_user(db)
+                UserController.delete_user(db, session)
             elif choice == "4":
-                UserController.delete_user(db)
-            elif choice == "5":
                 break
             else:
                 DisplayMessages.display_invalid_choice("users")
 
     @staticmethod
-    def run_clients_menu(db):
+    def run_clients_menu(db, session):
         """Runs the Clients submenu loop and delegates actions to ClientController."""
         while True:
             choice = MenuView.display_clients_menu()
             if choice == "1":
-                ClientController.list_clients(db)
+                ClientController.list_clients(db, session)
             elif choice == "2":
-                ClientController.create_client(db)
+                ClientController.create_client(db, session)
             elif choice == "3":
-                ClientController.update_client(db)
+                ClientController.update_client(db, session)
             elif choice == "4":
                 break
             else:
                 DisplayMessages.display_invalid_choice("clients")
 
     @staticmethod
-    def run_contracts_menu(db):
+    def run_contracts_menu(db, session):
         """Runs the Contracts submenu loop and delegates actions to ContractController."""
         while True:
             choice = MenuView.display_contracts_menu()
             if choice == "1":
-                ContractController.list_contracts(db)
+                ContractController.list_contracts(db, session)
             elif choice == "2":
-                ContractController.create_contract(db)
+                ContractController.create_contract(db, session)
             elif choice == "3":
-                ContractController.update_contract(db)
+                ContractController.update_contract(db, session)
             elif choice == "4":
                 break
             else:
                 DisplayMessages.display_invalid_choice("contracts")
 
     @staticmethod
-    def run_events_menu(db):
+    def run_events_menu(db, session):
         """Runs the Events submenu loop and delegates actions to EventController."""
         while True:
             choice = MenuView.display_events_menu()
             if choice == "1":
-                EventController.list_events(db)
+                EventController.list_events(db, session)
             elif choice == "2":
-                EventController.create_event(db)
+                EventController.create_event(db, session)
             elif choice == "3":
-                EventController.update_event(db)
+                EventController.update_event(db, session)
             elif choice == "4":
                 break
             else:
@@ -158,33 +158,7 @@ class UserController:
     """Static methods for user-related controller operations."""
 
     @staticmethod
-    def list_users(db):
-        """
-            Controller method to list all users in the CRM system.
-            This method orchestrates the retrieval of user data from the database,
-            handles potential errors, and delegates the display to the view layer.
-
-            Args:
-                db (sqlalchemy.orm.Session): Active SQLAlchemy database session for data retrieval.
-
-            Error Handling:
-                - Catches unexpected errors and provides a generic error message.
-                - Uses ErrorMessages enum for consistent error messaging across the application.
-            """
-        try:
-            # Step 1: Retrieve users from the database
-            users = User.get_all(db)
-
-            # Step 2: Delegate display to the view layer
-            UserView.list_users(users)
-
-        except Exception:
-            # Handle unexpected errors
-            DisplayMessages.display_error("DATABASE_ERROR")
-            raise
-
-    @staticmethod
-    def create_user(db):
+    def create_user(db, session):
         """
         Controller function to orchestrate the creation of a new user in the CRM system.
         This function acts as an intermediary between the view (user interaction) and the model (business logic).
@@ -248,7 +222,7 @@ class UserController:
             raise
 
     @staticmethod
-    def update_user(db):
+    def update_user(db, session):
         """
         Orchestrates the update of a user in the CRM system.
         Steps:
@@ -294,7 +268,7 @@ class UserController:
             raise
 
     @staticmethod
-    def delete_user(db):
+    def delete_user(db, session):
         """
         Orchestrates the deletion of a user in the CRM system.
         Steps:
@@ -350,7 +324,7 @@ class ClientController:
     """Static methods for client-related controller operations."""
 
     @staticmethod
-    def list_clients(db):
+    def list_clients(db, session):
         """
         Controller method to list all clients in the CRM system.
         This method orchestrates the retrieval of client data from the database,
@@ -382,7 +356,7 @@ class ClientController:
             raise
 
     @staticmethod
-    def create_client(db):
+    def create_client(db, session):
         """
         Controller function to orchestrate the creation of a new client in the CRM system.
         This function acts as an intermediary between the view (user interaction) and the model (business logic).
@@ -445,7 +419,7 @@ class ClientController:
             raise
 
     @staticmethod
-    def update_client(db):
+    def update_client(db, session):
         """
             Orchestrates the update of a client in the CRM system.
             Steps:
@@ -499,7 +473,7 @@ class ContractController:
     """Static methods for contract-related controller operations."""
 
     @staticmethod
-    def list_contracts(db):
+    def list_contracts(db, session):
         """
         Controller method to list all contracts in the CRM system.
         This method orchestrates the retrieval of contract data from the database,
@@ -531,7 +505,7 @@ class ContractController:
             raise
 
     @staticmethod
-    def create_contract(db):
+    def create_contract(db, session):
         """
         Controller function to orchestrate the creation of a new contract in the CRM system.
         This function acts as an intermediary between the view (user interaction) and the model (business logic).
@@ -594,7 +568,7 @@ class ContractController:
             raise
 
     @staticmethod
-    def update_contract(db):
+    def update_contract(db, session):
         """
         Orchestrates the update of a contract in the CRM system.
         Steps:
@@ -649,7 +623,7 @@ class EventController:
     """Static methods for event-related controller operations."""
 
     @staticmethod
-    def list_events(db):
+    def list_events(db, session):
         """
         Controller method to list all events in the CRM system.
         This method orchestrates the retrieval of event data from the database,
@@ -676,7 +650,7 @@ class EventController:
             raise
 
     @staticmethod
-    def create_event(db):
+    def create_event(db, session):
         """
         Controller function to orchestrate the creation of a new event in the CRM system.
         This function acts as an intermediary between the view (user interaction) and the model (business logic).
@@ -728,7 +702,7 @@ class EventController:
             raise
 
     @staticmethod
-    def update_event(db):
+    def update_event(db, session):
         """
         Orchestrates the update of an event in the CRM system.
         Steps:

@@ -152,26 +152,6 @@ class UserView:
         }
 
     @staticmethod
-    def list_users(users):
-        """
-        Displays a list of users.
-
-        Args:
-            users (list[User]): List of User objects to display.
-        """
-        if not users:
-            print("No users found in the database.")
-            return
-
-        print("\n=== List of Users ===")
-        for user in users:
-            print(
-                f"ID: {user.user_id} | {user.username} | "
-                f"{user.first_name} {user.last_name} | "
-                f"Email: {user.email} | Role: {user.role}"
-            )
-
-    @staticmethod
     def prompt_update(user):
         """
         Prompts the user to update an existing user's information.
