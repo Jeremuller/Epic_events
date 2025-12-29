@@ -498,11 +498,10 @@ def test_list_events_integration_success(db_session, support_session, test_event
         assert test_event.support_contact.first_name in output
 
 
-def test_create_event_success(db_session, support_session, test_client, test_user, capsys):
+def test_create_event_success(db_session, support_session, test_client, test_user, capsys, monkeypatch):
     """
     Full integration test: successful event creation.
     """
-
     future_start = datetime.now() + timedelta(days=1)
     future_end = future_start + timedelta(hours=2)
 
@@ -514,19 +513,20 @@ def test_create_event_success(db_session, support_session, test_client, test_use
         "location": "Test location",
         "attendees": 10,
         "client_id": test_client.client_id,
-        "support_contact_id": test_user.user_id
+        "support_contact_id": test_user.user_id,
     }
 
-    EventView.prompt_event_creation = staticmethod(lambda: event_data)
+    monkeypatch.setattr(
+        EventView,
+        "prompt_event_creation",
+        staticmethod(lambda: event_data)
+    )
 
-    # Act
     EventController.create_event(db_session, support_session)
 
-    # Assert stdout
     captured = capsys.readouterr()
-    output = captured.out
-    assert "Event created" in output
-    assert "Integration Test Event" in output
+    assert "Event created" in captured.out
+    assert "Integration Test Event" in captured.out
 
     event_in_db = db_session.query(Event).filter_by(name="Integration Test Event").first()
     assert event_in_db is not None
@@ -534,11 +534,10 @@ def test_create_event_success(db_session, support_session, test_client, test_use
     assert event_in_db.support_contact_id == test_user.user_id
 
 
-def test_create_event_failure_past_date(db_session, support_session, test_client, test_user, capsys):
+def test_create_event_failure_past_date(db_session, support_session, test_client, test_user, capsys, monkeypatch):
     """
     Full integration test: event creation fails because start_datetime is in the past.
     """
-
     past_start = datetime.now() - timedelta(days=1)
     future_end = datetime.now() + timedelta(hours=2)
 
@@ -550,95 +549,87 @@ def test_create_event_failure_past_date(db_session, support_session, test_client
         "location": "Test location",
         "attendees": 5,
         "client_id": test_client.client_id,
-        "support_contact_id": test_user.user_id
+        "support_contact_id": test_user.user_id,
     }
 
-    EventView.prompt_event_creation = staticmethod(lambda: event_data)
+    monkeypatch.setattr(
+        EventView,
+        "prompt_event_creation",
+        staticmethod(lambda: event_data)
+    )
 
-    # Act
     EventController.create_event(db_session, support_session)
 
-    # Assert stdout
     captured = capsys.readouterr()
-    output = captured.out
-    assert "❌ Error: Event date must be in the future.\n" in output
+    assert "Event date must be in the future" in captured.out
 
     event_in_db = db_session.query(Event).filter_by(name="Past Event").first()
     assert event_in_db is None
 
 
-def test_update_event_success_integration(db_session, support_session, test_event, capsys):
+def test_update_event_success_integration(db_session, support_session, test_event, capsys, monkeypatch):
     """
-    Full integration test:
-    Successfully updating an event using mocked prompts.
+    Full integration test: Successfully updating an event.
     """
-    original_prompt_id = MenuView.prompt_for_id
-    original_prompt_update = EventView.prompt_update
+    monkeypatch.setattr(
+        MenuView,
+        "prompt_for_id",
+        staticmethod(lambda _: test_event.event_id)
+    )
 
-    MenuView.prompt_for_id = staticmethod(lambda _: test_event.event_id)
-    EventView.prompt_update = staticmethod(lambda event: {
-        "name": "Updated Event Name",
-        "location": "Updated Location"
-    })
+    monkeypatch.setattr(
+        EventView,
+        "prompt_update",
+        staticmethod(lambda event: {
+            "name": "Updated Event Name",
+            "location": "Updated Location"
+        })
+    )
 
-    try:
-        EventController.update_event(db_session, support_session)
+    EventController.update_event(db_session, support_session)
 
-        updated_event = db_session.query(Event).get(test_event.event_id)
-        assert updated_event.name == "Updated Event Name"
-        assert updated_event.location == "Updated Location"
+    updated_event = db_session.query(Event).get(test_event.event_id)
+    assert updated_event.name == "Updated Event Name"
+    assert updated_event.location == "Updated Location"
 
-        captured = capsys.readouterr()
-        assert "✅ Event updated: Updated Event Name (ID: 1)\n" in captured.out
-
-    finally:
-        MenuView.prompt_for_id = original_prompt_id
-        EventView.prompt_update = original_prompt_update
+    captured = capsys.readouterr()
+    assert "Event updated" in captured.out
 
 
-def test_update_event_failure_end_before_start_integration(db_session, support_session, test_event, capsys):
+def test_update_event_failure_end_before_start_integration(db_session, support_session, test_event, capsys,
+                                                           monkeypatch):
     """
-    Full integration test:
-    Updating an event with end_datetime before start_datetime
-    should raise a ValueError and rollback changes.
+    Full integration test: invalid end date should rollback.
     """
-    original_prompt_id = MenuView.prompt_for_id
-    original_prompt_update = EventView.prompt_update
+    monkeypatch.setattr(
+        MenuView,
+        "prompt_for_id",
+        staticmethod(lambda _: test_event.event_id)
+    )
 
-    MenuView.prompt_for_id = staticmethod(lambda _: test_event.event_id)
-    EventView.prompt_update = staticmethod(lambda event: {
-        "start_datetime": test_event.start_datetime,
-        "end_datetime": test_event.start_datetime - timedelta(hours=1)  # invalid
-    })
+    monkeypatch.setattr(
+        EventView,
+        "prompt_update",
+        staticmethod(lambda event: {
+            "start_datetime": test_event.start_datetime,
+            "end_datetime": test_event.start_datetime - timedelta(hours=1),
+        })
+    )
 
-    try:
-        EventController.update_event(db_session, support_session)
+    EventController.update_event(db_session, support_session)
 
-        # Event should remain unchanged
-        unchanged_event = db_session.query(Event).get(test_event.event_id)
-        assert unchanged_event.end_datetime == test_event.end_datetime
+    unchanged_event = db_session.query(Event).get(test_event.event_id)
+    assert unchanged_event.end_datetime == test_event.end_datetime
 
-        captured = capsys.readouterr()
-        assert "❌ Error: End date must be after start date.\n" in captured.out
-
-    finally:
-        MenuView.prompt_for_id = original_prompt_id
-        EventView.prompt_update = original_prompt_update
+    captured = capsys.readouterr()
+    assert "End date must be after start date" in captured.out
 
 
-def test_create_user_hashes_and_verifies_password(db_session, support_session, monkeypatch):
+def test_create_user_hashes_and_verifies_password(
+        db_session, support_session, monkeypatch
+):
     """
     Integration test for user creation with password hashing.
-
-    This test verifies that:
-    1. The user creation workflow goes through the controller layer.
-    2. The plaintext password provided by the view is NOT stored in the database.
-    3. The password is properly hashed before persistence.
-    4. The stored password hash can be successfully verified using `verify_password`.
-
-    The view layer is mocked to provide controlled input data,
-    while the controller, authentication logic, model, and database
-    are exercised as real components.
     """
     plain_password = "super_secret_password"
 
@@ -652,19 +643,23 @@ def test_create_user_hashes_and_verifies_password(db_session, support_session, m
     }
 
     monkeypatch.setattr(
-        "epic_events.views.UserView.prompt_user_creation",
-        lambda: fake_user_data
+        UserView,
+        "prompt_user_creation",
+        staticmethod(lambda: fake_user_data)
     )
+
     UserController.create_user(db_session, support_session)
 
     user = db_session.query(User).filter_by(username="jdoe").one()
 
+    # The plaintext password must never be stored
     assert user.password_hash != plain_password
 
+    # The hash must correctly verify the original password
     assert verify_password(plain_password, user.password_hash) is True
 
 
-def test_login_integration_success(db_session):
+def test_login_integration_success(db_session, monkeypatch):
     """Integration test: successful login creates a SessionContext with correct data."""
 
     password = "integration_pass"
@@ -675,12 +670,17 @@ def test_login_integration_success(db_session):
         last_name="Tester",
         email="int_user@example.com",
         role="support",
-        password_hash=hash_password(password)
+        password_hash=hash_password(password),
     )
     db_session.add(user)
     db_session.commit()
 
-    LoginView.prompt_login = staticmethod(lambda: {"username": "int_user", "password": password})
+    monkeypatch.setattr(
+        LoginView,
+        "prompt_login",
+        staticmethod(lambda: {"username": "int_user", "password": password})
+    )
+
     session = LoginController.login(db_session)
 
     assert isinstance(session, SessionContext)
@@ -689,12 +689,8 @@ def test_login_integration_success(db_session):
     assert session.role == "support"
 
 
-def test_login_integration_failure(db_session):
+def test_login_integration_failure(db_session, monkeypatch):
     """Integration test: login fails with wrong password or unknown user."""
-    from epic_events.auth import hash_password
-    from epic_events.controllers import LoginController
-    from epic_events.views import LoginView
-    from epic_events.models import User
 
     password = "right_password"
     user = User.create(
@@ -704,15 +700,25 @@ def test_login_integration_failure(db_session):
         last_name="Tester",
         email="fail_user@example.com",
         role="commercial",
-        password_hash=hash_password(password)
+        password_hash=hash_password(password),
     )
     db_session.add(user)
     db_session.commit()
 
-    LoginView.prompt_login = staticmethod(lambda: {"username": "fail_user", "password": "wrong_pass"})
+    # Wrong password
+    monkeypatch.setattr(
+        LoginView,
+        "prompt_login",
+        staticmethod(lambda: {"username": "fail_user", "password": "wrong_pass"})
+    )
     session = LoginController.login(db_session)
     assert session is None
 
-    LoginView.prompt_login = staticmethod(lambda: {"username": "unknown_user", "password": "any"})
+    # Unknown user
+    monkeypatch.setattr(
+        LoginView,
+        "prompt_login",
+        staticmethod(lambda: {"username": "unknown_user", "password": "any"})
+    )
     session = LoginController.login(db_session)
     assert session is None

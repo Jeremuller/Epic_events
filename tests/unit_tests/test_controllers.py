@@ -10,14 +10,15 @@ import builtins
 from datetime import datetime, timedelta
 
 menus = [
-    # menu_func, menu_text, choices, controller_patch_path
-    (MenuController.run_main_menu, "CRM Main Menu", ["1", "5", "5"], None),
-    (MenuController.run_users_menu, "Users Menu", ["1", "4"], "epic_events.controllers.UserController.create_user"),
+    (MenuController.run_main_menu, "CRM Main Menu", ["1", "4", "5"], None),
+    (MenuController.run_users_menu, "Users Menu", ["1", "4"],
+     "epic_events.controllers.UserController.create_user"),
     (MenuController.run_clients_menu, "Clients Menu", ["1", "4"],
      "epic_events.controllers.ClientController.list_clients"),
     (MenuController.run_contracts_menu, "Contracts Menu", ["1", "4"],
      "epic_events.controllers.ContractController.list_contracts"),
-    (MenuController.run_events_menu, "Events Menu", ["1", "4"], "epic_events.controllers.EventController.list_events"),
+    (MenuController.run_events_menu, "Events Menu", ["1", "4"],
+     "epic_events.controllers.EventController.list_events"),
 ]
 
 
