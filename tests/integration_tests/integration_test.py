@@ -722,3 +722,40 @@ def test_login_integration_failure(db_session, monkeypatch):
     )
     session = LoginController.login(db_session)
     assert session is None
+
+
+def test_update_user_as_commercial_denied(db_session, commercial_session, test_user, capsys):
+    """Integration test: commercial cannot update a user."""
+    UserController.update_user(db_session, session=commercial_session)
+
+    unchanged_user = db_session.query(User).get(test_user.user_id)
+    assert unchanged_user.username == test_user.username
+    assert unchanged_user.first_name == test_user.first_name
+    assert unchanged_user.last_name == test_user.last_name
+
+    captured = capsys.readouterr()
+    assert "❌ Error: You do not have the permission to perform this action.\n" in captured.out
+
+
+def test_update_event_as_commercial_denied(db_session, commercial_session, test_event, capsys):
+    """Integration test: commercial cannot update an event."""
+    EventController.update_event(db_session, session=commercial_session)
+
+    unchanged_event = db_session.query(Event).get(test_event.event_id)
+    assert unchanged_event.name == test_event.name
+    assert unchanged_event.location == test_event.location
+
+    captured = capsys.readouterr()
+    assert "❌ Error: You do not have the permission to perform this action.\n" in captured.out
+
+
+def test_create_contract_as_support_denied(db_session, support_session, test_client, test_user, capsys):
+    """Integration test: support cannot create a contract."""
+    ContractController.create_contract(db_session, session=support_session)
+
+    contracts = db_session.query(Contract).all()
+
+    assert len(contracts) == 0
+
+    captured = capsys.readouterr()
+    assert "❌ Error: You do not have the permission to perform this action.\n" in captured.out
