@@ -2,7 +2,7 @@ from epic_events.models import User, Client, Contract, Event
 from epic_events.views import (DisplayMessages, UserView, ClientView, ContractView, EventView, MenuView, LoginView)
 from epic_events.auth import hash_password, verify_password, SessionContext
 from epic_events.database import SessionLocal
-from epic_events.permissions import requires_authentication
+from epic_events.permissions import requires_authentication, management_only, support_only, commercial_only
 
 db = SessionLocal()
 
@@ -164,6 +164,7 @@ class UserController:
     """Static methods for user-related controller operations."""
 
     @staticmethod
+    @management_only
     def create_user(db, session):
         """
         Controller function to orchestrate the creation of a new user in the CRM system.
@@ -231,6 +232,7 @@ class UserController:
             raise
 
     @staticmethod
+    @management_only
     def update_user(db, session):
         """
         Orchestrates the update of a user in the CRM system.
@@ -282,6 +284,7 @@ class UserController:
             raise
 
     @staticmethod
+    @management_only
     def delete_user(db, session):
         """
         Orchestrates the deletion of a user in the CRM system.
@@ -380,6 +383,7 @@ class ClientController:
             raise
 
     @staticmethod
+    @commercial_only
     def create_client(db, session):
         """
         Controller function to orchestrate the creation of a new client in the CRM system.
@@ -446,6 +450,7 @@ class ClientController:
             raise
 
     @staticmethod
+    @commercial_only
     def update_client(db, session):
         """
             Orchestrates the update of a client in the CRM system.
@@ -539,6 +544,7 @@ class ContractController:
             raise
 
     @staticmethod
+    @management_only
     def create_contract(db, session):
         """
         Controller function to orchestrate the creation of a new contract in the CRM system.
@@ -605,6 +611,7 @@ class ContractController:
             raise
 
     @staticmethod
+    @management_only
     def update_contract(db, session):
         """
         Orchestrates the update of a contract in the CRM system.
@@ -694,6 +701,7 @@ class EventController:
             raise
 
     @staticmethod
+    @commercial_only
     def create_event(db, session):
         """
         Controller function to orchestrate the creation of a new event in the CRM system.
@@ -749,6 +757,7 @@ class EventController:
             raise
 
     @staticmethod
+    @support_only
     def update_event(db, session):
         """
         Orchestrates the update of an event in the CRM system.
