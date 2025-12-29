@@ -2,6 +2,7 @@ import pytest
 from epic_events.permissions import commercial_only
 from epic_events.views import DisplayMessages
 from epic_events.auth import SessionContext
+from epic_events.controllers import ContractController
 
 
 def test_commercial_only_without_session(monkeypatch):
@@ -62,3 +63,47 @@ def test_commercial_only_with_valid_session():
     result = protected_function(session=session)
 
     assert result == "OK"
+
+
+def test_list_contracts_requires_authentication(db_session, monkeypatch):
+    """
+    Should deny access if session is missing or not authenticated.
+    """
+    mock_list = monkeypatch.setattr(
+        "epic_events.views.ContractView.list_contracts",
+        lambda *_: pytest.fail("list_contracts should not be called")
+    )
+
+    called = {}
+
+    def fake_error(msg):
+        called["msg"] = msg
+
+    monkeypatch.setattr(
+        "epic_events.views.DisplayMessages.display_error",
+        fake_error
+    )
+
+    ContractController.list_contracts(db_session, session=None)
+
+    assert called["msg"] == "ACCESS_DENIED"
+
+
+def test_list_contracts_authenticated(db_session, management_session, monkeypatch):
+    """
+    Should allow access when session is authenticated.
+    """
+
+    called = {"called": False}
+
+    def fake_list_contracts(contracts):
+        called["called"] = True
+
+    monkeypatch.setattr(
+        "epic_events.views.ContractView.list_contracts",
+        fake_list_contracts
+    )
+
+    ContractController.list_contracts(db_session, management_session)
+
+    assert called["called"] is True
