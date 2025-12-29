@@ -283,7 +283,7 @@ def test_list_contracts_database_error(db_session, commercial_session):
         mock_error.assert_called_once_with("DATABASE_ERROR")
 
 
-def test_create_contract_success(db_session, commercial_session, test_user, test_client):
+def test_create_contract_success(db_session, management_session, test_user, test_client):
     """Test creating a contract successfully."""
 
     contract_data = {
@@ -296,7 +296,7 @@ def test_create_contract_success(db_session, commercial_session, test_user, test
 
     with patch.object(ContractView, "prompt_contract_creation", return_value=contract_data), \
             patch.object(DisplayMessages, "display_success") as mock_success:
-        ContractController.create_contract(db_session, commercial_session)
+        ContractController.create_contract(db_session, management_session)
 
         created_contract = db_session.query(Contract).first()
 
@@ -311,7 +311,7 @@ def test_create_contract_success(db_session, commercial_session, test_user, test
         assert f"Contract created: ID {created_contract.contract_id}" in msg
 
 
-def test_create_contract_validation_error(db_session, commercial_session, test_user, test_client):
+def test_create_contract_validation_error(db_session, management_session, test_user, test_client):
     """Test contract creation failing due to validation error."""
 
     invalid_data = {
@@ -323,7 +323,7 @@ def test_create_contract_validation_error(db_session, commercial_session, test_u
 
     with patch.object(ContractView, "prompt_contract_creation", return_value=invalid_data), \
             patch.object(DisplayMessages, "display_error") as mock_error:
-        ContractController.create_contract(db_session, commercial_session)
+        ContractController.create_contract(db_session, management_session)
 
         from epic_events.models import Contract
         assert db_session.query(Contract).count() == 0
@@ -331,7 +331,7 @@ def test_create_contract_validation_error(db_session, commercial_session, test_u
         mock_error.assert_called_once_with("INVALID_TOTAL_PRICE")
 
 
-def test_create_contract_database_error(db_session, commercial_session, test_user, test_client):
+def test_create_contract_database_error(db_session, management_session, test_user, test_client):
     """Test unexpected database error during contract creation."""
 
     valid_data = {
@@ -345,14 +345,14 @@ def test_create_contract_database_error(db_session, commercial_session, test_use
             patch("epic_events.models.Contract.create", side_effect=Exception("DB FAIL")), \
             patch.object(DisplayMessages, "display_error") as mock_error:
         with pytest.raises(Exception):
-            ContractController.create_contract(db_session, commercial_session)
+            ContractController.create_contract(db_session, management_session)
 
         mock_error.assert_called_once_with("DATABASE_ERROR")
 
         assert db_session.query(Contract).count() == 0
 
 
-def test_update_contract_success(db_session, commercial_session, test_contract, test_client):
+def test_update_contract_success(db_session, management_session, test_contract, test_client):
     """Test successfully updating a contract."""
 
     updated_data = {
@@ -366,7 +366,7 @@ def test_update_contract_success(db_session, commercial_session, test_contract, 
     with patch.object(MenuView, "prompt_for_id", return_value=test_contract.contract_id), \
             patch.object(ContractView, "prompt_update", return_value=updated_data), \
             patch.object(DisplayMessages, "display_success") as mock_success:
-        ContractController.update_contract(db_session, commercial_session)
+        ContractController.update_contract(db_session, management_session)
 
         db_session.refresh(test_contract)
 
@@ -380,17 +380,17 @@ def test_update_contract_success(db_session, commercial_session, test_contract, 
         assert f"Contract updated: ID {test_contract.contract_id}" in msg
 
 
-def test_update_contract_not_found(db_session, commercial_session):
+def test_update_contract_not_found(db_session, management_session):
     """Test update attempt on nonexistent contract."""
 
     with patch.object(MenuView, "prompt_for_id", return_value=99999), \
             patch.object(DisplayMessages, "display_error") as mock_error:
-        ContractController.update_contract(db_session, commercial_session)
+        ContractController.update_contract(db_session, management_session)
 
         mock_error.assert_called_once_with("CONTRACT_NOT_FOUND")
 
 
-def test_update_contract_validation_error(db_session, commercial_session, test_contract):
+def test_update_contract_validation_error(db_session, management_session, test_contract):
     """Test update failing due to validation (ValueError)."""
 
     invalid_data = {
@@ -400,7 +400,7 @@ def test_update_contract_validation_error(db_session, commercial_session, test_c
     with patch.object(MenuView, "prompt_for_id", return_value=test_contract.contract_id), \
             patch.object(ContractView, "prompt_update", return_value=invalid_data), \
             patch.object(DisplayMessages, "display_error") as mock_error:
-        ContractController.update_contract(db_session, commercial_session)
+        ContractController.update_contract(db_session, management_session)
 
         mock_error.assert_called_once_with("INVALID_TOTAL_PRICE")
 
@@ -430,7 +430,7 @@ def test_list_events_db_error(db_session, support_session):
         mock_display.assert_called_once_with("DATABASE_ERROR")
 
 
-def test_create_event_success(db_session, support_session, test_user, test_client):
+def test_create_event_success(db_session, commercial_session, test_user, test_client):
     """Test successful creation of a new event."""
 
     fake_input = {
@@ -458,7 +458,7 @@ def test_create_event_success(db_session, support_session, test_user, test_clien
     with patch("epic_events.views.EventView.prompt_event_creation", return_value=fake_input) as mock_prompt, \
             patch.object(Event, "create", return_value=fake_event) as mock_create, \
             patch("epic_events.views.DisplayMessages.display_success") as mock_success:
-        EventController.create_event(db_session, support_session)
+        EventController.create_event(db_session, commercial_session)
 
         mock_prompt.assert_called_once()
         mock_create.assert_called_once()
@@ -466,7 +466,7 @@ def test_create_event_success(db_session, support_session, test_user, test_clien
         mock_success.assert_called_once()
 
 
-def test_create_event_validation_error(db_session, support_session, test_user, test_client):
+def test_create_event_validation_error(db_session, commercial_session, test_user, test_client):
     """Test validation error (ValueError) during event creation."""
 
     fake_input = {
@@ -483,7 +483,7 @@ def test_create_event_validation_error(db_session, support_session, test_user, t
     with patch("epic_events.views.EventView.prompt_event_creation", return_value=fake_input) as mock_prompt, \
             patch.object(Event, "create", side_effect=ValueError("CLIENT_NOT_FOUND")) as mock_create, \
             patch("epic_events.views.DisplayMessages.display_error") as mock_display:
-        EventController.create_event(db_session, support_session)
+        EventController.create_event(db_session, commercial_session)
 
         mock_prompt.assert_called_once()
         mock_create.assert_called_once()

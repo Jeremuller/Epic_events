@@ -338,7 +338,7 @@ def test_list_contracts_integration(db_session, commercial_session, test_contrac
 
 
 def test_create_contract_integration_success(
-        db_session, commercial_session, test_user, test_client, capsys
+        db_session, management_session, test_user, test_client, capsys
 ):
     """
     Full integration test:
@@ -356,7 +356,7 @@ def test_create_contract_integration_success(
     })
 
     try:
-        ContractController.create_contract(db_session, commercial_session)
+        ContractController.create_contract(db_session, management_session)
 
         contract = db_session.query(Contract).first()
         assert contract is not None
@@ -375,7 +375,7 @@ def test_create_contract_integration_success(
 
 
 def test_create_contract_integration_invalid_total_price(
-        db_session, commercial_session, test_user, test_client, capsys
+        db_session, management_session, test_user, test_client, capsys
 ):
     """
     Full integration test:
@@ -393,7 +393,7 @@ def test_create_contract_integration_invalid_total_price(
     })
 
     try:
-        ContractController.create_contract(db_session, commercial_session)
+        ContractController.create_contract(db_session, management_session)
 
         # No contract should be persisted
         contracts = db_session.query(Contract).all()
@@ -407,7 +407,7 @@ def test_create_contract_integration_invalid_total_price(
 
 
 def test_update_contract_integration_success(
-        db_session, commercial_session, test_contract, capsys
+        db_session, management_session, test_contract, capsys
 ):
     """
     Full integration test:
@@ -425,7 +425,7 @@ def test_update_contract_integration_success(
     })
 
     try:
-        ContractController.update_contract(db_session, commercial_session)
+        ContractController.update_contract(db_session, management_session)
 
         updated_contract = db_session.query(Contract).get(test_contract.contract_id)
         assert updated_contract.rest_to_pay == 0
@@ -441,7 +441,7 @@ def test_update_contract_integration_success(
 
 
 def test_update_contract_integration_inferior_total_price_error(
-        db_session, commercial_session, test_contract, capsys
+        db_session, management_session, test_contract, capsys
 ):
     """
     Full integration test:
@@ -459,7 +459,7 @@ def test_update_contract_integration_inferior_total_price_error(
     })
 
     try:
-        ContractController.update_contract(db_session, commercial_session)
+        ContractController.update_contract(db_session, management_session)
 
         # Contract should remain unchanged
         unchanged_contract = db_session.query(Contract).get(test_contract.contract_id)
@@ -498,7 +498,7 @@ def test_list_events_integration_success(db_session, support_session, test_event
         assert test_event.support_contact.first_name in output
 
 
-def test_create_event_success(db_session, support_session, test_client, test_user, capsys, monkeypatch):
+def test_create_event_success(db_session, commercial_session, test_client, test_user, capsys, monkeypatch):
     """
     Full integration test: successful event creation.
     """
@@ -522,7 +522,7 @@ def test_create_event_success(db_session, support_session, test_client, test_use
         staticmethod(lambda: event_data)
     )
 
-    EventController.create_event(db_session, support_session)
+    EventController.create_event(db_session, commercial_session)
 
     captured = capsys.readouterr()
     assert "Event created" in captured.out
@@ -534,7 +534,7 @@ def test_create_event_success(db_session, support_session, test_client, test_use
     assert event_in_db.support_contact_id == test_user.user_id
 
 
-def test_create_event_failure_past_date(db_session, support_session, test_client, test_user, capsys, monkeypatch):
+def test_create_event_failure_past_date(db_session, commercial_session, test_client, test_user, capsys, monkeypatch):
     """
     Full integration test: event creation fails because start_datetime is in the past.
     """
@@ -558,7 +558,7 @@ def test_create_event_failure_past_date(db_session, support_session, test_client
         staticmethod(lambda: event_data)
     )
 
-    EventController.create_event(db_session, support_session)
+    EventController.create_event(db_session, commercial_session)
 
     captured = capsys.readouterr()
     assert "Event date must be in the future" in captured.out
@@ -626,7 +626,7 @@ def test_update_event_failure_end_before_start_integration(db_session, support_s
 
 
 def test_create_user_hashes_and_verifies_password(
-        db_session, support_session, monkeypatch
+        db_session, management_session, monkeypatch
 ):
     """
     Integration test for user creation with password hashing.
@@ -648,7 +648,7 @@ def test_create_user_hashes_and_verifies_password(
         staticmethod(lambda: fake_user_data)
     )
 
-    UserController.create_user(db_session, support_session)
+    UserController.create_user(db_session, management_session)
 
     user = db_session.query(User).filter_by(username="jdoe").one()
 
