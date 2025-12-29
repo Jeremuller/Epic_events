@@ -10,7 +10,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from epic_events.models import Base, User, Client, Contract, Event
-from epic_events.auth import hash_password
+from epic_events.auth import hash_password, SessionContext
 
 # Create an in-memory SQLite engine for testing.
 # This avoids affecting the production database and ensures tests run in isolation.
@@ -45,6 +45,36 @@ def db_session():
         # Close the session and drop all tables to ensure a clean state for the next test
         db.close()
         Base.metadata.drop_all(engine)
+
+
+@pytest.fixture
+def commercial_session():
+    return SessionContext(
+        username="commercial",
+        user_id=2,
+        role="commercial",
+        is_authenticated=True
+    )
+
+
+@pytest.fixture
+def support_session():
+    return SessionContext(
+        username="commercial",
+        user_id=2,
+        role="support",
+        is_authenticated=True
+    )
+
+
+@pytest.fixture
+def management_session():
+    return SessionContext(
+        username="commercial",
+        user_id=2,
+        role="management",
+        is_authenticated=True
+    )
 
 
 @pytest.fixture()
