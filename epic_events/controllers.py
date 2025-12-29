@@ -2,6 +2,7 @@ from epic_events.models import User, Client, Contract, Event
 from epic_events.views import (DisplayMessages, UserView, ClientView, ContractView, EventView, MenuView, LoginView)
 from epic_events.auth import hash_password, verify_password, SessionContext
 from epic_events.database import SessionLocal
+from epic_events.permissions import requires_authentication
 
 db = SessionLocal()
 
@@ -10,6 +11,7 @@ class MenuController:
     """Static methods for handling menu navigation and controller delegation."""
 
     @staticmethod
+    @requires_authentication
     def run_main_menu(db, session):
         """
         Runs the main menu loop and delegates actions to submenus.
@@ -36,6 +38,7 @@ class MenuController:
                 DisplayMessages.display_invalid_choice("main")
 
     @staticmethod
+    @requires_authentication
     def run_users_menu(db, session):
         """Runs the Users submenu loop and delegates actions to UserController."""
         while True:
@@ -52,6 +55,7 @@ class MenuController:
                 DisplayMessages.display_invalid_choice("users")
 
     @staticmethod
+    @requires_authentication
     def run_clients_menu(db, session):
         """Runs the Clients submenu loop and delegates actions to ClientController."""
         while True:
@@ -68,6 +72,7 @@ class MenuController:
                 DisplayMessages.display_invalid_choice("clients")
 
     @staticmethod
+    @requires_authentication
     def run_contracts_menu(db, session):
         """Runs the Contracts submenu loop and delegates actions to ContractController."""
         while True:
@@ -84,6 +89,7 @@ class MenuController:
                 DisplayMessages.display_invalid_choice("contracts")
 
     @staticmethod
+    @requires_authentication
     def run_events_menu(db, session):
         """Runs the Events submenu loop and delegates actions to EventController."""
         while True:
@@ -166,6 +172,9 @@ class UserController:
 
         Args:
             db (sqlalchemy.orm.Session): Active database session for persistence operations.
+            session (SessionContext):
+            Authentication context of the currently logged-in user.
+            Contains identity and role information used for permission checks.
 
         Workflow:
             1. Delegates user input collection to the view layer (`prompt_user_creation`).
@@ -234,6 +243,9 @@ class UserController:
 
         Args:
             db (sqlalchemy.orm.Session): Active database session.
+            session (SessionContext):
+            Authentication context of the currently logged-in user.
+            Contains identity and role information used for permission checks.
         """
         try:
             # Step 1: Prompt for user ID and updated data
@@ -282,6 +294,9 @@ class UserController:
 
         Args:
             db (sqlalchemy.orm.Session): Active database session.
+            session (SessionContext):
+            Authentication context of the currently logged-in user.
+            Contains identity and role information used for permission checks.
         """
         try:
             # Step 1: Prompt for user ID
@@ -328,6 +343,7 @@ class ClientController:
     """Static methods for client-related controller operations."""
 
     @staticmethod
+    @requires_authentication
     def list_clients(db, session):
         """
         Controller method to list all clients in the CRM system.
@@ -336,6 +352,9 @@ class ClientController:
 
         Args:
             db (sqlalchemy.orm.Session): Active SQLAlchemy database session for data retrieval.
+            session (SessionContext):
+            Authentication context of the currently logged-in user.
+            Contains identity and role information used for permission checks.
 
         Workflow:
             1. Retrieves all clients from the database (via Client.get_all).
@@ -347,6 +366,7 @@ class ClientController:
             - Uses ErrorMessages enum for consistent error messaging across the application.
             - Re-raises the exception for potential higher-level handling (e.g., logging).
         """
+
         try:
             # Step 1: Retrieve clients from the database (model layer)
             clients = Client.get_all(db)
@@ -368,6 +388,9 @@ class ClientController:
 
         Args:
             db (sqlalchemy.orm.Session): Active database session for persistence operations.
+            session (SessionContext):
+            Authentication context of the currently logged-in user.
+            Contains identity and role information used for permission checks.
 
         Workflow:
             1. Delegates client input collection to the view layer (`prompt_client_creation`).
@@ -436,6 +459,9 @@ class ClientController:
 
             Args:
                 db (sqlalchemy.orm.Session): Active database session.
+                session (SessionContext):
+                Authentication context of the currently logged-in user.
+                Contains identity and role information used for permission checks.
             """
         try:
             # Step 1: Prompt for client ID
@@ -477,6 +503,7 @@ class ContractController:
     """Static methods for contract-related controller operations."""
 
     @staticmethod
+    @requires_authentication
     def list_contracts(db, session):
         """
         Controller method to list all contracts in the CRM system.
@@ -485,6 +512,9 @@ class ContractController:
 
         Args:
             db (sqlalchemy.orm.Session): Active SQLAlchemy database session for data retrieval.
+            session (SessionContext):
+            Authentication context of the currently logged-in user.
+            Contains identity and role information used for permission checks.
 
         Workflow:
             1. Retrieves all contracts from the database (via Contract.get_all).
@@ -517,6 +547,9 @@ class ContractController:
 
         Args:
             db (sqlalchemy.orm.Session): Active database session for persistence operations.
+            session (SessionContext):
+            Authentication context of the currently logged-in user.
+            Contains identity and role information used for permission checks.
 
         Workflow:
             1. Delegates contract input collection to the view layer (`prompt_contract_creation`).
@@ -585,6 +618,9 @@ class ContractController:
 
         Args:
             db (sqlalchemy.orm.Session): Active database session.
+            session (SessionContext):
+            Authentication context of the currently logged-in user.
+            Contains identity and role information used for permission checks.
         """
         try:
             # Step 1: Prompt for contract ID
@@ -627,6 +663,7 @@ class EventController:
     """Static methods for event-related controller operations."""
 
     @staticmethod
+    @requires_authentication
     def list_events(db, session):
         """
         Controller method to list all events in the CRM system.
@@ -635,6 +672,9 @@ class EventController:
 
         Args:
             db (sqlalchemy.orm.Session): Active SQLAlchemy database session for data retrieval.
+            session (SessionContext):
+            Authentication context of the currently logged-in user.
+            Contains identity and role information used for permission checks.
 
         Workflow:
             1. Retrieves all events from the database (via Event.get_all).
@@ -662,6 +702,9 @@ class EventController:
 
         Args:
             db (sqlalchemy.orm.Session): Active database session for persistence operations.
+            session (SessionContext):
+            Authentication context of the currently logged-in user.
+            Contains identity and role information used for permission checks.
 
         Workflow:
             1. Delegates event input collection to the view layer (`prompt_event_creation`).
@@ -719,6 +762,9 @@ class EventController:
 
         Args:
             db (sqlalchemy.orm.Session): Active database session.
+            session (SessionContext):
+            Authentication context of the currently logged-in user.
+            Contains identity and role information used for permission checks.
         """
         try:
             # Step 1: Prompt for event ID
