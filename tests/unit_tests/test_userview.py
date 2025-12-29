@@ -28,32 +28,6 @@ def test_prompt_user_creation(monkeypatch, db_session):
     }
 
 
-def test_list_users_empty(capsys, db_session):
-    """Test that list_users prints a message when no users exist."""
-    UserView.list_users([])
-
-    captured = capsys.readouterr()
-    assert "No users found in the database." in captured.out
-
-
-def test_list_users_with_user(capsys, db_session, test_user):
-    """Test that list_users prints the expected header and user information."""
-    UserView.list_users([test_user])
-
-    output = capsys.readouterr().out
-
-    # Check header is printed
-    assert "=== List of Users ===" in output
-
-    # Check important user fields
-    assert str(test_user.user_id) in output
-    assert test_user.username in output
-    assert test_user.first_name in output
-    assert test_user.last_name in output
-    assert test_user.email in output
-    assert test_user.role in output
-
-
 def test_prompt_update_single_change(monkeypatch, db_session, test_user, capsys):
     """Test that prompt_update returns only fields that were modified."""
 

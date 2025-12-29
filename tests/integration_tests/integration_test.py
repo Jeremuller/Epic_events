@@ -8,7 +8,7 @@ from epic_events.auth import verify_password, hash_password, SessionContext
 from datetime import datetime, timedelta
 
 
-def test_create_user_integration(db_session, capsys):
+def test_create_user_integration(db_session, management_session, capsys):
     """
     Full integration test: create a user via the controller.
     Verifies that the user is persisted in the database
@@ -26,7 +26,7 @@ def test_create_user_integration(db_session, capsys):
     })
 
     try:
-        UserController.create_user(db_session)
+        UserController.create_user(db_session, management_session)
 
         user_in_db = db_session.query(User).filter_by(username="integration_user").first()
         assert user_in_db is not None
@@ -42,7 +42,7 @@ def test_create_user_integration(db_session, capsys):
         UserView.prompt_user_creation = original_prompt
 
 
-def test_update_user_integration_success(db_session, test_user, capsys):
+def test_update_user_integration_success(db_session, management_session, test_user, capsys):
     """
     Full integration test:
     Successfully updates an existing user through the controller
@@ -60,7 +60,7 @@ def test_update_user_integration_success(db_session, test_user, capsys):
     })
 
     try:
-        UserController.update_user(db_session)
+        UserController.update_user(db_session, management_session)
 
         updated_user = db_session.query(User).get(test_user.user_id)
 
@@ -76,7 +76,7 @@ def test_update_user_integration_success(db_session, test_user, capsys):
         UserView.prompt_update = original_prompt_update
 
 
-def test_update_user_duplicate_username_integration(db_session, test_user, capsys):
+def test_update_user_duplicate_username_integration(db_session, management_session, test_user, capsys):
     """
     Full integration test:
     Attempts to update a user with a duplicate username
@@ -104,7 +104,7 @@ def test_update_user_duplicate_username_integration(db_session, test_user, capsy
     })
 
     try:
-        UserController.update_user(db_session)
+        UserController.update_user(db_session, management_session)
 
         unchanged_user = db_session.query(User).get(test_user.user_id)
         assert unchanged_user.username == "test_user"
@@ -118,7 +118,7 @@ def test_update_user_duplicate_username_integration(db_session, test_user, capsy
 
 
 def test_delete_user_integration_success(
-        db_session, test_user, test_client, test_contract, test_event, capsys
+        db_session, management_session, test_user, test_client, test_contract, test_event, capsys
 ):
     """
     Full integration test:
@@ -133,7 +133,7 @@ def test_delete_user_integration_success(
     UserView.prompt_delete_confirmation = staticmethod(lambda user: True)
 
     try:
-        UserController.delete_user(db_session)
+        UserController.delete_user(db_session, management_session)
 
         deleted_user = db_session.query(User).get(test_user.user_id)
         assert deleted_user is None
@@ -154,14 +154,14 @@ def test_delete_user_integration_success(
         UserView.prompt_delete_confirmation = original_prompt_confirm
 
 
-def test_list_clients_integration(db_session, test_client, capsys):
+def test_list_clients_integration(db_session, commercial_session, test_client, capsys):
     """
     Full integration test:
     Calls ClientController.list_clients and verifies that
     the client stored in the database is displayed by the view.
     """
 
-    ClientController.list_clients(db_session)
+    ClientController.list_clients(db_session, commercial_session)
 
     captured = capsys.readouterr()
 
@@ -171,7 +171,7 @@ def test_list_clients_integration(db_session, test_client, capsys):
     assert test_client.business_name in captured.out
 
 
-def test_create_client_integration_success(db_session, test_user, capsys):
+def test_create_client_integration_success(db_session, commercial_session, test_user, capsys):
     """
     Full integration test:
     Successfully creates a client through the controller
@@ -189,7 +189,7 @@ def test_create_client_integration_success(db_session, test_user, capsys):
     })
 
     try:
-        ClientController.create_client(db_session)
+        ClientController.create_client(db_session, commercial_session)
 
         client = db_session.query(Client).filter_by(
             email="integration.client@test.com"
@@ -209,7 +209,7 @@ def test_create_client_integration_success(db_session, test_user, capsys):
         ClientView.prompt_client_creation = original_prompt
 
 
-def test_create_client_integration_duplicate_email(db_session, test_user, test_client, capsys):
+def test_create_client_integration_duplicate_email(db_session, commercial_session, test_user, test_client, capsys):
     """
     Full integration test:
     Attempts to create a client with a duplicate email and verifies
@@ -227,7 +227,7 @@ def test_create_client_integration_duplicate_email(db_session, test_user, test_c
     })
 
     try:
-        ClientController.create_client(db_session)
+        ClientController.create_client(db_session, commercial_session)
 
         client = db_session.query(Client).filter_by(
             business_name="Duplicate Business"
@@ -242,7 +242,7 @@ def test_create_client_integration_duplicate_email(db_session, test_user, test_c
         ClientView.prompt_client_creation = original_prompt
 
 
-def test_update_client_integration_success(db_session, test_client, test_user, capsys):
+def test_update_client_integration_success(db_session, commercial_session, test_client, test_user, capsys):
     """
     Full integration test:
     Successfully updates a client through the controller and verifies
@@ -262,7 +262,7 @@ def test_update_client_integration_success(db_session, test_client, test_user, c
     })
 
     try:
-        ClientController.update_client(db_session)
+        ClientController.update_client(db_session, commercial_session)
 
         updated_client = db_session.query(Client).get(test_client.client_id)
 
@@ -280,7 +280,7 @@ def test_update_client_integration_success(db_session, test_client, test_user, c
         ClientView.prompt_update = original_prompt_update
 
 
-def test_update_client_integration_duplicate_email(db_session, test_client, test_user, capsys):
+def test_update_client_integration_duplicate_email(db_session, commercial_session, test_client, test_user, capsys):
     """
     Full integration test:
     Attempts to update a client with an email already used by another client
@@ -307,7 +307,7 @@ def test_update_client_integration_duplicate_email(db_session, test_client, test
     })
 
     try:
-        ClientController.update_client(db_session)
+        ClientController.update_client(db_session, commercial_session)
 
         unchanged_client = db_session.query(Client).get(test_client.client_id)
         assert unchanged_client.email == test_client.email
@@ -320,14 +320,14 @@ def test_update_client_integration_duplicate_email(db_session, test_client, test
         ClientView.prompt_update = original_prompt_update
 
 
-def test_list_contracts_integration(db_session, test_contract, capsys):
+def test_list_contracts_integration(db_session, commercial_session, test_contract, capsys):
     """
     Full integration test:
     Calls ContractController.list_contracts and verifies that
     the existing contract is displayed by the view.
     """
 
-    ContractController.list_contracts(db_session)
+    ContractController.list_contracts(db_session, commercial_session)
 
     captured = capsys.readouterr()
 
@@ -338,7 +338,7 @@ def test_list_contracts_integration(db_session, test_contract, capsys):
 
 
 def test_create_contract_integration_success(
-        db_session, test_user, test_client, capsys
+        db_session, commercial_session, test_user, test_client, capsys
 ):
     """
     Full integration test:
@@ -356,7 +356,7 @@ def test_create_contract_integration_success(
     })
 
     try:
-        ContractController.create_contract(db_session)
+        ContractController.create_contract(db_session, commercial_session)
 
         contract = db_session.query(Contract).first()
         assert contract is not None
@@ -375,7 +375,7 @@ def test_create_contract_integration_success(
 
 
 def test_create_contract_integration_invalid_total_price(
-        db_session, test_user, test_client, capsys
+        db_session, commercial_session, test_user, test_client, capsys
 ):
     """
     Full integration test:
@@ -393,7 +393,7 @@ def test_create_contract_integration_invalid_total_price(
     })
 
     try:
-        ContractController.create_contract(db_session)
+        ContractController.create_contract(db_session, commercial_session)
 
         # No contract should be persisted
         contracts = db_session.query(Contract).all()
@@ -407,7 +407,7 @@ def test_create_contract_integration_invalid_total_price(
 
 
 def test_update_contract_integration_success(
-        db_session, test_contract, capsys
+        db_session, commercial_session, test_contract, capsys
 ):
     """
     Full integration test:
@@ -425,7 +425,7 @@ def test_update_contract_integration_success(
     })
 
     try:
-        ContractController.update_contract(db_session)
+        ContractController.update_contract(db_session, commercial_session)
 
         updated_contract = db_session.query(Contract).get(test_contract.contract_id)
         assert updated_contract.rest_to_pay == 0
@@ -441,7 +441,7 @@ def test_update_contract_integration_success(
 
 
 def test_update_contract_integration_inferior_total_price_error(
-        db_session, test_contract, capsys
+        db_session, commercial_session, test_contract, capsys
 ):
     """
     Full integration test:
@@ -459,7 +459,7 @@ def test_update_contract_integration_inferior_total_price_error(
     })
 
     try:
-        ContractController.update_contract(db_session)
+        ContractController.update_contract(db_session, commercial_session)
 
         # Contract should remain unchanged
         unchanged_contract = db_session.query(Contract).get(test_contract.contract_id)
@@ -473,7 +473,7 @@ def test_update_contract_integration_inferior_total_price_error(
         ContractView.prompt_update = original_prompt_update
 
 
-def test_list_events_integration_success(db_session, test_event, capsys):
+def test_list_events_integration_success(db_session, support_session, test_event, capsys):
     """
     Full integration test:
     list_events should retrieve events from DB
@@ -481,7 +481,7 @@ def test_list_events_integration_success(db_session, test_event, capsys):
     """
 
     # Act
-    EventController.list_events(db_session)
+    EventController.list_events(db_session, support_session)
 
     # Assert (stdout)
     captured = capsys.readouterr()
@@ -498,7 +498,7 @@ def test_list_events_integration_success(db_session, test_event, capsys):
         assert test_event.support_contact.first_name in output
 
 
-def test_create_event_success(db_session, test_client, test_user, capsys):
+def test_create_event_success(db_session, support_session, test_client, test_user, capsys):
     """
     Full integration test: successful event creation.
     """
@@ -520,7 +520,7 @@ def test_create_event_success(db_session, test_client, test_user, capsys):
     EventView.prompt_event_creation = staticmethod(lambda: event_data)
 
     # Act
-    EventController.create_event(db_session)
+    EventController.create_event(db_session, support_session)
 
     # Assert stdout
     captured = capsys.readouterr()
@@ -534,7 +534,7 @@ def test_create_event_success(db_session, test_client, test_user, capsys):
     assert event_in_db.support_contact_id == test_user.user_id
 
 
-def test_create_event_failure_past_date(db_session, test_client, test_user, capsys):
+def test_create_event_failure_past_date(db_session, support_session, test_client, test_user, capsys):
     """
     Full integration test: event creation fails because start_datetime is in the past.
     """
@@ -556,7 +556,7 @@ def test_create_event_failure_past_date(db_session, test_client, test_user, caps
     EventView.prompt_event_creation = staticmethod(lambda: event_data)
 
     # Act
-    EventController.create_event(db_session)
+    EventController.create_event(db_session, support_session)
 
     # Assert stdout
     captured = capsys.readouterr()
@@ -567,7 +567,7 @@ def test_create_event_failure_past_date(db_session, test_client, test_user, caps
     assert event_in_db is None
 
 
-def test_update_event_success_integration(db_session, test_event, capsys):
+def test_update_event_success_integration(db_session, support_session, test_event, capsys):
     """
     Full integration test:
     Successfully updating an event using mocked prompts.
@@ -582,7 +582,7 @@ def test_update_event_success_integration(db_session, test_event, capsys):
     })
 
     try:
-        EventController.update_event(db_session)
+        EventController.update_event(db_session, support_session)
 
         updated_event = db_session.query(Event).get(test_event.event_id)
         assert updated_event.name == "Updated Event Name"
@@ -596,7 +596,7 @@ def test_update_event_success_integration(db_session, test_event, capsys):
         EventView.prompt_update = original_prompt_update
 
 
-def test_update_event_failure_end_before_start_integration(db_session, test_event, capsys):
+def test_update_event_failure_end_before_start_integration(db_session, support_session, test_event, capsys):
     """
     Full integration test:
     Updating an event with end_datetime before start_datetime
@@ -612,7 +612,7 @@ def test_update_event_failure_end_before_start_integration(db_session, test_even
     })
 
     try:
-        EventController.update_event(db_session)
+        EventController.update_event(db_session, support_session)
 
         # Event should remain unchanged
         unchanged_event = db_session.query(Event).get(test_event.event_id)
@@ -626,7 +626,7 @@ def test_update_event_failure_end_before_start_integration(db_session, test_even
         EventView.prompt_update = original_prompt_update
 
 
-def test_create_user_hashes_and_verifies_password(db_session, monkeypatch):
+def test_create_user_hashes_and_verifies_password(db_session, support_session, monkeypatch):
     """
     Integration test for user creation with password hashing.
 
@@ -655,7 +655,7 @@ def test_create_user_hashes_and_verifies_password(db_session, monkeypatch):
         "epic_events.views.UserView.prompt_user_creation",
         lambda: fake_user_data
     )
-    UserController.create_user(db_session)
+    UserController.create_user(db_session, support_session)
 
     user = db_session.query(User).filter_by(username="jdoe").one()
 
