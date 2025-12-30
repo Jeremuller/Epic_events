@@ -1,6 +1,7 @@
 from functools import wraps
 from epic_events.auth import SessionContext
 from epic_events.views import DisplayMessages
+from epic_events.models import Contract
 
 
 def requires_authentication(func):
@@ -110,7 +111,7 @@ def management_only(func):
     If the user is not authenticated or does not have the required role:
         - Access denied error message is displayed
         - The decorated function is NOT executed
-        - None is returned
+        - None is returned.
 
     Typical usage:
         @management_only
@@ -159,7 +160,7 @@ def support_only(func):
     If the user is not authenticated or does not have the required role:
         - Access denied error message is displayed
         - The decorated function is NOT executed
-        - None is returned
+        - None is returned.
 
     Typical usage:
         @support_only
@@ -191,3 +192,27 @@ def support_only(func):
         return func(*args, **kwargs)
 
     return wrapper
+
+
+def role_permission(allowed_roles):
+    """
+    Decorator to restrict access to users with specific roles.
+    Works like `support_only` but supports multiple allowed roles.
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            session = kwargs.get("session")
+            # fallback: try to get session from the second positional argument
+            if session is None and len(args) >= 2:
+                session = args[1]
+
+            if not session:
+                raise RuntimeError("Session must be provided")
+
+            if session.role not in allowed_roles:
+                raise ValueError("ACCESS_DENIED")
+
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator

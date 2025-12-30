@@ -1,5 +1,5 @@
 import pytest
-from epic_events.permissions import commercial_only, requires_assignment
+from epic_events.permissions import commercial_only, role_permission
 from epic_events.views import DisplayMessages
 from epic_events.auth import SessionContext
 from epic_events.controllers import ContractController
@@ -108,3 +108,62 @@ def test_list_contracts_authenticated(db_session, management_session, monkeypatc
     ContractController.list_contracts(db_session, management_session)
 
     assert called["called"] is True
+
+
+def test_manager_can_update_any_contract(db_session, management_session, test_contract):
+    @role_permission(["management", "commercial"])
+    def fake_update(*, db, session, contract_id):
+        return "OK"
+
+    result = fake_update(db=db_session, session=management_session, contract_id=test_contract.contract_id)
+    assert result == "OK"
+
+
+def test_commercial_can_update_own_contract(db_session, commercial_session, test_contract):
+    @role_permission(["management", "commercial"])
+    def fake_update(*, db, session, contract_id):
+        # assignment check
+        contract = db.query(Contract).get(contract_id)
+        if session.role == "commercial" and contract.client.commercial_contact_id != session.user_id:
+            raise ValueError("ACCESS_DENIED")
+        return "OK"
+
+    result = fake_update(db=db_session, session=commercial_session, contract_id=test_contract.contract_id)
+    assert result == "OK"
+
+
+def test_commercial_cannot_update_other_contract(db_session, commercial_session, test_contract):
+    commercial_session.user_id += 999
+
+    @role_permission(["management", "commercial"])
+    def fake_update(*, db, session, contract_id):
+        contract = db.query(Contract).get(contract_id)
+        if session.role == "commercial" and contract.client.commercial_contact_id != session.user_id:
+            raise ValueError("ACCESS_DENIED")
+        return "OK"
+
+    import pytest
+    with pytest.raises(ValueError) as exc:
+        fake_update(db=db_session, session=commercial_session, contract_id=test_contract.contract_id)
+    assert str(exc.value) == "ACCESS_DENIED"
+
+
+def test_support_cannot_update_contract(db_session, support_session, test_contract):
+    """
+    Ensure that a support user cannot update a contract.
+    Should raise ValueError with message "ACCESS_DENIED".
+    """
+    @role_permission(["management", "commercial"])
+    def fake_update(*, db, session, contract_id):
+        contract = db.query(Contract).get(contract_id)
+        # Check assignment for commercial
+        if session.role == "commercial" and contract.client.commercial_contact_id != session.user_id:
+            raise ValueError("ACCESS_DENIED")
+        return "OK"
+
+    import pytest
+    with pytest.raises(ValueError) as exc:
+        fake_update(db=db_session, session=support_session, contract_id=test_contract.contract_id)
+
+    assert str(exc.value) == "ACCESS_DENIED"
+

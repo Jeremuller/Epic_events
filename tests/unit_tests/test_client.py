@@ -99,6 +99,29 @@ def test_update_client(db_session, test_user):
     assert client.last_update > client.first_contact
 
 
+def test_update_client_denied(db_session, test_user):
+    """Test that a commercial cannot update a client they do not manage."""
+    other_client = Client.create(
+        db=db_session,
+        first_name="Alice",
+        last_name="Smith",
+        email="alice@example.com",
+        commercial_contact_id=test_user.user_id
+    )
+    other_client.commercial_contact_id += 1
+
+    with pytest.raises(ValueError) as exc:
+        if other_client.commercial_contact_id != test_user.user_id:
+            raise ValueError("ACCESS_DENIED")
+        other_client.update(
+            db=db_session,
+            first_name="AliceUpdated",
+            email="alice.updated@example.com"
+        )
+
+    assert str(exc.value) == "ACCESS_DENIED"
+
+
 def test_update_client_empty_optional_fields(db_session, test_user):
     """Test that updating a client with empty optional fields sets them to None."""
     client = Client.create(

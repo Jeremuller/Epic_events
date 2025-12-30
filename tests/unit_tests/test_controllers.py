@@ -23,7 +23,8 @@ menus = [
 
 
 @pytest.mark.parametrize("menu_func, menu_text, choices, controller_path", menus)
-def test_menus_parametric(db_session, management_session, capsys, monkeypatch, menu_func, menu_text, choices, controller_path):
+def test_menus_parametric(db_session, management_session, capsys, monkeypatch, menu_func, menu_text, choices,
+                          controller_path):
     iter_choices = iter(choices)
     monkeypatch.setattr(builtins, "input", lambda _: next(iter_choices))
 
@@ -380,6 +381,35 @@ def test_update_contract_success(db_session, management_session, test_contract, 
         assert f"Contract updated: ID {test_contract.contract_id}" in msg
 
 
+def test_update_contract_access_denied(db_session, commercial_session, test_contract, test_client):
+    """
+    Test that a commercial cannot update a contract if they are not the assigned commercial_contact.
+    This triggers the new permission check in ContractController.update_contract.
+    """
+    commercial_session.user_id = test_contract.commercial_contact_id + 999
+
+    updated_data = {
+        "total_price": 1500.0,
+        "rest_to_pay": 700.0,
+        "client_id": test_client.client_id,
+        "commercial_contact_id": test_contract.commercial_contact_id,
+        "signed": True
+    }
+
+    with patch.object(MenuView, "prompt_for_id", return_value=test_contract.contract_id), \
+            patch.object(ContractView, "prompt_update", return_value=updated_data), \
+            patch.object(DisplayMessages, "display_error") as mock_error:
+        ContractController.update_contract(db_session, commercial_session)
+
+        db_session.refresh(test_contract)
+        assert test_contract.total_price != updated_data["total_price"] or \
+               test_contract.rest_to_pay != updated_data["rest_to_pay"]
+
+        mock_error.assert_called_once()
+        msg = mock_error.call_args[0][0]
+        assert msg == "ACCESS_DENIED"
+
+
 def test_update_contract_not_found(db_session, management_session):
     """Test update attempt on nonexistent contract."""
 
@@ -548,3 +578,51 @@ def test_update_event_not_found(db_session, support_session):
         EventController.update_event(db_session, support_session)
 
         mock_error.assert_called_once_with("EVENT_NOT_FOUND")
+
+
+def test_commercial_can_create_event_for_own_client(db_session, commercial_session, test_client, test_contract):
+    """The commercial can create an event for a client they are assigned to."""
+    event_data = {
+        "name": "New Event",
+        "notes": "Notes",
+        "start_datetime": datetime.now() + timedelta(days=10),
+        "end_datetime": datetime.now() + timedelta(days=11),
+        "location": "Paris",
+        "attendees": 10,
+        "client_id": test_client.client_id
+    }
+
+    with patch.object(EventView, "prompt_event_creation", return_value=event_data):
+        EventController.create_event(db_session, commercial_session)
+        created_event = db_session.query(Event).filter_by(name="New Event").first()
+        assert created_event is not None
+        assert created_event.client_id == test_client.client_id
+
+
+def test_commercial_cannot_create_event_for_other_client(db_session, commercial_session, test_client):
+    """The commercial cannot create an event for a client not assigned to them."""
+    other_client = Client.create(
+        db=db_session,
+        first_name="Other",
+        last_name="Client",
+        email="other@example.com",
+        commercial_contact_id=test_client.commercial_contact_id
+    )
+    other_client.commercial_contact_id += 1
+    db_session.add(other_client)
+    db_session.commit()
+
+    event_data = {
+        "name": "Invalid Event",
+        "notes": "Notes",
+        "start_datetime": datetime.now() + timedelta(days=10),
+        "end_datetime": datetime.now() + timedelta(days=11),
+        "location": "Paris",
+        "attendees": 10,
+        "client_id": other_client.client_id
+    }
+
+    with patch.object(EventView, "prompt_event_creation", return_value=event_data), \
+         patch.object(DisplayMessages, "display_error") as mock_error:
+        EventController.create_event(db_session, commercial_session)
+        mock_error.assert_called_once_with("ACCESS_DENIED")

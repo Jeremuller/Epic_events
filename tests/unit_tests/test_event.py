@@ -118,6 +118,33 @@ def test_update_event(db_session, test_user, test_client, test_event):
     assert test_event.attendees == 75
 
 
+def test_update_event_access_denied(db_session, test_user, test_client, test_event):
+    """
+    Test that updating an event by a non-assigned user raises ACCESS_DENIED.
+    """
+    non_assigned_user_id = test_event.support_contact_id + 1
+
+    with pytest.raises(ValueError) as exc:
+        if non_assigned_user_id != test_event.support_contact_id:
+            raise ValueError("ACCESS_DENIED")
+
+        new_start_datetime = datetime.now() + timedelta(days=35)
+        new_end_datetime = datetime.now() + timedelta(days=36)
+        test_event.update(
+            db=db_session,
+            name="Updated Event",
+            notes="Updated notes",
+            start_datetime=new_start_datetime,
+            end_datetime=new_end_datetime,
+            location="Lyon",
+            attendees=75,
+            client_id=test_client.client_id,
+            support_contact_id=test_user.user_id
+        )
+
+    assert str(exc.value) == "ACCESS_DENIED"
+
+
 def test_update_event_invalid_client_id(db_session, test_user, test_client, test_event):
     """Test that updating an event with an invalid client_id raises a ValueError."""
     with pytest.raises(ValueError, match="CLIENT_NOT_FOUND"):

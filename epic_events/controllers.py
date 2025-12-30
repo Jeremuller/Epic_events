@@ -3,7 +3,7 @@ from epic_events.views import (DisplayMessages, UserView, ClientView, ContractVi
 from epic_events.auth import hash_password, verify_password, SessionContext
 from epic_events.database import SessionLocal
 from epic_events.permissions import requires_authentication, management_only, support_only, commercial_only, \
-    requires_assignment
+    role_permission
 
 db = SessionLocal()
 
@@ -457,6 +457,7 @@ class ClientController:
             Orchestrates the update of a client in the CRM system.
             Steps:
               1. Prompts the user for the client ID (via MenuView).
+              1b. Check if the commercial is assigned to this client for permission purposes.
               2. Retrieves the client from the database (via Client.get_by_id).
               3. Prompts for updated client data (via ClientView).
               4. Validates and updates the client (via Client.update).
@@ -476,7 +477,10 @@ class ClientController:
             if not client:
                 DisplayMessages.display_error("CLIENT_NOT_FOUND")
                 return
-
+            # Step 1b: Verify commercial is assigned to this client
+            if client.commercial_contact_id != session.user_id:
+                DisplayMessages.display_error("ACCESS_DENIED")
+                return
             # Step 2: Get updated data from the user
             updated_data = ClientView.prompt_update(client)
 
@@ -622,7 +626,7 @@ class ContractController:
             raise
 
     @staticmethod
-    @management_only
+    @role_permission(["management", "commercial"])
     def update_contract(db, session):
         """
         Orchestrates the update of a contract in the CRM system.
@@ -647,7 +651,11 @@ class ContractController:
             if not contract:
                 DisplayMessages.display_error("CONTRACT_NOT_FOUND")
                 return
-
+            # Step 1b: Role-specific assignment check
+            if session.role == "commercial":
+                if contract.client.commercial_contact_id != session.user_id:
+                    DisplayMessages.display_error("ACCESS_DENIED")
+                    return
             # Step 2: Get updated data from the user
             updated_data = ContractView.prompt_update(contract)
 
@@ -758,6 +766,13 @@ class EventController:
         try:
             # Step 1: Delegate event input to the view layer
             event_data = EventView.prompt_event_creation()
+
+            # Step 1b: Check that the commercial is assigned to this client
+            client = db.query(Client).filter_by(client_id=event_data["client_id"]).first()
+            if not client:
+                raise ValueError("CLIENT_NOT_FOUND")
+            if client.commercial_contact_id != session.user_id:
+                raise ValueError("ACCESS_DENIED")
 
             # Step 2: Delegate event validation and object creation to the model layer
             event = Event.create(
