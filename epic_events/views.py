@@ -102,6 +102,16 @@ class MenuView:
         """
         return click.prompt(f"Enter the ID of the {entity_name}", type=int)
 
+    @staticmethod
+    def logout_confirmation():
+        """
+        Prompts the user to confirm logout.
+
+        Returns:
+            bool: True if the user confirms logout, False otherwise.
+        """
+        return click.confirm("Do you really want to logout?")
+
 
 class LoginView:
     @staticmethod

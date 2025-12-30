@@ -33,8 +33,9 @@ class MenuController:
             elif choice == "4":
                 MenuController.run_events_menu(db, session)
             elif choice == "5":
-                DisplayMessages.display_goodbye()
-                break
+                if LoginController.logout(session):
+                    DisplayMessages.display_goodbye()
+                    break
             else:
                 DisplayMessages.display_invalid_choice("main")
 
@@ -159,6 +160,26 @@ class LoginController:
         )
 
         return session
+
+    @staticmethod
+    def logout(session):
+        """
+        Logs out the current user with a confirmation prompt.
+
+        Workflow:
+            1. Asks the user to confirm logout via SessionView.
+            2. Returns True if confirmed, False otherwise.
+            3. Display of goodbye message is handled by the menu.
+
+        Args:
+            session (SessionContext): The current user's session context.
+
+        Returns:
+            bool: True if logout confirmed, False otherwise.
+        """
+        # Ask the user for confirmation using the view
+        confirm = MenuView.logout_confirmation()
+        return confirm
 
 
 class UserController:
@@ -856,6 +877,55 @@ class EventController:
 
         except Exception:
             # Handle unexpected errors
+            db.rollback()
+            DisplayMessages.display_error("DATABASE_ERROR")
+            raise
+
+    @staticmethod
+    @management_only
+    def assign_support(db, session):
+        """
+    Allows a manager to assign or change a support contact for any event.
+
+    Workflow:
+        1. Prompts the user for the event ID (via MenuView).
+        2. Retrieves the event from the database (via Event.get_by_id).
+        3. Checks that the event exists.
+        4. Prompts the user for the support contact ID (via MenuView).
+        5. Validates that the support user exists.
+        6. Updates the event with the new support_contact_id (via Event.update).
+        7. Handles database transactions (commit/rollback).
+        8. Displays success or error messages via DisplayMessages.
+
+    Raises:
+        ValueError: If the event is not found or the support user does not exist.
+        Exception: For unexpected database errors.
+    """
+        try:
+            event_id = MenuView.prompt_for_id("event")
+            event = Event.get_by_id(db, event_id)
+            if not event:
+                raise ValueError("EVENT_NOT_FOUND")
+
+            support_id = MenuView.prompt_for_contact_id("support user")
+            support_user = db.query(User).filter_by(user_id=support_id).first()
+            if not support_user:
+                raise ValueError("CONTACT_NOT_FOUND")
+
+            event.update(db, support_contact_id=support_id)
+
+            db.commit()
+            db.refresh(event)
+
+            DisplayMessages.display_success(
+                f"Support {support_user.username} assigned to event '{event.name}' (ID: {event.event_id})"
+            )
+
+        except ValueError as e:
+            db.rollback()
+            DisplayMessages.display_error(str(e))
+
+        except Exception:
             db.rollback()
             DisplayMessages.display_error("DATABASE_ERROR")
             raise

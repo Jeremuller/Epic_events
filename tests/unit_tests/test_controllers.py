@@ -623,6 +623,35 @@ def test_commercial_cannot_create_event_for_other_client(db_session, commercial_
     }
 
     with patch.object(EventView, "prompt_event_creation", return_value=event_data), \
-         patch.object(DisplayMessages, "display_error") as mock_error:
+            patch.object(DisplayMessages, "display_error") as mock_error:
         EventController.create_event(db_session, commercial_session)
         mock_error.assert_called_once_with("ACCESS_DENIED")
+
+
+def test_assign_support(db_session, management_session, test_event, test_user):
+    """Test the manager can assign a support contact to an event."""
+
+    support_user = User.create(
+        db=db_session,
+        username="support_user",
+        first_name="Support",
+        last_name="User",
+        email="support@example.com",
+        role="support",
+        password_hash="hashed_pw"
+    )
+    test_event.support_contact_id = None
+    db_session.add(support_user)
+    db_session.commit()
+
+    # Scenario 1: Assign support successfully
+    with patch.object(MenuView, "prompt_for_id", return_value=test_event.event_id), \
+            patch.object(MenuView, "prompt_for_contact_id", return_value=support_user.user_id), \
+            patch.object(DisplayMessages, "display_success") as mock_success:
+        EventController.assign_support(db_session, management_session)
+
+        db_session.refresh(test_event)
+        assert test_event.support_contact_id == support_user.user_id
+        mock_success.assert_called_once()
+        msg = mock_success.call_args[0][0]
+        assert f"Support {support_user.username} assigned to event" in msg
