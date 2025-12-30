@@ -422,7 +422,7 @@ class ClientController:
                 first_name=client_data["first_name"],
                 last_name=client_data["last_name"],
                 email=client_data["email"],
-                commercial_contact_id=client_data["commercial_contact_id"],
+                commercial_contact_id=session.user_id,
                 business_name=client_data.get("business_name"),
                 telephone=client_data.get("telephone")
             )
@@ -701,6 +701,20 @@ class EventController:
             raise
 
     @staticmethod
+    @management_only
+    def show_unassigned_events(db, session):
+        """
+        Retrieves and displays events without a support contact assigned.
+        Only accessible to management.
+
+        Args:
+            db (Session): SQLAlchemy database session.
+            session (SessionContext): Current authenticated user session.
+        """
+        events = Event.get_unassigned_events(db)
+        EventView.display_unassigned_events(events)
+
+    @staticmethod
     @commercial_only
     def create_event(db, session):
         """
@@ -733,8 +747,7 @@ class EventController:
                 end_datetime=event_data["end_datetime"],
                 location=event_data.get("location"),
                 attendees=event_data["attendees"],
-                client_id=event_data["client_id"],
-                support_contact_id=event_data["support_contact_id"]
+                client_id=event_data["client_id"]
             )
 
             # Step 3: Persist the event (controller responsibility)

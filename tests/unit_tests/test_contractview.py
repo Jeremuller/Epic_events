@@ -119,13 +119,13 @@ def test_prompt_update_some_changes(monkeypatch, db_session, test_contract):
     ])
 
     monkeypatch.setattr("click.prompt", lambda *a, **kw: next(answers))
-    monkeypatch.setattr("click.confirm", lambda *a, **kw: True)  # changed
+    monkeypatch.setattr("click.confirm", lambda *a, **kw: False)  # changed
 
     result = ContractView.prompt_update(contract)
 
     assert result == {
         "total_price": 1500.0,
-        "signed": True
+        "signed": False
     }
 
 

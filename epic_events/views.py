@@ -260,7 +260,6 @@ class ClientView:
                   - first_name (str)
                   - last_name (str)
                   - email (str)
-                  - commercial_contact_id (int)
                   - business_name (str, optional)
                   - telephone (str, optional)
         """
@@ -270,7 +269,6 @@ class ClientView:
             "first_name": click.prompt("First name", type=str),
             "last_name": click.prompt("Last name", type=str),
             "email": click.prompt("Email", type=str),
-            "commercial_contact_id": click.prompt("Commercial contact", type=int),
             "business_name": click.prompt("Business name (optional)", default="", type=str) or None,
             "telephone": click.prompt("Phone (optional)", default="", type=str) or None
         }
@@ -431,6 +429,23 @@ class EventView:
             )
 
     @staticmethod
+    def display_unassigned_events(events):
+        """
+        Displays a list of events that have no support assigned.
+
+        Args:
+            events (List[Event]): List of Event objects to display.
+        """
+        if not events:
+            print("No unassigned events found.")
+            return
+
+        print("\nUnassigned Events:")
+        for e in events:
+            print(f"- ID: {e.event_id}, Name: {e.name}, Client: {e.client.business_name if e.client else 'N/A'}, "
+                  f"Start: {e.start_datetime}, End: {e.end_datetime}, Location: {e.location}")
+
+    @staticmethod
     def prompt_event_creation():
         """
         Prompts the user for new event information.
@@ -467,9 +482,7 @@ class EventView:
             "end_datetime": parse_datetime("End date and time"),
             "location": click.prompt("Location (optional)", default="", type=str) or None,
             "attendees": click.prompt("Number of attendees", type=int),
-            "client_id": click.prompt("client", type=int),
-            "support_contact_id": click.prompt("Support contact", type=int),
-
+            "client_id": click.prompt("client", type=int)
         }
 
     @staticmethod

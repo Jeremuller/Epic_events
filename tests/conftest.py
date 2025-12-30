@@ -11,6 +11,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from epic_events.models import Base, User, Client, Contract, Event
 from epic_events.auth import hash_password, SessionContext
+from datetime import datetime, timedelta
 
 # Create an in-memory SQLite engine for testing.
 # This avoids affecting the production database and ensures tests run in isolation.
@@ -48,10 +49,10 @@ def db_session():
 
 
 @pytest.fixture
-def commercial_session():
+def commercial_session(test_user):
     return SessionContext(
         username="commercial",
-        user_id=2,
+        user_id=test_user.user_id,
         role="commercial",
         is_authenticated=True
     )
@@ -132,7 +133,6 @@ def test_contract(db_session, test_user, test_client):
 @pytest.fixture()
 def test_event(db_session, test_user, test_client, test_contract):
     """Fixture to create a test event linked to the test contract and test user."""
-    from datetime import datetime, timedelta
     event = Event.create(
         db=db_session,
         name="Test Event",
@@ -141,9 +141,9 @@ def test_event(db_session, test_user, test_client, test_contract):
         end_datetime=datetime.now() + timedelta(days=31),
         location="Paris",
         attendees=50,
-        client_id=test_client.client_id,
-        support_contact_id=test_user.user_id
+        client_id=test_client.client_id
     )
+    event.support_contact_id = test_user.user_id
     db_session.add(event)
     db_session.commit()
     return event

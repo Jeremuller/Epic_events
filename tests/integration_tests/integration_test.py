@@ -183,7 +183,6 @@ def test_create_client_integration_success(db_session, commercial_session, test_
         "first_name": "Integration",
         "last_name": "Client",
         "email": "integration.client@test.com",
-        "commercial_contact_id": test_user.user_id,
         "business_name": "Integration Business",
         "telephone": "0102030405",
     })
@@ -498,7 +497,8 @@ def test_list_events_integration_success(db_session, support_session, test_event
         assert test_event.support_contact.first_name in output
 
 
-def test_create_event_success(db_session, commercial_session, test_client, test_user, capsys, monkeypatch):
+def test_create_event_success(db_session, commercial_session, test_client, test_user, test_contract, capsys,
+                              monkeypatch):
     """
     Full integration test: successful event creation.
     """
@@ -512,8 +512,7 @@ def test_create_event_success(db_session, commercial_session, test_client, test_
         "end_datetime": future_end,
         "location": "Test location",
         "attendees": 10,
-        "client_id": test_client.client_id,
-        "support_contact_id": test_user.user_id,
+        "client_id": test_client.client_id
     }
 
     monkeypatch.setattr(
@@ -531,10 +530,10 @@ def test_create_event_success(db_session, commercial_session, test_client, test_
     event_in_db = db_session.query(Event).filter_by(name="Integration Test Event").first()
     assert event_in_db is not None
     assert event_in_db.client_id == test_client.client_id
-    assert event_in_db.support_contact_id == test_user.user_id
 
 
-def test_create_event_failure_past_date(db_session, commercial_session, test_client, test_user, capsys, monkeypatch):
+def test_create_event_failure_past_date(db_session, commercial_session, test_client, test_user, test_contract, capsys,
+                                        monkeypatch):
     """
     Full integration test: event creation fails because start_datetime is in the past.
     """

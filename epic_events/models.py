@@ -271,7 +271,7 @@ class Client(Base):
             first_name (str): Client's first name.
             last_name (str): Client's last name.
             email (str): Client's email address.
-            commercial_contact_id (int): ID of the commercial user responsible.
+            commercial_contact_id (int): ID of the commercial user responsible (automatically assigned by controller).
             business_name (str, optional): Client's business name.
             telephone (str, optional): Client's phone number.
 
@@ -587,7 +587,7 @@ class Event(Base):
     @classmethod
     def create(cls, db: Session, name: str, notes: str, start_datetime: datetime,
                end_datetime: datetime, location: str, attendees: int,
-               client_id: int, support_contact_id: int):
+               client_id: int):
         """
         Creates a new event with full validation.
         Does NOT persist the event to the database (handled by the controller).
@@ -601,7 +601,6 @@ class Event(Base):
             location (str, optional): Event location.
             attendees (int): Number of attendees.
             client_id (int): ID of the associated client (must exist).
-            support_contact_id (int): ID of the support contact (must exist).
 
         Returns:
             Event: The created Event object (not persisted).
@@ -617,9 +616,10 @@ class Event(Base):
         if not db.query(Client).filter_by(client_id=client_id).first():
             raise ValueError(ErrorMessages.CLIENT_NOT_FOUND.name)
 
-        # Check if support contact exists
-        if not db.query(User).filter_by(user_id=support_contact_id).first():
-            raise ValueError(ErrorMessages.CONTACT_NOT_FOUND.name)
+        # Check if contract exists and is signed
+        contract = db.query(Contract).filter_by(client_id=client_id).first()
+        if not contract or not contract.signed:
+            raise ValueError(ErrorMessages.CONTRACT_NOT_SIGNED.name)
 
         # Validate dates
         if start_datetime < datetime.now():
@@ -635,8 +635,7 @@ class Event(Base):
             end_datetime=end_datetime,
             location=location,
             attendees=attendees,
-            client_id=client_id,
-            support_contact_id=support_contact_id
+            client_id=client_id
         )
 
     @classmethod
@@ -667,6 +666,19 @@ class Event(Base):
         """
 
         return db.query(cls).filter_by(event_id=event_id).first()
+
+    @classmethod
+    def get_unassigned_events(cls, db: Session):
+        """
+        Retrieves all events that do not have a support contact assigned.
+
+        Args:
+            db (Session): SQLAlchemy database session.
+
+        Returns:
+            List[Event]: List of Event objects without a support contact.
+        """
+        return db.query(cls).filter(cls.support_contact_id.is_(None)).all()
 
     def update(self, db: Session, name: str = None, notes: str = None,
                start_datetime: datetime = None, end_datetime: datetime = None,

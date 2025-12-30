@@ -45,8 +45,7 @@ def test_list_events_no_client_raises(db_session, test_user):
             end_datetime=datetime.now() + timedelta(hours=2),
             location="Virtual",
             attendees=20,
-            client_id=None,
-            support_contact_id=test_user.user_id
+            client_id=None
         )
         db_session.add(event)
         db_session.commit()
@@ -64,8 +63,7 @@ def test_list_events_no_support_raises(db_session, test_client):
             end_datetime=datetime.now() + timedelta(hours=2),
             location="Online",
             attendees=15,
-            client_id=test_client.client_id,
-            support_contact_id=None
+            client_id=test_client.client_id
         )
         db_session.add(event)
         db_session.commit()
@@ -82,7 +80,6 @@ def test_prompt_event_creation_full(db_session, monkeypatch):
         "Paris",  # location
         50,  # attendees
         1,  # client_id
-        2  # support_contact_id
     ])
 
     # Monkeypatch click.prompt
@@ -97,7 +94,6 @@ def test_prompt_event_creation_full(db_session, monkeypatch):
     assert result["location"] == "Paris"
     assert result["attendees"] == 50
     assert result["client_id"] == 1
-    assert result["support_contact_id"] == 2
 
 
 def test_prompt_event_creation_optional_none(db_session, monkeypatch):
@@ -134,7 +130,6 @@ def test_prompt_event_creation_invalid_date(db_session, monkeypatch, capsys):
         "",  # location
         20,  # attendees
         1,  # client_id
-        2  # support_contact_id
     ])
 
     monkeypatch.setattr("click.prompt", lambda prompt_text, **kwargs: next(inputs))

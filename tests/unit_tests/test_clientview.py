@@ -43,7 +43,6 @@ def test_prompt_client_creation_full(monkeypatch, db_session):
         "John",  # First name
         "Doe",  # Last name
         "john.doe@example.com",  # Email
-        42,  # Commercial ID
         "JD Consulting",  # Business
         "0601020304"  # Telephone
     ])
@@ -59,7 +58,6 @@ def test_prompt_client_creation_full(monkeypatch, db_session):
         "first_name": "John",
         "last_name": "Doe",
         "email": "john.doe@example.com",
-        "commercial_contact_id": 42,
         "business_name": "JD Consulting",
         "telephone": "0601020304",
     }
@@ -72,7 +70,6 @@ def test_prompt_client_creation_optional_fields_none(monkeypatch, db_session):
         "Alice",  # First name
         "Smith",  # Last name
         "alice@example.com",  # Email
-        12,  # Commercial ID
         "",  # Business name → becomes None
         ""  # Telephone → becomes None
     ])

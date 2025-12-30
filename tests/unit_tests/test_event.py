@@ -15,8 +15,7 @@ def test_create_event_valid(db_session, test_user, test_client, test_contract):
         end_datetime=end_datetime,
         location="Paris",
         attendees=50,
-        client_id=test_client.client_id,
-        support_contact_id=test_user.user_id
+        client_id=test_client.client_id
     )
     assert event.name == "Team Meeting"
     assert event.notes == "Quarterly team meeting"
@@ -25,7 +24,6 @@ def test_create_event_valid(db_session, test_user, test_client, test_contract):
     assert event.location == "Paris"
     assert event.attendees == 50
     assert event.client_id == test_client.client_id
-    assert event.support_contact_id == test_user.user_id
 
 
 def test_create_failed_contract_not_signed(db_session, test_user, test_client, test_contract):
@@ -42,8 +40,7 @@ def test_create_failed_contract_not_signed(db_session, test_user, test_client, t
             end_datetime=end_datetime,
             location="Paris",
             attendees=50,
-            client_id=test_client.client_id,
-            support_contact_id=test_user.user_id
+            client_id=test_client.client_id
         )
 
 
@@ -60,8 +57,7 @@ def test_create_event_past_date(db_session, test_user, test_client, test_contrac
             end_datetime=end_datetime,
             location="Paris",
             attendees=50,
-            client_id=test_client.client_id,
-            support_contact_id=test_user.user_id
+            client_id=test_client.client_id
         )
 
 
@@ -78,8 +74,7 @@ def test_create_event_end_before_start(db_session, test_user, test_client, test_
             end_datetime=end_datetime,
             location="Paris",
             attendees=50,
-            client_id=test_client.client_id,
-            support_contact_id=test_user.user_id
+            client_id=test_client.client_id
         )
 
 
@@ -96,26 +91,7 @@ def test_create_event_invalid_client(db_session, test_user):
             end_datetime=end_datetime,
             location="Paris",
             attendees=50,
-            client_id=9999,
-            support_contact_id=test_user.user_id
-        )
-
-
-def test_create_event_invalid_support_contact(db_session, test_client):
-    """Test that creating an event with an invalid support_contact_id raises a ValueError."""
-    start_datetime = datetime.now() + timedelta(days=30)
-    end_datetime = datetime.now() + timedelta(days=31)
-    with pytest.raises(ValueError, match="CONTACT_NOT_FOUND"):
-        Event.create(
-            db=db_session,
-            name="Invalid Contact Event",
-            notes="Support contact does not exist",
-            start_datetime=start_datetime,
-            end_datetime=end_datetime,
-            location="Paris",
-            attendees=50,
-            client_id=test_client.client_id,
-            support_contact_id=9999
+            client_id=9999
         )
 
 
@@ -181,7 +157,6 @@ def test_get_all_events(db_session, test_user, test_client, test_contract):
         location="Paris",
         attendees=50,
         client_id=test_client.client_id,
-        support_contact_id=test_user.user_id
     )
     db_session.add(event1)
     db_session.commit()
@@ -193,8 +168,7 @@ def test_get_all_events(db_session, test_user, test_client, test_contract):
         end_datetime=datetime.now() + timedelta(days=41),
         location="Lyon",
         attendees=60,
-        client_id=test_client.client_id,
-        support_contact_id=test_user.user_id
+        client_id=test_client.client_id
     )
     db_session.add(event2)
     db_session.commit()
@@ -202,3 +176,27 @@ def test_get_all_events(db_session, test_user, test_client, test_contract):
     assert len(events) == 2
     assert events[0].name in ["Event 1", "Event 2"]
     assert events[1].name in ["Event 1", "Event 2"]
+
+
+def test_get_unassigned_events(db_session, test_user, test_client, test_contract, test_event):
+    start_datetime = datetime.now() + timedelta(days=30)
+    end_datetime = datetime.now() + timedelta(days=31)
+
+    event_unassigned = Event.create(
+        db=db_session,
+        name="Unassigned Event",
+        notes="No support",
+        start_datetime=start_datetime,
+        end_datetime=end_datetime,
+        location="Lyon",
+        attendees=20,
+        client_id=test_client.client_id
+    )
+    db_session.add(event_unassigned)
+    db_session.commit()
+
+    unassigned_events = Event.get_unassigned_events(db_session)
+
+    assert len(unassigned_events) == 1
+    assert unassigned_events[0].name == "Unassigned Event"
+    assert unassigned_events[0].support_contact_id is None
