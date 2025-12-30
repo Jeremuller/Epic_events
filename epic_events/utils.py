@@ -19,6 +19,7 @@ class ErrorMessages(Enum):
     NEGATIVE_REST_TO_PAY = "Rest to pay can't be < 0."
     CLIENT_NOT_FOUND = "The specified client does not exist."
     CONTRACT_NOT_FOUND = "The specified contract does not exist."
+    CONTRACT_NOT_SIGNED = "You can't create an event if the client haven't signed the contract."
     EVENT_DATE_IN_PAST = "Event date must be in the future."
     END_BEFORE_START = "End date must be after start date."
     INVALID_CREDENTIALS = "The credentials you have selected are not recognized. Please try again."

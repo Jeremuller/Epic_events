@@ -122,7 +122,7 @@ def test_contract(db_session, test_user, test_client):
         rest_to_pay=500.0,
         client_id=test_client.client_id,
         commercial_contact_id=test_user.user_id,
-        signed=False
+        signed=True
     )
     db_session.add(contract)
     db_session.commit()

@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from epic_events.models import Event
 
 
-def test_create_event_valid(db_session, test_user, test_client):
+def test_create_event_valid(db_session, test_user, test_client, test_contract):
     """Test that a valid event can be created."""
     start_datetime = datetime.now() + timedelta(days=30)
     end_datetime = datetime.now() + timedelta(days=31)
@@ -28,7 +28,26 @@ def test_create_event_valid(db_session, test_user, test_client):
     assert event.support_contact_id == test_user.user_id
 
 
-def test_create_event_past_date(db_session, test_user, test_client):
+def test_create_failed_contract_not_signed(db_session, test_user, test_client, test_contract):
+    """Test an event can't be created if the client contract is not signed."""
+    start_datetime = datetime.now() + timedelta(days=30)
+    end_datetime = datetime.now() + timedelta(days=31)
+    test_contract.signed = False
+    with pytest.raises(ValueError, match="CONTRACT_NOT_SIGNED"):
+        Event.create(
+            db=db_session,
+            name="Team Meeting",
+            notes="Quarterly team meeting",
+            start_datetime=start_datetime,
+            end_datetime=end_datetime,
+            location="Paris",
+            attendees=50,
+            client_id=test_client.client_id,
+            support_contact_id=test_user.user_id
+        )
+
+
+def test_create_event_past_date(db_session, test_user, test_client, test_contract):
     """Test that creating an event with a past date raises a ValueError."""
     start_datetime = datetime.now() - timedelta(days=1)
     end_datetime = datetime.now() + timedelta(days=1)
@@ -46,7 +65,7 @@ def test_create_event_past_date(db_session, test_user, test_client):
         )
 
 
-def test_create_event_end_before_start(db_session, test_user, test_client):
+def test_create_event_end_before_start(db_session, test_user, test_client, test_contract):
     """Test that creating an event with end_datetime before start_datetime raises a ValueError."""
     start_datetime = datetime.now() + timedelta(days=30)
     end_datetime = datetime.now() + timedelta(days=29)
@@ -151,7 +170,7 @@ def test_update_event_end_before_start(db_session, test_user, test_client, test_
         )
 
 
-def test_get_all_events(db_session, test_user, test_client):
+def test_get_all_events(db_session, test_user, test_client, test_contract):
     """Test that all events can be retrieved."""
     event1 = Event.create(
         db=db_session,
