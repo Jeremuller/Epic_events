@@ -1,8 +1,9 @@
 import pytest
-from epic_events.permissions import commercial_only
+from epic_events.permissions import commercial_only, requires_assignment
 from epic_events.views import DisplayMessages
 from epic_events.auth import SessionContext
 from epic_events.controllers import ContractController
+from epic_events.models import Event, Client, Contract, User
 
 
 def test_commercial_only_without_session(monkeypatch):

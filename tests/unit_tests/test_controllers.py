@@ -47,7 +47,7 @@ def test_create_user_success(db_session, management_session):
         username="jeanmicheltesteur",
         first_name="Test",
         last_name="User",
-        email="test@example.com",
+        email="testing@example.com",
         role="commercial",
         password_hash="testpassword"
     )
@@ -57,7 +57,7 @@ def test_create_user_success(db_session, management_session):
         "username": "jeanmicheltesteur",
         "first_name": "Test",
         "last_name": "User",
-        "email": "test@example.com",
+        "email": "testing@example.com",
         "role": "commercial",
         "password": "testpassword"
     }):

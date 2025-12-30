@@ -137,3 +137,45 @@ def test_update_contract_with_invalid_commercial_id(db_session, test_user, test_
             db=db_session,
             commercial_contact_id=9999
         )
+
+
+def test_get_pending_contracts(db_session, test_user, test_client):
+
+    contract1 = Contract.create(
+        db=db_session,
+        total_price=1000.0,
+        rest_to_pay=0.0,
+        client_id=test_client.client_id,
+        commercial_contact_id=test_user.user_id,
+        signed=True
+    )
+
+    contract2 = Contract.create(
+        db=db_session,
+        total_price=2000.0,
+        rest_to_pay=2000.0,
+        client_id=test_client.client_id,
+        commercial_contact_id=test_user.user_id,
+        signed=False
+    )
+
+    contract3 = Contract.create(
+        db=db_session,
+        total_price=1500.0,
+        rest_to_pay=500.0,
+        client_id=test_client.client_id,
+        commercial_contact_id=test_user.user_id,
+        signed=True
+    )
+
+    db_session.add_all([contract1, contract2, contract3])
+    db_session.commit()
+
+    pending = Contract.get_pending_contracts(db_session)
+
+    assert len(pending) == 2
+    pending_ids = [c.contract_id for c in pending]
+    assert contract2.contract_id in pending_ids
+    assert contract3.contract_id in pending_ids
+    assert contract1.contract_id not in pending_ids
+

@@ -200,3 +200,29 @@ def test_get_unassigned_events(db_session, test_user, test_client, test_contract
     assert len(unassigned_events) == 1
     assert unassigned_events[0].name == "Unassigned Event"
     assert unassigned_events[0].support_contact_id is None
+
+
+def test_get_assigned_events(db_session, support_session, test_client, test_contract, test_event):
+    """
+    Test that a support user retrieves only events assigned to them.
+    """
+
+    support_session.user_id = 7
+    event_unassigned = Event.create(
+        db=db_session,
+        name="Unassigned Event",
+        notes="Event not assigned",
+        start_datetime=datetime.now() + timedelta(days=10),
+        end_datetime=datetime.now() + timedelta(days=11),
+        location="Lyon",
+        attendees=20,
+        client_id=test_client.client_id
+    )
+    event_unassigned.support_contact_id = support_session.user_id
+    db_session.add(event_unassigned)
+    db_session.commit()
+
+    assigned_events = Event.get_assigned_to_user(db_session, support_session.user_id)
+    assert len(assigned_events) == 1
+    assert assigned_events[0].name == event_unassigned.name
+    assert assigned_events[0].support_contact_id == support_session.user_id

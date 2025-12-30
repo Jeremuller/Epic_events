@@ -566,7 +566,7 @@ def test_create_event_failure_past_date(db_session, commercial_session, test_cli
     assert event_in_db is None
 
 
-def test_update_event_success_integration(db_session, support_session, test_event, capsys, monkeypatch):
+def test_update_event_success_integration(db_session, test_user, support_session, test_event, capsys, monkeypatch):
     """
     Full integration test: Successfully updating an event.
     """
@@ -584,7 +584,6 @@ def test_update_event_success_integration(db_session, support_session, test_even
             "location": "Updated Location"
         })
     )
-
     EventController.update_event(db_session, support_session)
 
     updated_event = db_session.query(Event).get(test_event.event_id)

@@ -59,20 +59,20 @@ def commercial_session(test_user):
 
 
 @pytest.fixture
-def support_session():
+def support_session(test_user):
     return SessionContext(
         username="commercial",
-        user_id=2,
+        user_id=test_user.user_id,
         role="support",
         is_authenticated=True
     )
 
 
 @pytest.fixture
-def management_session():
+def management_session(test_user):
     return SessionContext(
         username="commercial",
-        user_id=2,
+        user_id=test_user.user_id,
         role="management",
         is_authenticated=True
     )
