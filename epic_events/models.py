@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, DECIMAL, Boolean, Text, Enum
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, DECIMAL, Boolean, Text, Enum, or_
 from sqlalchemy.orm import relationship, Session
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
@@ -544,6 +544,21 @@ class Contract(Base):
 
         return db.query(cls).filter_by(contract_id=contract_id).first()
 
+    @classmethod
+    def get_pending_contracts(cls, db: Session):
+        """
+        Retrieves all contracts that are either not signed or not fully paid.
+
+        Args:
+            db (Session): SQLAlchemy database session.
+
+        Returns:
+            List[Contract]: List of contracts matching the criteria.
+        """
+        return db.query(cls).filter(
+            or_(cls.signed == False, cls.rest_to_pay > 0)
+        ).all()
+
 
 class Event(Base):
     """
@@ -679,6 +694,20 @@ class Event(Base):
             List[Event]: List of Event objects without a support contact.
         """
         return db.query(cls).filter(cls.support_contact_id.is_(None)).all()
+
+    @classmethod
+    def get_assigned_to_user(cls, db: Session, user_id: int):
+        """
+        Retrieves all events assigned to a specific user (support).
+
+        Args:
+            db (Session): SQLAlchemy database session.
+            user_id (int): The ID of the support user.
+
+        Returns:
+            List[Event]: List of events assigned to the user.
+        """
+        return db.query(cls).filter(cls.support_contact_id == user_id).all()
 
     def update(self, db: Session, name: str = None, notes: str = None,
                start_datetime: datetime = None, end_datetime: datetime = None,

@@ -429,23 +429,6 @@ class EventView:
             )
 
     @staticmethod
-    def display_unassigned_events(events):
-        """
-        Displays a list of events that have no support assigned.
-
-        Args:
-            events (List[Event]): List of Event objects to display.
-        """
-        if not events:
-            print("No unassigned events found.")
-            return
-
-        print("\nUnassigned Events:")
-        for e in events:
-            print(f"- ID: {e.event_id}, Name: {e.name}, Client: {e.client.business_name if e.client else 'N/A'}, "
-                  f"Start: {e.start_datetime}, End: {e.end_datetime}, Location: {e.location}")
-
-    @staticmethod
     def prompt_event_creation():
         """
         Prompts the user for new event information.

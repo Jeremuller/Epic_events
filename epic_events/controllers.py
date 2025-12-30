@@ -2,7 +2,8 @@ from epic_events.models import User, Client, Contract, Event
 from epic_events.views import (DisplayMessages, UserView, ClientView, ContractView, EventView, MenuView, LoginView)
 from epic_events.auth import hash_password, verify_password, SessionContext
 from epic_events.database import SessionLocal
-from epic_events.permissions import requires_authentication, management_only, support_only, commercial_only
+from epic_events.permissions import requires_authentication, management_only, support_only, commercial_only, \
+    requires_assignment
 
 db = SessionLocal()
 
@@ -544,6 +545,16 @@ class ContractController:
             raise
 
     @staticmethod
+    @commercial_only
+    def list_pending_contracts(db, session):
+        """
+        Lists all pending contracts for the commercial user.
+        Calls the model to retrieve data and displays them using list_contracts.
+        """
+        contracts = Contract.get_pending_contracts(db)
+        ContractView.list_contracts(contracts)
+
+    @staticmethod
     @management_only
     def create_contract(db, session):
         """
@@ -701,6 +712,16 @@ class EventController:
             raise
 
     @staticmethod
+    @support_only
+    def list_my_events(db, session):
+        """
+        Retrieves and displays all events assigned to the logged-in support user.
+        """
+        events = Event.get_assigned_to_user(db, session.user_id)
+
+        EventView.list_events(events)
+
+    @staticmethod
     @management_only
     def show_unassigned_events(db, session):
         """
@@ -712,7 +733,7 @@ class EventController:
             session (SessionContext): Current authenticated user session.
         """
         events = Event.get_unassigned_events(db)
-        EventView.display_unassigned_events(events)
+        EventView.list_events(events)
 
     @staticmethod
     @commercial_only
@@ -795,18 +816,20 @@ class EventController:
             if not event:
                 DisplayMessages.display_error("EVENT_NOT_FOUND")
                 return
-
-            # Step 2: Get updated data from the user
+            # Step 2: Vérification “requires_assignment” inline
+            if event.support_contact_id != session.user_id:
+                raise ValueError("ACCESS_DENIED")
+            # Step 3: Get updated data from the user
             updated_data = EventView.prompt_update(event)
 
-            # Step 3: Update the event (model layer)
+            # Step 4: Update the event (model layer)
             event.update(db, **updated_data)
 
-            # Step 4: Commit changes (controller responsibility)
+            # Step 5: Commit changes (controller responsibility)
             db.commit()
             db.refresh(event)
 
-            # Step 5: Display success
+            # Step 6: Display success
             DisplayMessages.display_success(
                 f"Event updated: {event.name} (ID: {event.event_id})"
             )
