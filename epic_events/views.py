@@ -30,10 +30,11 @@ class MenuView:
     """Static methods for displaying menus and capturing user choices."""
 
     @staticmethod
-    def display_main_menu():
+    def display_main_menu(session):
         """Displays the main menu and captures user choice."""
         print("\n=== CRM Main Menu ===")
-        print("1. Manage Users")
+        if session.role == "management":
+            print("1. Manage Users")
         print("2. Manage Clients")
         print("3. Manage Contracts")
         print("4. Manage Events")
@@ -51,34 +52,52 @@ class MenuView:
         return input("Enter your choice (1-4): ")
 
     @staticmethod
-    def display_clients_menu():
+    def display_clients_menu(session):
         """Displays the Clients submenu and captures user choice."""
         print("\n=== Clients Menu ===")
         print("1. List Clients")
-        print("2. Create Client")
-        print("3. Update Client")
+        if session.role == "commercial":
+            print("2. Create Client")
+            print("3. Update Client")
         print("4. Back to Main Menu")
         return input("Enter your choice (1-4): ")
 
     @staticmethod
-    def display_contracts_menu():
+    def display_contracts_menu(session):
         """Displays the Contracts submenu and captures user choice."""
         print("\n=== Contracts Menu ===")
         print("1. List Contracts")
-        print("2. Create Contract")
-        print("3. Update Contract")
-        print("4. Back to Main Menu")
-        return input("Enter your choice (1-4): ")
+
+        if session.role == "management":
+            print("2. Create Contract")
+
+        if session.role in ("management", "commercial"):
+            print("3. Update Contract")
+
+        if session.role == "commercial":
+            print("4. List Pending Contracts")
+
+        print("5. Back to Main Menu")
+        return input("Enter your choice (1-5): ")
 
     @staticmethod
-    def display_events_menu():
+    def display_events_menu(session):
         """Displays the Events submenu and captures user choice."""
         print("\n=== Events Menu ===")
         print("1. List Events")
-        print("2. Create Event")
-        print("3. Update Event")
-        print("4. Back to Main Menu")
-        return input("Enter your choice (1-4): ")
+        if session.role == "commercial":
+            print("2. Create Event")
+
+        if session.role == "support":
+            print("3. Update Event")
+            print("4. List My Assigned Events")
+
+        if session.role == "management":
+            print("5. List Unassigned Events")
+            print("6. Assign Support to Event")
+
+        print("7. Back to Main Menu")
+        return input("Enter your choice (1-7): ")
 
     @staticmethod
     def prompt_for_id(entity_name):

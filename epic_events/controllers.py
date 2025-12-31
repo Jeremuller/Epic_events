@@ -23,7 +23,7 @@ class MenuController:
             Contains identity and role information used for permission checks.
         """
         while True:
-            choice = MenuView.display_main_menu()
+            choice = MenuView.display_main_menu(session)
             if choice == "1":
                 MenuController.run_users_menu(db, session)
             elif choice == "2":
@@ -40,7 +40,7 @@ class MenuController:
                 DisplayMessages.display_invalid_choice("main")
 
     @staticmethod
-    @requires_authentication
+    @management_only
     def run_users_menu(db, session):
         """Runs the Users submenu loop and delegates actions to UserController."""
         while True:
@@ -61,7 +61,7 @@ class MenuController:
     def run_clients_menu(db, session):
         """Runs the Clients submenu loop and delegates actions to ClientController."""
         while True:
-            choice = MenuView.display_clients_menu()
+            choice = MenuView.display_clients_menu(session)
             if choice == "1":
                 ClientController.list_clients(db, session)
             elif choice == "2":
@@ -78,7 +78,7 @@ class MenuController:
     def run_contracts_menu(db, session):
         """Runs the Contracts submenu loop and delegates actions to ContractController."""
         while True:
-            choice = MenuView.display_contracts_menu()
+            choice = MenuView.display_contracts_menu(session)
             if choice == "1":
                 ContractController.list_contracts(db, session)
             elif choice == "2":
@@ -86,6 +86,8 @@ class MenuController:
             elif choice == "3":
                 ContractController.update_contract(db, session)
             elif choice == "4":
+                ContractController.list_pending_contracts(db, session)
+            elif choice == "5":
                 break
             else:
                 DisplayMessages.display_invalid_choice("contracts")
@@ -95,7 +97,7 @@ class MenuController:
     def run_events_menu(db, session):
         """Runs the Events submenu loop and delegates actions to EventController."""
         while True:
-            choice = MenuView.display_events_menu()
+            choice = MenuView.display_events_menu(session)
             if choice == "1":
                 EventController.list_events(db, session)
             elif choice == "2":
@@ -103,7 +105,14 @@ class MenuController:
             elif choice == "3":
                 EventController.update_event(db, session)
             elif choice == "4":
+                EventController.list_assigned_events(db, session)
+            elif choice == "5":
+                EventController.list_unassigned_events(db, session)
+            elif choice == "6":
+                EventController.assign_support(db, session)
+            elif choice == "7":
                 break
+
             else:
                 DisplayMessages.display_invalid_choice("events")
 
@@ -742,7 +751,7 @@ class EventController:
 
     @staticmethod
     @support_only
-    def list_my_events(db, session):
+    def list_assigned_events(db, session):
         """
         Retrieves and displays all events assigned to the logged-in support user.
         """
@@ -752,7 +761,7 @@ class EventController:
 
     @staticmethod
     @management_only
-    def show_unassigned_events(db, session):
+    def list_unassigned_events(db, session):
         """
         Retrieves and displays events without a support contact assigned.
         Only accessible to management.
