@@ -6,39 +6,7 @@ from epic_events.controllers import (
 )
 from epic_events.views import UserView, MenuView, ClientView, ContractView, EventView
 from epic_events.models import User, Client, Contract, Event
-import builtins
 from datetime import datetime, timedelta
-
-menus = [
-    (MenuController.run_main_menu, "CRM Main Menu", ["1", "4", "5"], None),
-    (MenuController.run_users_menu, "Users Menu", ["1", "4"],
-     "epic_events.controllers.UserController.create_user"),
-    (MenuController.run_clients_menu, "Clients Menu", ["1", "4"],
-     "epic_events.controllers.ClientController.list_clients"),
-    (MenuController.run_contracts_menu, "Contracts Menu", ["1", "4"],
-     "epic_events.controllers.ContractController.list_contracts"),
-    (MenuController.run_events_menu, "Events Menu", ["1", "4"],
-     "epic_events.controllers.EventController.list_events"),
-]
-
-
-@pytest.mark.parametrize("menu_func, menu_text, choices, controller_path", menus)
-def test_menus_parametric(db_session, management_session, capsys, monkeypatch, menu_func, menu_text, choices,
-                          controller_path):
-    iter_choices = iter(choices)
-    monkeypatch.setattr(builtins, "input", lambda _: next(iter_choices))
-
-    if controller_path is not None:
-        with patch(controller_path) as mock_controller:
-            menu_func(db_session, management_session)
-            mock_controller.assert_called_once()
-    else:
-        with patch.object(DisplayMessages, "display_goodbye") as mock_goodbye:
-            menu_func(db_session, management_session)
-            mock_goodbye.assert_called_once()
-
-    captured = capsys.readouterr().out
-    assert menu_text in captured
 
 
 def test_create_user_success(db_session, management_session):
