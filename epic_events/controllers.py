@@ -727,21 +727,39 @@ class ContractController:
     @role_permission(["management", "commercial"])
     def update_contract(db, session):
         """
-        Orchestrates the update of a contract in the CRM system.
-        Steps:
-          1. Prompts the user for the contract ID (via MenuView).
-          2. Retrieves the contract from the database (via Contract.get_by_id).
-          3. Prompts for updated contract data (via ContractView).
-          4. Validates and updates the contract (via Contract.update).
-          5. Handles database transactions (commit/rollback).
-          6. Delegates success/error feedback to the view.
+    Orchestrates the update of a contract in the CRM system.
 
-        Args:
-            db (sqlalchemy.orm.Session): Active database session.
-            session (SessionContext):
-            Authentication context of the currently logged-in user.
+    Workflow:
+        1. Prompts the user for the contract ID (via MenuView).
+        2. Retrieves the contract from the database (via Contract.get_by_id).
+        3. Performs role-specific assignment checks:
+            - Commercials can only update contracts of their assigned clients.
+        4. Prompts for updated contract data (via ContractView).
+        5. Validates and updates the contract (via Contract.update).
+        6. Handles database transactions (commit/rollback).
+        7. Delegates success/error feedback to the view (display_success/display_error).
+        8. Logs contract signature events to Sentry if the contract is marked as signed.
+
+    Transaction Management:
+        - Commits changes to the database if the operation succeeds.
+        - Rolls back changes if any validation or unexpected error occurs.
+        - Ensures data consistency by handling exceptions explicitly.
+
+    Sentry Logging:
+        - Only logs when a contract is marked as signed (`signed=True`).
+        - Adds context for the contract (ID, client info, total price).
+        - Adds context for the acting user (ID, role).
+        - Captures a message "Contract signed successfully" in Sentry.
+
+    Args:
+        db (sqlalchemy.orm.Session): Active database session.
+        session (SessionContext): Authentication context of the currently logged-in user.
             Contains identity and role information used for permission checks.
-        """
+
+    Raises:
+        ValueError: For business logic validation errors.
+        Exception: For unexpected database or technical errors.
+    """
         try:
             # Step 1: Prompt for contract ID
             contract_id = MenuView.prompt_for_id("contract")
@@ -763,8 +781,31 @@ class ContractController:
             # Step 4: Commit changes (controller responsibility)
             db.commit()
             db.refresh(contract)
+            # Sentry - log contract signature
+            if updated_data.get("signed") is True:
+                sentry_sdk.set_tag("event_type", "contract_signed")
 
-            # Step 5: Display success
+                sentry_sdk.set_context(
+                    "contract_signed",
+                    {
+                        "contract_id": contract.contract_id,
+                        "client_id": contract.client_id,
+                        "client_name": contract.client.business_name if contract.client else "N/A",
+                        "total_price": contract.total_price,
+                    }
+                )
+
+                sentry_sdk.set_context(
+                    "actor",
+                    {
+                        "actor_id": session.user_id,
+                        "actor_role": session.role,
+                    }
+                )
+
+                sentry_sdk.capture_message("Contract signed successfully")
+
+                # Step 5: Display success
             DisplayMessages.display_success(
                 f"Contract updated: ID {contract.contract_id} | "
                 f"Client: {contract.client.business_name if contract.client else 'N/A'} | "
