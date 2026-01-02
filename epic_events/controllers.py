@@ -288,19 +288,43 @@ class UserController:
     @management_only
     def update_user(db, session):
         """
-        Orchestrates the update of a user in the CRM system.
-        Steps:
-          1. Prompts the user for the user ID and updated data (via UserView).
-          2. Retrieves the user from the database (via User.get_by_id).
-          3. Updates the user (via User.update).
-          4. Handles database transactions (commit/rollback).
-          5. Delegates success/error feedback to the view.
+        Controller function to orchestrate the update of a user in the CRM system.
+        This function acts as an intermediary between the view (user interaction) and the model (business logic).
+        It handles transaction management (commit/rollback), error feedback, and business event logging.
 
         Args:
             db (sqlalchemy.orm.Session): Active database session.
             session (SessionContext):
             Authentication context of the currently logged-in user.
             Contains identity and role information used for permission checks.
+
+        Workflow:
+            1. Displays the list of existing users and prompts for a user ID (via UserView/MenuView).
+            2. Retrieves the selected user from the database (via User.get_by_id).
+            3. Prompts for updated user data (via UserView).
+            4. Applies validated updates to the user (via User.update).
+            5. Persists changes to the database (commit/rollback).
+            6. Logs the successful update as a business event (via Sentry).
+            7. Delegates success or error feedback to the view layer.
+
+        Transaction Management:
+            - Commits changes to the database if the operation succeeds.
+            - Rolls back changes if any error occurs (validation or database error).
+            - Ensures data consistency by handling exceptions explicitly.
+
+        Logging & Monitoring:
+            - Records successful user update events in the monitoring system.
+            - Attaches contextual information such as:
+                - Acting manager (session user)
+                - Updated user ID
+                - Modified fields (when relevant)
+            - Unexpected exceptions are automatically captured by the global monitoring setup.
+
+        Error Handling:
+            - Catches `ValueError` for business logic validation errors
+              (e.g., duplicate email or username).
+            - Catches generic `Exception` for database or technical errors.
+            - Delegates user-facing error messages to the view layer using standardized error keys.
         """
         try:
             # Step 1: Prompt for user ID and updated data
@@ -321,6 +345,28 @@ class UserController:
             # Step 4: Commit changes
             db.commit()
             db.refresh(user)
+
+            # Sentry - business event logging
+            sentry_sdk.set_tag("event_type", "user_update")
+
+            sentry_sdk.set_context(
+                "user_updated",
+                {
+                    "user_id": user.user_id,
+                    "username": user.username,
+                    "role": user.role,
+                }
+            )
+
+            sentry_sdk.set_context(
+                "actor",
+                {
+                    "actor_id": session.user_id,
+                    "actor_role": session.role,
+                }
+            )
+
+            sentry_sdk.capture_message("User updated successfully")
 
             # Step 5: Display success
             DisplayMessages.display_success(f"User updated: {user.username} (ID: {user.user_id})")
