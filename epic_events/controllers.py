@@ -204,7 +204,7 @@ class UserController:
         """
         Controller function to orchestrate the creation of a new user in the CRM system.
         This function acts as an intermediary between the view (user interaction) and the model (business logic).
-        It handles transaction management (commit/rollback) and error feedback.
+        It handles transaction management (commit/rollback), error feedback, and business event logging.
 
         Args:
             db (sqlalchemy.orm.Session): Active database session for persistence operations.
@@ -214,20 +214,26 @@ class UserController:
 
         Workflow:
             1. Delegates user input collection to the view layer (`prompt_user_creation`).
-            2. Delegates user validation and object creation to the model layer (`User.create_user`).
-            3. Manages database persistence (commit/rollback) based on operation success/failure.
-            4. Delegates success/error feedback to the view layer (`display_success`/`display_error`).
+            2. Delegates user validation and object creation to the model layer (`User.create`).
+            3. Persists the new user to the database (commit/rollback).
+            4. Logs the successful creation as a business event (via Sentry).
+            5. Delegates success or error feedback to the view layer.
 
         Transaction Management:
             - Commits changes to the database if the operation succeeds.
             - Rolls back changes if any error occurs (validation or database error).
             - Ensures data consistency by handling exceptions explicitly.
 
+        Logging & Monitoring:
+            - Records successful user creation events in the monitoring system.
+            - Attaches contextual information (actor, created user, role) to facilitate audit
+              trails and post-mortem analysis.
+            - Unexpected exceptions are automatically captured by the global monitoring setup.
+
         Error Handling:
             - Catches `ValueError` for business logic validation errors (e.g., duplicate username/email).
-            - Catches generic `Exception` for database/technical errors.
-            - Delegates error display to the view layer with appropriate error keys.
-
+            - Catches generic `Exception` for database or technical errors.
+            - Delegates user-facing error messages to the view layer using standardized error keys.
         """
         try:
             # Step 1: Delegate user input to the view layer
@@ -251,6 +257,18 @@ class UserController:
             db.add(user)
             db.commit()
             db.refresh(user)
+
+            # Sentry — log business event
+            sentry_sdk.set_context("user_action", {
+                "action": "create_user",
+                "created_user_id": user.user_id,
+                "created_user_email": user.email,
+                "created_user_role": user.role,
+                "actor_id": session.user_id,
+                "actor_role": session.role,
+            })
+
+            sentry_sdk.capture_message("User created")
 
             # Step 4: Delegate success feedback to the view layer
             DisplayMessages.display_success(f"User created: {user.first_name} {user.last_name} (ID: {user.user_id})")
