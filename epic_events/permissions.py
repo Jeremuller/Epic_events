@@ -1,7 +1,6 @@
 from functools import wraps
 from epic_events.auth import SessionContext
 from epic_events.views import DisplayMessages
-from epic_events.models import Contract
 
 
 def requires_authentication(func):
