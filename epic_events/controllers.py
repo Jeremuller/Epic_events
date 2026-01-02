@@ -5,6 +5,10 @@ from epic_events.database import SessionLocal
 from epic_events.permissions import requires_authentication, management_only, support_only, commercial_only, \
     role_permission
 
+from dotenv import load_dotenv
+import os
+import sentry_sdk
+
 db = SessionLocal()
 
 
@@ -941,6 +945,15 @@ class EventController:
 
 
 if __name__ == "__main__":
+
+    load_dotenv()
+
+    # Initialize Sentry
+    sentry_sdk.init(
+        dsn=os.getenv("SENTRY_DSN"),
+        traces_sample_rate=1.0,
+    )
+
     session = LoginController.login(db)
 
     if not session or not session.is_authenticated:
