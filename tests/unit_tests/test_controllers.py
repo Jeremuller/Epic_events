@@ -1,7 +1,6 @@
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from epic_events.controllers import (
-    MenuController,
     DisplayMessages, UserController, ClientController, ContractController, EventController
 )
 from epic_events.views import UserView, MenuView, ClientView, ContractView, EventView
