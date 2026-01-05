@@ -4,6 +4,8 @@ from epic_events.views import LoginView, DisplayMessages
 from epic_events.models import User
 from epic_events.controllers import LoginController
 
+from datetime import datetime, timedelta
+
 
 def test_hash_password_returns_hashed_value():
     """
@@ -222,3 +224,72 @@ def test_session_context_repr():
     session = SessionContext(username="bob", user_id=98, role="management", is_authenticated=True)
     expected = "<SessionContext username='bob' role='management' authenticated=True>"
     assert repr(session) == expected
+
+
+def test_session_expired_is_invalid():
+    """
+        Ensure that a session becomes invalid once its expiration timeout is exceeded.
+
+        This test simulates an expired session by manually setting the creation
+        timestamp in the past and verifies that:
+        - the session is considered invalid
+        - the authentication flag is automatically cleared
+    """
+    session = SessionContext(
+        username="test",
+        user_id=1,
+        role="management",
+        is_authenticated=True
+    )
+
+    session.created_at = datetime.now() - timedelta(minutes=20)
+
+    assert session.is_valid() is False
+    assert session.is_authenticated is False
+
+
+def test_session_end_session_invalidates():
+    """
+        Ensure that calling end_session() explicitly invalidates the session.
+
+        This test verifies that ending a session:
+        - immediately marks the session as invalid
+        - prevents any further authenticated access
+    """
+    session = SessionContext(
+        username="test",
+        user_id=1,
+        role="management",
+        is_authenticated=True
+    )
+
+    session.end_session()
+
+    assert session.is_valid() is False
+
+
+def test_logout_ends_session(monkeypatch):
+    """
+        Ensure that the logout controller properly terminates the user session.
+
+        This test mocks the logout confirmation prompt to simulate a user
+        confirming the logout action and verifies that:
+        - logout returns True
+        - the session is no longer authenticated after logout
+    """
+    session = SessionContext(
+        username="test",
+        user_id=1,
+        role="management",
+        is_authenticated=True
+    )
+
+    monkeypatch.setattr(
+        "epic_events.views.MenuView.logout_confirmation",
+        lambda: True
+    )
+
+    result = LoginController.logout(session)
+
+    assert result is True
+    assert session.is_authenticated is False

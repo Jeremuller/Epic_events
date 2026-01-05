@@ -1,9 +1,11 @@
 import pytest
-from epic_events.permissions import commercial_only, role_permission
+from epic_events.permissions import commercial_only, role_permission, requires_authentication
 from epic_events.views import DisplayMessages
 from epic_events.auth import SessionContext
 from epic_events.controllers import ContractController
 from epic_events.models import Event, Client, Contract, User
+
+from datetime import datetime, timedelta
 
 
 def test_commercial_only_without_session(monkeypatch):
@@ -148,22 +150,80 @@ def test_commercial_cannot_update_other_contract(db_session, commercial_session,
     assert str(exc.value) == "ACCESS_DENIED"
 
 
-def test_support_cannot_update_contract(db_session, support_session, test_contract):
+def test_support_cannot_update_contract(db_session, support_session, test_contract, monkeypatch):
     """
     Ensure that a support user cannot update a contract.
-    Should raise ValueError with message "ACCESS_DENIED".
+    Access should be denied by the role_permission decorator.
     """
+
+    called = {"called": False}
+
     @role_permission(["management", "commercial"])
     def fake_update(*, db, session, contract_id):
-        contract = db.query(Contract).get(contract_id)
-        # Check assignment for commercial
-        if session.role == "commercial" and contract.client.commercial_contact_id != session.user_id:
-            raise ValueError("ACCESS_DENIED")
+        called["called"] = True
         return "OK"
 
-    import pytest
-    with pytest.raises(ValueError) as exc:
-        fake_update(db=db_session, session=support_session, contract_id=test_contract.contract_id)
+    monkeypatch.setattr(
+        DisplayMessages,
+        "display_error",
+        lambda msg: msg
+    )
 
-    assert str(exc.value) == "ACCESS_DENIED"
+    result = fake_update(
+        db=db_session,
+        session=support_session,
+        contract_id=test_contract.contract_id
+    )
 
+    assert result is None
+    assert called["called"] is False
+
+
+def test_requires_authentication_denies_expired_session(db_session):
+    """
+        Ensure that the requires_authentication decorator denies access
+        when the session has expired.
+
+        An expired session should be considered invalid, prevent the
+        controller execution, and return None.
+    """
+    session = SessionContext(
+        username="test",
+        user_id=1,
+        role="management",
+        is_authenticated=True
+    )
+
+    session.created_at = datetime.now() - timedelta(minutes=20)
+
+    @requires_authentication
+    def fake_controller(db, session):
+        return "OK"
+
+    result = fake_controller(db_session, session)
+
+    assert result is None
+
+
+def test_requires_authentication_allows_valid_session(db_session):
+    """
+        Ensure that the requires_authentication decorator allows access
+        when the session is valid and authenticated.
+
+        A valid session should allow the controller function to execute
+        and return its expected result.
+    """
+    session = SessionContext(
+        username="test",
+        user_id=1,
+        role="management",
+        is_authenticated=True
+    )
+
+    @requires_authentication
+    def fake_controller(db, session):
+        return "OK"
+
+    result = fake_controller(db_session, session)
+
+    assert result == "OK"
