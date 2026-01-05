@@ -37,7 +37,7 @@ def requires_authentication(func):
         if session is None and len(args) >= 2:
             session = args[1]
 
-        if not session or not session.is_authenticated:
+        if not session or not session.is_valid():
             DisplayMessages.display_error("ACCESS_DENIED")
             return None
 
@@ -84,7 +84,7 @@ def commercial_only(func):
 
         if (
                 not session
-                or not session.is_authenticated
+                or not session.is_valid()
                 or session.role != "commercial"
         ):
             DisplayMessages.display_error("ACCESS_DENIED")
@@ -133,7 +133,7 @@ def management_only(func):
 
         if (
                 not session
-                or not session.is_authenticated
+                or not session.is_valid()
                 or session.role != "management"
         ):
             DisplayMessages.display_error("ACCESS_DENIED")
@@ -182,7 +182,7 @@ def support_only(func):
 
         if (
                 not session
-                or not session.is_authenticated
+                or not session.is_valid()
                 or session.role != "support"
         ):
             DisplayMessages.display_error("ACCESS_DENIED")
@@ -202,15 +202,16 @@ def role_permission(allowed_roles):
         @wraps(func)
         def wrapper(*args, **kwargs):
             session = kwargs.get("session")
-            # fallback: try to get session from the second positional argument
             if session is None and len(args) >= 2:
                 session = args[1]
 
-            if not session:
-                raise RuntimeError("Session must be provided")
+            if not session or not session.is_valid():
+                DisplayMessages.display_error("ACCESS_DENIED")
+                return None
 
             if session.role not in allowed_roles:
-                raise ValueError("ACCESS_DENIED")
+                DisplayMessages.display_error("ACCESS_DENIED")
+                return None
 
             return func(*args, **kwargs)
         return wrapper
