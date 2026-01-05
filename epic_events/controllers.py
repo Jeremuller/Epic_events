@@ -192,7 +192,8 @@ class LoginController:
         """
         # Ask the user for confirmation using the view
         confirm = MenuView.logout_confirmation()
-        session.is_authenticated = False
+        if confirm:
+            session.end_session()
         return confirm
 
 
