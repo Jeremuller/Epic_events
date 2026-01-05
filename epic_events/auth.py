@@ -1,5 +1,5 @@
 import bcrypt
-from epic_events.models import User
+from datetime import datetime, timedelta
 
 
 def hash_password(password: str) -> str:
@@ -41,6 +41,8 @@ class SessionContext:
     It deliberately avoids any dependency on the database layer.
     """
 
+    SESSION_TIMEOUT = timedelta(minutes=15)
+
     def __init__(
             self,
             username: str,
@@ -52,6 +54,32 @@ class SessionContext:
         self.user_id = user_id
         self.role = role
         self.is_authenticated = is_authenticated
+        self.created_at = datetime.now()
+
+    def is_expired(self) -> bool:
+        """
+        Checks whether the session has expired based on its creation time.
+        """
+        return datetime.now() > self.created_at + self.SESSION_TIMEOUT
+
+    def is_valid(self) -> bool:
+        """
+        Returns True if the session is authenticated and not expired.
+        """
+        if not self.is_authenticated:
+            return False
+
+        if self.is_expired():
+            self.end_session()
+            return False
+
+        return True
+
+    def end_session(self):
+        """
+        Properly invalidates the session.
+        """
+        self.is_authenticated = False
 
     def __repr__(self) -> str:
         return (
