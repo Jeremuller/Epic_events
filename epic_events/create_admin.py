@@ -85,7 +85,7 @@ def create_first_manager(username: str, email: str, password: str) -> None:
     - Create the user using the application's domain model
 
     The operation is intentionally irreversible and will refuse to run
-    if a management user is already present.
+    if a user is already present.
     """
     try:
         db = get_db_session()
