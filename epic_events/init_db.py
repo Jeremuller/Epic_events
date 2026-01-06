@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 
-from epic_events.database import init_db
+from database import init_db
 
 load_dotenv()
 
