@@ -85,6 +85,8 @@ The main objectives of this project are:
 
 - Database: MySQL
 
+- MySQL Command line Client or MySQL WorkBench, for initialisation purposes.
+
 - ORM: SQLAlchemy for database access and object-relational mapping
 
 - CLI Framework: Click for command-line interaction
@@ -93,7 +95,7 @@ The main objectives of this project are:
 
 - Security Libraries: Bcrypt for secure password hashing and salting, dotenv for environment variable management
 
-- This stack was chosen to provide a secure, maintainable, and portable back-end architecture, while keeping the project simple enough for educational purposes.
+This stack was chosen to provide a secure, maintainable, and portable back-end architecture, while keeping the project simple enough for educational purposes.
 
 Testing and Validation
 
@@ -214,6 +216,48 @@ Replace the placeholders with your actual credentials. These environment variabl
 
 7. Database Initialization
 
+The CRM application relies on a MySQL database.
+For security and clarity reasons, the database initialization process is split between manual SQL steps and automated SQLAlchemy scripts.
+
+The following steps describe the required initialization procedure, in the correct order.
+
+**_Prerequisites:_**
+
+Make sure you have access to one of the following tools:
+
+- MySQL Command Line Client
+
+- MySQL Workbench
+
+Database connection parameters must be defined in the .env file.
+
+Step 1 – Create the database and grant privileges (SQL)
+
+Before running any Python script, the database must be created manually and the application user must be granted the appropriate privileges.
+
+Connect to MySQL as an administrator (for example, root), then execute:
+
+      CREATE DATABASE epic_events
+      CHARACTER SET utf8mb4
+      COLLATE utf8mb4_unicode_ci;
+
+      CREATE USER 'epic_user'@'localhost' IDENTIFIED BY 'strong_password';
+
+      GRANT ALL PRIVILEGES ON epic_events.* TO 'epic_user'@'localhost';
+
+      FLUSH PRIVILEGES;
+
+All credentials writen above between '' are for demonstration purposes, make sure to replace it with proper ones.
+
+This step ensures that:
+
+- The database exists
+
+- The application user has full access to it
+
+- SQLAlchemy can create tables without permission errors
+
+Step 2 – Initialize tables with SQLAlchemy
 
 The CRM application relies on a MySQL database. To simplify setup, the project provides the init_db.py script, which handles both the creation of the database (if it does not exist) and the creation of all required tables.
 
@@ -238,6 +282,22 @@ Notes:
 
 - After running this script, the database is fully set up and ready for the first management user to be created using create_first_manager.py.
 
+Step 3 – Select the database and adjust the schema (SQL)
+
+
+After the tables are created, a manual schema adjustment is required to ensure consistency with the application’s domain model.
+
+Connect again to MySQL and select the database:
+
+      USE epic_events;
+
+Then modify the users table to replace the legacy password column with password_hash:
+
+      ALTER TABLE users
+      DROP COLUMN password,
+      ADD COLUMN password_hash VARCHAR(100) NOT NULL;
+
+If you have followed those steps properly, you should run smoothly through the next part.
 
 8. Initial User Bootstrap
 
