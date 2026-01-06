@@ -18,9 +18,9 @@ import click
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
-from epic_events.database import SessionLocal
-from epic_events.models import User
-from epic_events.auth import hash_password
+from database import SessionLocal
+from models import User
+from auth import hash_password
 
 
 def get_db_session() -> Session:
