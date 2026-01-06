@@ -94,13 +94,13 @@ class User(Base):
     @classmethod
     def get_all(cls, db: Session):
         """
-        Retrieves all clients from the database.
+        Retrieves all users from the database.
 
         Args:
             db (Session): SQLAlchemy database session.
 
         Returns:
-            list[Client]: List of all Client objects.
+            list[User]: List of all User objects.
         """
         return db.query(cls).all()
 
@@ -571,7 +571,7 @@ class Event(Base):
         start_datetime (DateTime): Start date and time of the event.
         end_datetime (DateTime): End date and time of the event.
         location (str): Physical or virtual location of the event (max 200 characters).
-        attendees (int): Number off attendees for the event.
+        attendees (int): Number of attendees for the event.
         client_id (int): Foreign key referencing the associated client.
         support_contact_id (int): Foreign key referencing the user (commercial/support) responsible for the event.
 
