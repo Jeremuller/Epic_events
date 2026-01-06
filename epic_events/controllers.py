@@ -9,8 +9,6 @@ from dotenv import load_dotenv
 import os
 import sentry_sdk
 
-db = SessionLocal()
-
 
 class MenuController:
     """Static methods for handling menu navigation and controller delegation."""
@@ -972,7 +970,7 @@ class EventController:
             if not event:
                 DisplayMessages.display_error("EVENT_NOT_FOUND")
                 return
-            # Step 2: Vérification “requires_assignment” inline
+            # Step 2: Check for assignment
             if event.support_contact_id != session.user_id:
                 raise ValueError("ACCESS_DENIED")
             # Step 3: Get updated data from the user
@@ -1060,6 +1058,9 @@ if __name__ == "__main__":
         dsn=os.getenv("SENTRY_DSN"),
         traces_sample_rate=1.0,
     )
+
+    # Initialize db and auth session
+    db = SessionLocal()
 
     session = LoginController.login(db)
 
