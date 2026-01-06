@@ -61,7 +61,7 @@ def commercial_session(test_user):
 @pytest.fixture
 def support_session(test_user):
     return SessionContext(
-        username="commercial",
+        username="support",
         user_id=test_user.user_id,
         role="support",
         is_authenticated=True
@@ -71,7 +71,7 @@ def support_session(test_user):
 @pytest.fixture
 def management_session(test_user):
     return SessionContext(
-        username="commercial",
+        username="management",
         user_id=test_user.user_id,
         role="management",
         is_authenticated=True
