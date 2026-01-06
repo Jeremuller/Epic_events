@@ -63,7 +63,7 @@ def test_create_client_empty_fields(db_session, test_user):
             db=db_session,
             first_name="John",
             last_name="Doe",
-            email="",  # Champ vide
+            email="",
             commercial_contact_id=test_user.user_id
         )
 
